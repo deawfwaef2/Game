@@ -1,12 +1,12 @@
 // Optional developer step; the compiled, MIT-licensed bundle is already committed.
-// npm install --prefix /tmp/closed365-qa esbuild
+// npm install --prefix /var/tmp/closed365-qa esbuild
 const path = require("path"),
   root = path.resolve(__dirname, "..");
 let esbuild;
 try {
   esbuild = require("esbuild");
 } catch {
-  esbuild = require("/tmp/closed365-qa/node_modules/esbuild");
+  esbuild = require("/var/tmp/closed365-qa/node_modules/esbuild");
 }
 esbuild.buildSync({
   entryPoints: [path.join(root, "src/vendor/addons/entry.js")],

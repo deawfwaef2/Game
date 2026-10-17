@@ -187,3 +187,13 @@
 - 样片入口改为`index.html#sample`（或iframe里`window.CLOSED365_SAMPLE=true`）；不再生成`写实房间样片.html`；ZIP改到`dist/`（gitignore）并作为Release附件。
 - 视觉QA：`tools/qa-views.cjs [seed] [filter]`；`tools/qa-hud.cjs`抓带HUD的CDP截图。**注意：读取刚生成的图片必须等生成命令结束后再读，不要并行。**
 - 新资源：Poly Haven CC0 模型（电炉、搪瓷锅、吊灯、挂钟、扫帚、簸箕）与贴图（地砖、长墙砖、油毡）；墙纸/地毯/胡桃木贴皮为本项目生成贴图，manifest已登记。
+
+### 2026-10-17 / v0.8.0-preview 真实光照 + 建筑细节
+- 用户要求“继续大师级，真实系”。本轮新增两个模块：`src/fixtures.js`（模板标记 FIXTURES，在 INTERIOR 之后）和 `src/lighting.js`（标记 LIGHTING，最后）。均包装 roomDecorate/roomLight，并在 `R.ready` 时自应用。
+- **重要发现**：three r160 没有 `scene.environmentIntensity`（r163 才有），旧代码设置它无效，PMREM 环境一直满强度。`lightingApplyEnv` 每约 0.9 秒按材质缩放 `envMapIntensity`（基准存在 `material.userData.envBase`；金属缩得少；商店保持 1）。新增材质会在下一次遍历时被处理。
+- 窗户面光源 `RectAreaLight` 放在 scene 里（不在 roomRoot 下），因为镜像房 scale.x=-1 会翻转单面面光源；roomRoot 更换时重新定位。旧的 windowBounce 点光源移到房间内 1.5 米、高 2.35 米做天花板反射，否则会在玻璃里出现高光点。
+- GTAO：`ROOM_TOOLS` 现在包含 EffectComposer/RenderPass/GTAOPass/OutputPass/RectAreaLightUniformsLib（`tools/bundle-vendor.cjs` 从 /var/tmp/closed365-qa 打包，addon 源码在 `src/vendor/addons/`）。`renderer.render` 被包装，只有主场景+主相机且渲染到屏幕时走 composer。`gtao.overrideVisibility` 被替换：Points/Line/Sprite、`userData.noAO`、不可见/透明（opacity<0.7 或 depthWrite=false）/colorWrite=false 的网格不进 AO 的法线深度缓冲。新加的深窄缝隙（外层窗扇、窗洞）标记 noAO，避免颗粒。
+- 默认值：localStorage `closed365-ao` = on/off；未设置时桌面开、触屏或软件渲染（SwiftShader/llvmpipe）关。所以无头测试默认 AO 关；视觉 QA 用 `QA_AO=on`。
+- fixtures 识别旧部件：`fxHide` 按网格真实尺寸+位置隐藏旧窗框条/窗台；暖气按“含≥8个 CapsuleGeometry 的 Group”隐藏；水槽下的整块柜体按射线命中后拆成带空腔的 5 个盒子。浴盆、门扇往 `colliders` 推了世界坐标 AABB；导航 257 路线复测通过。
+- 洗衣盆（laundry）的位置被移进浴盆里（y=0.16）；shower 交互组保留，旧子网格隐藏，浴盆挂在它下面，所以 E 洗澡/洗衣的交互不变。
+- 未做：袋子网格合并（性能），马桶盖造型仍是 v0.7 的简单圆片。

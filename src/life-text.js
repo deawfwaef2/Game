@@ -61,7 +61,7 @@ const LIFE_FILLER = [
   "电台下周开始播出新的外语讲座节目。",
 ];
 // Weekly radio play, Saturday-like evenings (day % 7 === 6), 19:00–23:00.
-const LIFE_SERIAL = [
+const LIFE_SERIAL_A = [
   "雾港旅馆来了一位只住一晚的客人，他付了一个月的房钱。",
   "女老板阿梅在客人的箱子里发现了一张旧船票，日期是十年前。",
   "客人说自己在等一艘船。可港口早就不走那条航线了。",
@@ -89,3 +89,6 @@ const LIFE_SERIAL = [
   "春天到了，客人终于上了一艘真的船，回到了家乡。",
   "大结局：阿梅把旅馆改名叫“归港”。门房仍然每天守在门口。",
 ];
+
+const LIFE_SERIAL = LIFE_SERIAL_A.slice();
+const LIFE_SERIAL_META = LIFE_SERIAL_A.map((t, i) => ({ t, name: "雾港旅馆", ep: i + 1, of: LIFE_SERIAL_A.length }));

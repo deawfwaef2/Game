@@ -39,14 +39,14 @@ const ctx = {
   },
 };
 vm.createContext(ctx);
-for (const f of ["src/data.js", "src/core.js", "src/life-text.js", "src/life.js"])
+for (const f of ["src/data.js", "src/core.js", "src/life-text.js", "src/life.js", "src/life-more.js"])
   vm.runInContext(fs.readFileSync(f, "utf8"), ctx);
 vm.runInContext(
   `
 let assertions=0;function ok(value,msg){assert.ok(value,msg);assertions++;}
 function reset(seed='ANDERS-1986',kit=STARTER){closePreparation();phase='title';currentSeed=seed;env=environment(seed);startPreparation();cart={...kit};beginGame();for(const b of G.inv){b.packed=false;b.location=DB[b.id].kind==='food'&&DB[b.id].life<60&&env.fridge?'fridge':'shelf';}G.bags.forEach(b=>b.opened=true);G.cooldowns={};}
 saveGame=()=>{};
-ok(CATALOG.length===130,'catalog count');ok(new Set(CATALOG.map(i=>i.id)).size===CATALOG.length,'unique ids');ok(CATALOG.every(i=>i.price>0&&i.weight>0&&Number.isInteger(i.servings)&&i.servings>0),'valid product data');
+ok(CATALOG.length===131,'catalog count');ok(new Set(CATALOG.map(i=>i.id)).size===CATALOG.length,'unique ids');ok(CATALOG.every(i=>i.price>0&&i.weight>0&&Number.isInteger(i.servings)&&i.servings>0),'valid product data');
 for(let i=0;i<100;i++){const seed='test-'+i;ok(JSON.stringify(environment(seed))===JSON.stringify(environment(seed)),'seed deterministic');}
 const envs=Array.from({length:100},(_,i)=>environment('t'+i));ok(envs.some(e=>!e.fridge)&&envs.some(e=>e.fridge),'fridge varies');ok(new Set(envs.map(e=>e.temp)).size>12,'temperature varies');
 for(const kit of [STARTER,YEAR_KIT,Object.fromEntries(CATALOG.map(i=>[i.id,3]))]){const p=packCart(kit);ok(p.bags.every(b=>b.weight<=8),'all bags <=8kg');ok(p.total.reduce((a,b)=>a+Object.values(b.items).reduce((a,n)=>a+n,0),0)===Object.values(kit).reduce((a,n)=>a+n,0),'no lost packages');}
@@ -91,6 +91,21 @@ ok(DB.greens.kind==='food'&&!CATALOG.some(i=>i.id==='greens'),'produce is food b
 ok(G.life.garden[1].growth<1,'tomato still growing after two weeks');
 G.life.garden[2]={crop:'sprout',growth:0.5,water:0,dry:0,fruit:0,harvests:0};for(let h=0;h<40;h++){G.minute+=60;lifeGrowHour();}ok(G.life.garden[2].dead,'dry sprouts die');
 const s2=JSON.parse(JSON.stringify(G));ok(validateSave(s2),'save with life layer validates');
+
+
+// v0.11 variety & replay value.
+reset('seed-A');lifeEnsure();const gA=LM.gang.g,nA=LIFE_NEWS.map(n=>n.t).join('|'),cA=Object.keys(G.life.chains).join();
+reset('seed-Q7');lifeEnsure();const gB=LM.gang.g,nB=LIFE_NEWS.map(n=>n.t).join('|'),cB=Object.keys(G.life.chains).join();
+ok(nA!==nB,'different seeds give different news years');ok(Object.keys(G.life.chains).length===3,'three neighbour storylines per run');
+let variety=new Set();for(const sd of ['a','b','c','d','e','f','g','h','i','j']){reset(sd);lifeEnsure();variety.add(LM.gang.g+'/'+Object.keys(G.life.chains).sort().join()+'/'+LIFE_SERIAL_META[0].name);}ok(variety.size>=6,'ten seeds give at least six different story setups');
+reset('seed-A');lifeEnsure();ok(LIFE_NEWS.length>=25&&LIFE_NEWS.every((n,i)=>!i||n.d>=LIFE_NEWS[i-1].d)&&LIFE_NEWS.at(-1).d<365&&LIFE_NEWS.filter(n=>n.alert).length>=2,'seeded news arc ordered with alerts');
+ok(!LIFE_NEWS.some(n=>/\{[GBD]\}/.test(n.t)),'news templates filled');
+ok(Array.isArray(G.life.goals)&&G.life.goals.length===5,'five personal goals after purchase');
+ok(LIFE_SERIAL.length===39&&LIFE_SERIAL_META.length===39,'two radio plays, 39 episodes');
+G.inv.push({uid:uid(),id:'origami',units:300,packed:false,location:'room',created:0,age:0,opened:true,contaminated:false});for(let k=0;k<12;k++)doLeisure('origami');ok(G.life.cranes>=72&&amount('origami')===300-G.life.cranes,'cranes use paper one sheet each');
+let ev=0;for(let k=0;k<60;k++){const n=G.log.length;randomEvent();G.pendingKnock=false;if(G.log.length>n)ev++;}ok(ev>=50,'events keep coming');
+const steps=Object.values(G.life.chains).reduce((a,c)=>a+c.step,0);G.minute+=200*1440;while(lifeAlertActive())G.minute+=1440;for(let k=0;k<40;k++){randomEvent();G.pendingKnock=false;}ok(Object.values(G.life.chains).reduce((a,c)=>a+c.step,0)>steps,'neighbour stories advance');
+G.life.harvests=25;G.win=true;ok(lmEnding().id==='garden','gardener ending');G.life.harvests=0;G.life.cranes=1000;ok(lmEnding().id==='cranes','crane ending');G.life.cranes=0;ok(lmEnding().id==='home','default ending');
 
 reset('ANDERS-1986',YEAR_KIT);const actionCounts={eat:0,water:0,sleep:0,read:0};let loops=0,lastDay=day();
 while(!G.ended&&loops++<30000){

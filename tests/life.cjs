@@ -25,6 +25,11 @@ const { chromium } = require("playwright"), path = require("path"), assert = req
       W.focus = find("letters"); worldInteract(false); worldFinishAction(); o.glance = W.glance; o.letters = G.life.letters; o.paper = W.paperStamp;
       worldInteract(false); o.closed = W.glance === "";
       doLeisure("radio"); const cap = document.getElementById("lifeCaption"); o.caption = cap && cap.classList.contains("on") && /新闻/.test(cap.textContent);
+      W.focus = null; const cal = (() => { let f = null; roomRoot.traverse((x) => { if (!f && x.userData.interact === "journal") f = x; }); return f; })();
+      W.focus = cal; o.calHint = worldTargetInfo(cal)[1]; worldInteract(false); o.year = W.glance; o.yearPaper = String(W.paperStamp).startsWith("year"); worldInteract(false);
+      G.life.cranes = 300; LW.stamp = ""; syncWorldRoom(); o.cranes = 0; LW.root.traverse((x) => { if (x.isInstancedMesh && x.geometry === LW.craneGeo) o.cranes = x.count; });
+      G.life.harvests = 30; endGame(true, "test"); o.ending = G.life.ending; o.endBox = !!document.querySelector("#endScreen .life-ending") && /窗台上的春天/.test(document.querySelector("#endScreen .life-ending").textContent);
+      o.records = lmRecords().endings.includes("garden");
       return o;
     });
     console.log(JSON.stringify(out));
@@ -36,8 +41,11 @@ const { chromium } = require("playwright"), path = require("path"), assert = req
     assert.strictEqual(out.letters, 1);
     assert.strictEqual(out.paper, "letter0");
     assert.ok(out.closed && out.caption);
+    assert.ok(/看看这一年/.test(out.calHint) && out.year === "year" && out.yearPaper);
+    assert.strictEqual(out.cranes, 300);
+    assert.ok(out.ending === "garden" && out.endBox && out.records);
     assert.deepStrictEqual(errors, []);
     assert.deepStrictEqual(external, []);
-    console.log("LIFE PASS: windowsill garden sow/harvest-to-hand / letter bundle + letter page / radio caption / no pests / no external requests / JS errors 0");
+    console.log("LIFE PASS: year page on the wall calendar / hanging paper cranes / ending + cross-run records / windowsill garden sow/harvest-to-hand / letter bundle + letter page / radio caption / no pests / no external requests / JS errors 0");
   } finally { await b.close(); }
 })().catch((e) => { console.error(e); process.exitCode = 1; });

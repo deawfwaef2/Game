@@ -1,5 +1,5 @@
 /* 闭门365 — original game data, fictional 1980s subsidized prices. */
-const VERSION = "0.10.0-preview";
+const VERSION = "0.11.0-preview";
 const CATEGORIES = [
   ["all", "全部物资"],
   ["staple", "主食与干粮"],
@@ -460,6 +460,12 @@ item("tape", "音乐磁带 · 夜间爵士", 0.9, 0.08, "leisure", 1, {
 item("plant", "耐阴绿植", 1.4, 1.2, "furniture", 1, {
   kind: "furniture",
   joy: 1,
+});
+item("origami", "彩色折纸 · 300张", 0.55, 0.35, "leisure", 300, {
+  kind: "leisure",
+  activity: "craft",
+  joy: 4,
+  desc: "一小时能折六到十只纸鹤。每三十只串成一串，挂在窗边；折满一千只据说能许一个愿。",
 });
 item("pots", "陶土花盆与培养土 · 3套", 1.6, 4.5, "furniture", 1, {
   kind: "furniture",

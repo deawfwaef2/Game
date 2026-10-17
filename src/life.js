@@ -69,7 +69,7 @@ validateSave = function (s) {
   if (L === undefined) return true;
   const n = (v, a, b) => typeof v === "number" && Number.isFinite(v) && v >= a && v <= b;
   return (
-    !!L && typeof L === "object" && n(L.letters, 0, 16) && n(L.news, 0, 100) && n(L.serial, 0, 10000) &&
+    !!L && typeof L === "object" && n(L.letters, 0, 16) && n(L.news, 0, 200) && n(L.serial, 0, 10000) &&
     Array.isArray(L.garden) && L.garden.length <= 3 &&
     L.garden.every((p) => p === null || (p && Object.hasOwn(LIFE_CROPS, p.crop) && n(p.growth, 0, 2) && n(p.water, 0, 100)))
   );
@@ -141,8 +141,8 @@ function lifeProgramme(peek = false) {
     return {
       kind: "serial",
       joy: rerun ? 5 : 11,
-      title: `广播剧《雾港旅馆》${rerun ? "重播 · " : ""}第${n + 1}集`,
-      lines: [n ? "上回说到……" : "今晚开播的新广播剧。", LIFE_SERIAL[n], n + 1 < LIFE_SERIAL.length ? "欲知后事，下周此时。" : "全剧终。谢谢收听。"],
+      title: `广播剧《${LIFE_SERIAL_META[n].name}》${rerun ? "重播 · " : ""}第${LIFE_SERIAL_META[n].ep}集`,
+      lines: [LIFE_SERIAL_META[n].ep > 1 ? "上回说到……" : "今晚开播的新广播剧。", LIFE_SERIAL[n], LIFE_SERIAL_META[n].ep < LIFE_SERIAL_META[n].of ? "欲知后事，下周此时。" : "全剧终。谢谢收听。"],
     };
   }
   if (newsHour) {
@@ -157,8 +157,8 @@ function lifeProgramme(peek = false) {
     const lines = [item ? item.t : LIFE_FILLER[(d * 7 + Math.floor(h)) % LIFE_FILLER.length]];
     if (lifeAlertActive(d)) lines.push("播音员提醒：这几天楼里如有陌生人敲门，请勿开门。");
     lines.push(`天气预报：明天，第${d + 1}天，${lifeForecast(d + 1)}。`);
-    if ((d + 1) % 7 === 6) lines.push("明晚八点，广播剧《雾港旅馆》继续播出。");
-    else if (d % 7 === 6 && h < 19.5) lines.push("今晚八点，广播剧《雾港旅馆》，敬请收听。");
+    if ((d + 1) % 7 === 6) lines.push(`明晚八点，广播剧《${(LIFE_SERIAL_META[L.serial % LIFE_SERIAL_META.length] || {}).name || "雾港旅馆"}》继续播出。`);
+    else if (d % 7 === 6 && h < 19.5) lines.push(`今晚八点，广播剧《${(LIFE_SERIAL_META[L.serial % LIFE_SERIAL_META.length] || {}).name || "雾港旅馆"}》，敬请收听。`);
     return { kind: "news", joy: item ? 6 : 3, title: h < 10 ? "早间新闻" : h < 14 ? "午间新闻" : "晚间新闻", lines };
   }
   const songs = ["《港口的灯》", "《雨后电车》", "《远处的河》", "《北方的信》", "《夜班》", "《归港》", "《第七个春天》"];

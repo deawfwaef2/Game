@@ -215,3 +215,17 @@
 - 状态保存在 G.life = {letters, early, news, serial, serialDay, heardAlert, garden[3], harvests}。收获时会生成一个物资批次并直接放进手里（worldEquip），遵守“不自动摆放”的规则。产物 greens/sprouts/cherrytom 只写进 DB，不进 CATALOG，所以商店不卖。
 - 测试：新增 tests/life.cjs；商品数改为130；入门套餐价85.74；全年套餐剩余现金214.26；样片未拆件数104。
 - 后续可做：手记里加一页“这一年”的进度；拼图/棋盘进度做成桌上看得见的变化；季节温度曲线；可以在家里做的手工。
+
+### 2026-10-18 / v0.11.0-preview 每局不同 + 不腻 + 值得再玩
+- 用户要求：内容更丰富、更多，不让玩家腻，并且有重复可玩性。
+- 新文件 `src/life-more.js`（加载顺序在 life.js 之后、life-world.js 之前；simulation 也会加载它）：
+  - 帮派、城区、新闻顺序、结局走向都由种子生成（lmSetup 会就地改写 LIFE_NEWS / LIFE_SERIAL / LIFE_SERIAL_META 这几个数组）。
+  - LM_CHAINS：6条邻居故事线，每局抽3条。LM_EVENTS：32种小事件，40天内不重复。
+  - 项目：origami 走 doLeisure；notebook 写回忆录；puzzle 记片数。
+  - LM_GOALS：每局抽5个小目标。LM_ENDINGS：7种结局。跨局记录存在 localStorage 的 closed365-records-v1。
+  - 包装了 lifeEnsure、randomEvent、dailyUpdate、doAction（统计伸展次数）、doLeisure、endGame。
+- life-world.js 新增：
+  - 纸鹤：InstancedMesh，每串30只，最多32串，挂在窗口两侧，深度分两排。
+  - 日历（"journal"）按 E 打开 glance "year" 页（lwYearPage）。
+  - showEnd 包装：在结局页插入 .life-ending 结局块。
+- 新商品 origami（共131件）。life-text 中 LIFE_SERIAL_A 是《雾港旅馆》原文，LIFE_SERIAL 是本局播放顺序。

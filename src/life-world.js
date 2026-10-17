@@ -125,6 +125,57 @@ function lwLetters(parent, opened, total) {
     e.rotation.y = (R() - 0.5) * 0.7;
   }
 }
+// Strings of paper cranes hanging from the head of the window opening, 100 per string, edges first.
+function lwCraneGeo() {
+  if (LW.craneGeo) return LW.craneGeo;
+  const v = [
+    0, 0, 0.012, 0, 0.004, 0, 0, 0, -0.012, // body ridge (front, top, back)
+    0, 0.002, 0.004, 0.017, 0.006, -0.002, 0, 0.002, -0.006, // right wing
+    0, 0.002, 0.004, 0, 0.002, -0.006, -0.017, 0.006, -0.002, // left wing
+    0, 0, 0.012, 0, 0.012, 0.016, 0, 0.003, 0.006, // neck
+    0, 0, -0.012, 0, 0.009, -0.017, 0, 0.003, -0.006, // tail
+  ];
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.Float32BufferAttribute(v, 3));
+  g.computeVertexNormals();
+  return (LW.craneGeo = g);
+}
+function lwCranes(root, count, back) {
+  if (count <= 0) return;
+  // Real senbazuru: about 30 cranes per string, nested close; strings hang at both edges of the opening, two rows deep.
+  const per = 30,
+    strings = Math.min(32, Math.ceil(count / per)),
+    total = Math.min(count, strings * per),
+    mat = new THREE.MeshStandardMaterial({ roughness: 0.7, side: THREE.DoubleSide }),
+    mesh = new THREE.InstancedMesh(lwCraneGeo(), mat, total),
+    thread = lwMat("thread", "#d8d0bc"),
+    colors = ["#c8463c", "#e3b23c", "#3f7cac", "#5b9a5b", "#efe8d6", "#c86b98", "#e07b39", "#6b5ca5", "#2f8f8a"].map((c) => new THREE.Color(c)),
+    R = lwRand("cranes" + env.seed),
+    M = new THREE.Matrix4(),
+    Q = new THREE.Quaternion(),
+    S = new THREE.Vector3(2.1, 2.1, 2.1);
+  let k = 0;
+  for (let s = 0; s < strings; s++) {
+    const side = s % 2 ? -1 : 1,
+      slot = Math.floor(s / 2),
+      x = side * (1.27 - (slot % 8) * 0.058),
+      z = back + (slot < 8 ? 0.11 : 0.2),
+      n = Math.min(per, total - s * per),
+      top = 2.43,
+      len = n * 0.022 + 0.05;
+    lwMesh(root, new THREE.CylinderGeometry(0.0006, 0.0006, len, 3), thread, x, top - len / 2, z).castShadow = false;
+    for (let j = 0; j < n && k < total; j++, k++) {
+      Q.setFromEuler(new THREE.Euler(0, R() * 6.28, 0));
+      M.compose(new THREE.Vector3(x, top - 0.04 - j * 0.022, z), Q, S);
+      mesh.setMatrixAt(k, M);
+      mesh.setColorAt(k, colors[Math.floor(R() * colors.length)]);
+    }
+  }
+  mesh.count = k;
+  mesh.castShadow = true;
+  mesh.userData.noAO = true;
+  root.add(mesh);
+}
 function lwBuild() {
   if (typeof roomRoot === "undefined" || !roomRoot || !G || phase !== "playing" || W.store) return;
   lifeEnsure();
@@ -133,6 +184,7 @@ function lwBuild() {
       env.seed,
       slots,
       G.life.letters,
+      Math.floor((G.life.cranes || 0) / 5),
       G.life.garden.map((p) => p && [p.crop, Math.round(p.growth * 25), Math.floor((p.fruit || 0)), p.dead, p.water <= 0 ? Math.round(Math.min(24, p.dry || 0) / 6) : -1]),
     ]);
   if (LW.root && LW.root.parent === roomRoot && stamp === LW.stamp) return;
@@ -155,6 +207,7 @@ function lwBuild() {
     lwPlant(g, G.life.garden[i], i);
     worldTag(g, "garden:" + i, "窗台花盆");
   }
+  lwCranes(LW.root, G.life.cranes || 0, back);
   // Letter bundle on the bedside cabinet top.
   const base = worldFindBase("inspect");
   if (base) {
@@ -191,6 +244,7 @@ worldTargetInfo = function (o) {
   if (G && !(typeof worldIsShopping === "function" && worldIsShopping())) {
     if (id === "letters" || id === "inspect") return ["家里的信 · " + (LIFE_LETTERS.length - G.life.letters) + "封未拆", lifeLetterHint()];
     if (id.startsWith("garden:")) return lifeGardenHint(Number(id.slice(7)));
+    if (id === "journal") return ["墙上的旧日历", `第${day()}天 · 还有${Math.max(0, 365 - day())}天  ·  E 看看这一年`];
     if (id === "radio") {
       const [n, h] = lwBase.worldTargetInfo(o);
       return [n, h + "  ·  " + lifeRadioHint()];
@@ -224,6 +278,13 @@ worldInteract = function (shift = false) {
     showToast(lifeLetterHint());
     return;
   }
+  if (free && id === "journal") {
+    W.glance = "year";
+    W.page = 0;
+    worldSetHand();
+    worldRenderHUD();
+    return;
+  }
   if (free && id.startsWith("garden:")) {
     const i = Number(id.slice(7)),
       p = G.life.garden[i];
@@ -251,7 +312,72 @@ worldInteract = function (shift = false) {
   return lwBase.worldInteract(shift);
 };
 // The letter page in both hands: two pages of handwriting on aged paper.
+function lwYearPage(model) {
+  const c = model.userData.canvas,
+    stamp = "year" + Math.floor(G.minute / 10) + JSON.stringify(G.life.goalsDone);
+  if (W.paperStamp === stamp) return;
+  W.paperStamp = stamp;
+  lifeEnsure();
+  const x = c.getContext("2d"),
+    cw = c.width,
+    ch = c.height,
+    L = G.life,
+    rec = lmRecords();
+  x.fillStyle = "#e4dcc6";
+  x.fillRect(0, 0, cw, ch);
+  x.strokeStyle = "rgba(90,80,60,0.2)";
+  x.beginPath();
+  x.moveTo(cw / 2, 0);
+  x.lineTo(cw / 2, ch);
+  x.stroke();
+  const serif = "'Noto Serif CJK SC','Songti SC',serif";
+  const text = (t, px, X, Y, color = "#2f3a2c", w = cw / 2 - 80) => {
+    x.font = `${px}px ${serif}`;
+    x.fillStyle = color;
+    x.fillText(t, X, Y, w);
+  };
+  x.textAlign = "left";
+  text(`第 ${day()} 天`, 44, 40, 70, "#2b3326");
+  text(`还有 ${Math.max(0, 365 - day())} 天 · 你在躲：${LM.gang.g}`, 21, 40, 106, "#6d6450");
+  text("今年的小目标", 24, 40, 160, "#5a4a32");
+  lmGoalRows().forEach((g, i) => {
+    const y = 205 + i * 70;
+    text((g.done ? "✓ " : "") + g.t, 23, 40, y, g.done ? "#4f6b3a" : "#2f3a2c");
+    x.fillStyle = "rgba(80,70,50,0.15)";
+    x.fillRect(40, y + 14, cw / 2 - 100, 8);
+    x.fillStyle = g.done ? "#6c8c4a" : "#9c7b52";
+    x.fillRect(40, y + 14, ((cw / 2 - 100) * g.cur) / g.max, 8);
+    text(`${g.cur}/${g.max}`, 17, cw / 2 - 56, y + 22, "#7a705a", 60);
+  });
+  if (!(L.goals || []).length) text("（开局采购后生成）", 21, 40, 210, "#7a705a");
+  const X = cw / 2 + 36;
+  text("这一年", 24, X, 70, "#5a4a32");
+  const chains = Object.entries(L.chains || {})
+    .filter(([, c]) => c.step > 0)
+    .map(([id, c]) => `${LM_CHAINS.find((q) => q.id === id).name} ${c.step}/6`);
+  [
+    `家信 ${L.letters}/16${L.early ? ` · 提前拆了${L.early}封` : ""}`,
+    `自己种的菜 收获${L.harvests}次`,
+    `纸鹤 ${L.cranes}只`,
+    `回忆录 ${L.memoir}页 · ${Math.min(12, Math.floor(L.memoir / 20))}/12章`,
+    `拼图 完成${L.puzzles}次 · 当前${L.pieces}/500`,
+    `广播剧 听了${L.serial}集 · 新闻${L.news}条`,
+    chains.length ? "邻居：" + chains.join("　") : "邻居：还没听见什么",
+  ].forEach((t, i) => text(t, 21, X, 112 + i * 40));
+  text("所有的生活", 24, X, 420, "#5a4a32");
+  text(`开始过 ${rec.runs} 次 · 撑满一年 ${rec.wins} 次 · 最长 ${rec.best} 天`, 20, X, 458);
+  text(`找到的结局 ${rec.endings.length}/${LM_ENDINGS.length}`, 20, X, 494);
+  LM_ENDINGS.forEach((e, i) => text(rec.endings.includes(e.id) ? "◆ " + e.t : "◇ ？？？", 19, X + (i % 2) * 210, 532 + Math.floor(i / 2) * 34, rec.endings.includes(e.id) ? "#4f6b3a" : "#8a806a", 200));
+  const next = LM_ENDINGS.find((e) => !rec.endings.includes(e.id));
+  if (next) text("下一次也许可以：" + next.hint, 18, X, 680, "#7a5a3a");
+  text("Tab / R 合上", 17, X, ch - 30, "#8a806a");
+  model.userData.page.material.map.needsUpdate = true;
+}
 worldUpdatePaper = function (force = false) {
+  if (W.glance === "year" && W.handModel?.userData.canvas) {
+    if (force) W.paperStamp = "";
+    return lwYearPage(W.handModel);
+  }
   if (W.glance !== "letter") return lwBase.worldUpdatePaper(force);
   const model = W.handModel,
     c = model?.userData.canvas;
@@ -335,9 +461,29 @@ worldProduct = function (id, parent = null, bare = false) {
   if (parent) parent.add(g);
   return g;
 };
+if (typeof showEnd === "function") {
+  const lwShowEnd = showEnd;
+  showEnd = function () {
+    lwShowEnd();
+    try {
+      lifeEnsure();
+      const e = LM_ENDINGS.find((q) => q.id === G.life.ending) || { t: G.win ? "归港" : "未完的一年" },
+        rec = lmRecords(),
+        done = G.life.goalsDone.length,
+        next = LM_ENDINGS.find((q) => !rec.endings.includes(q.id));
+      const box = document.createElement("section");
+      box.className = "life-ending";
+      box.innerHTML = `<small>结局</small><strong></strong><p></p>`;
+      box.querySelector("strong").textContent = "「" + e.t + "」";
+      box.querySelector("p").textContent = `今年的小目标完成 ${done}/${(G.life.goals || []).length} · 找到的结局 ${rec.endings.length}/${LM_ENDINGS.length}` + (next ? ` · 下一次也许可以：${next.hint}` : " · 全部结局都找到了");
+      const btn = document.querySelector("#endScreen .start-button");
+      btn?.parentNode.insertBefore(box, btn);
+    } catch (err) {}
+  };
+}
 (function lwStyle() {
   const st = document.createElement("style");
   st.textContent = `#lifeCaption{position:fixed;left:50%;bottom:17%;transform:translate(-50%,8px);max-width:min(720px,88vw);padding:12px 20px 14px;background:rgba(18,17,14,.62);backdrop-filter:blur(3px);border-left:2px solid #c9a86a;color:#efe7d4;font:16px/1.65 'Noto Serif CJK SC','Songti SC',serif;letter-spacing:.04em;opacity:0;transition:opacity .5s,transform .5s;pointer-events:none;z-index:40}
-#lifeCaption.on{opacity:1;transform:translate(-50%,0)}#lifeCaption small{display:block;font:11px/1.4 ui-monospace,monospace;letter-spacing:.12em;color:#c9a86a;margin-bottom:4px}#lifeCaption p{margin:0}`;
+#lifeCaption.on{opacity:1;transform:translate(-50%,0)}#lifeCaption small{display:block;font:11px/1.4 ui-monospace,monospace;letter-spacing:.12em;color:#c9a86a;margin-bottom:4px}#lifeCaption p{margin:0}.life-ending{margin:18px 0 22px;padding:14px 18px;border-left:2px solid #c9a86a;background:rgba(255,255,255,.04)}.life-ending small{display:block;font-size:11px;letter-spacing:.2em;opacity:.7}.life-ending strong{display:block;font-size:24px;margin:4px 0;font-family:'Noto Serif CJK SC','Songti SC',serif}.life-ending p{margin:0;opacity:.8;font-size:14px}`;
   document.head.appendChild(st);
 })();

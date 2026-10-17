@@ -130,7 +130,7 @@ fs.mkdirSync(artifacts, { recursive: true });
     assert.strictEqual(await page.evaluate(() => W.enabled), true);
     await page.locator("#newGameButton").click();
     await helpers(page);
-    assert.strictEqual(await page.evaluate(() => W.shopProducts.length), 130);
+    assert.strictEqual(await page.evaluate(() => W.shopProducts.length), 131);
     assert.strictEqual(await page.locator("#shopScreen").isVisible(), false);
     // Real key handlers drive the same production movement used by the RAF loop.
     const z = await page.evaluate(() => camera.position.z);
@@ -174,7 +174,7 @@ fs.mkdirSync(artifacts, { recursive: true });
     assert.strictEqual(await page.evaluate(() => G.cash), 214.26);
     assert.strictEqual(await page.evaluate(() => G.bags.length), 9);
     console.log(
-      "PASS walkable shop / 130 products / real E-R / budget / 3D receipt / checkout / movement-look",
+      "PASS walkable shop / 131 products / real E-R / budget / 3D receipt / checkout / movement-look",
     );
     const front = await page.evaluate(() => env.d / 2),
       mir = await page.evaluate(() => (env.mirror ? -1 : 1)),

@@ -22,7 +22,6 @@ function worldBuildStore() {
   colliders = [];
   curtainMeshes = [];
   lampLights = [];
-  pestRoot = null;
   bagRoot = null;
   decorRoot = null;
   roomRoot = new THREE.Group();

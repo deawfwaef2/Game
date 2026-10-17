@@ -198,9 +198,6 @@ function freshState(seed) {
     weather: { temp: 0, until: 0 },
     curtains: true,
     suspicion: 3,
-    hidden: { cars: Math.floor(e.wear / 2), helis: 0, balls: 0 },
-    found: { cars: 0, helis: 0, balls: 0 },
-    pestTraces: [],
     nextEvent: 22 * 60 + Math.floor(rngNext({ rng: hashSeed(seed) }) * 900),
     lastHour: 8,
     lastDay: 1,
@@ -498,7 +495,6 @@ function simulate(minutes, context) {
     );
 }
 function hourlyUpdate() {
-  if (G.hidden.helis > 0) G.stats.morale -= Math.min(1, G.hidden.helis * 0.13);
   if (G.stats.hygiene < 22 && G.dirt > 45 && rngNext(G) < 0.015)
     addDisease("stomach");
   if (temperature() < 12 && !has("sweater") && rngNext(G) < 0.008)
@@ -512,31 +508,6 @@ function dailyUpdate() {
   G.readToday = 0;
   G.suspicion = Math.max(0, G.suspicion - (G.curtains ? 1.4 : 0.4));
   G.foodHistory = G.foodHistory.slice(-12);
-  if (G.dirt > 32 && rngNext(G) < G.dirt / 140) {
-    const keys = ["cars", "helis", "balls"],
-      k = keys[Math.floor(rngNext(G) * 3)];
-    G.hidden[k] = Math.min(8, G.hidden[k] + 1);
-  }
-  if (G.hidden.balls && G.dirt > 28 && rngNext(G) < 0.4) {
-    const list = G.inv.filter(
-      (b) =>
-        !b.packed &&
-        b.location === "table" &&
-        DB[b.id]?.kind === "food" &&
-        b.units > 0,
-    );
-    if (list.length && !has("jar")) {
-      const b = list[Math.floor(rngNext(G) * list.length)];
-      b.units = Math.max(0, b.units - 1);
-      if (G.dirt > 50 && rngNext(G) < 0.35) b.contaminated = true;
-      G.pestTraces.push("桌面留下了一个整齐的圆形印记。某份食物似乎少了一点。");
-      G.pestTraces = G.pestTraces.slice(-20);
-      logEvent(
-        "醒来时，你看到了桌面上的圆形痕迹。检查一下家具和桌面物资。",
-        "warn",
-      );
-    }
-  }
   const spoiled = G.inv.filter(
     (b) => !b.packed && isSpoiled(b) && DB[b.id]?.kind === "food",
   );
@@ -818,36 +789,6 @@ function doAction(action, value) {
         );
         break;
       }
-    case "inspect": {
-      advanceTime(15, "inspect");
-      let found = 0;
-      const chance = has("flashlight") ? 0.8 : 0.48;
-      for (const k of ["cars", "helis", "balls"]) {
-        const undiscovered = G.hidden[k] - G.found[k];
-        if (undiscovered > 0 && rngNext(G) < chance) {
-          const n = 1 + Math.floor(rngNext(G) * undiscovered);
-          G.found[k] += n;
-          found += n;
-        }
-      }
-      logEvent(
-        found
-          ? `检查家具后发现${found}个几何干扰物。隐藏总数仍然未知。`
-          : "本次检查没有新发现。未发现不代表没有，保持清洁比反复搜索更重要。",
-        found ? "warn" : "normal",
-      );
-      notify(found ? `发现 ${found} 个几何干扰物` : "没有新发现，隐藏总数未知");
-      break;
-    }
-    case "clearcars":
-      clearPest("cars", "carpowder");
-      break;
-    case "clearhelis":
-      clearPest("helis", "swatter");
-      break;
-    case "clearballs":
-      clearPest("balls", "balltrap");
-      break;
     case "nails":
       if (G.nails <= 0.8) return notify("指甲已经修剪整齐，不必再剪。");
       if (!has("nailclip")) return notify("需要指甲刀。", "warn");
@@ -923,8 +864,9 @@ function doAction(action, value) {
       if (!has("repair")) return notify("需要维修工具。", "warn");
       if (G.power && G.waterOn) return notify("目前水电都正常。");
       use("repair");
-      G.powerUntil = Math.min(G.powerUntil, G.minute + 60);
-      G.waterUntil = Math.min(G.waterUntil, G.minute + 60);
+      const fix = has("flashlight") ? 30 : 60;
+      G.powerUntil = Math.min(G.powerUntil, G.minute + fix);
+      G.waterUntil = Math.min(G.waterUntil, G.minute + fix);
       advanceTime(45, "repair");
       logEvent("进行了力所能及的检查，故障剩余时间缩短至约1小时。");
       break;
@@ -953,7 +895,7 @@ function doAction(action, value) {
           location: "shelf",
           opened: false,
         });
-      advanceTime(10, "inspect");
+      advanceTime(10, "idle");
       logEvent(
         "房东旧抽屉里有一包饼干、一瓶水和一块肥皂。只够应急一次。",
         "good",
@@ -964,20 +906,6 @@ function doAction(action, value) {
   renderHUD();
   syncRoom();
   if (panelType && panelType !== "inventory") refreshPanel();
-}
-function clearPest(key, tool) {
-  if (G.found[key] < 1) return notify("先检查家具，找到后才能清理。");
-  if (!has(tool)) return notify("需要 " + DB[tool].name + "。", "warn");
-  if (DB[tool].kind === "consumable") use(tool);
-  G.found[key]--;
-  G.hidden[key] = Math.max(0, G.hidden[key] - 1);
-  G.stats.morale = clamp(G.stats.morale + 2);
-  advanceTime(8, "clean");
-  logEvent(
-    { cars: "一辆小汽车", helis: "一架小直升机", balls: "一个小足球" }[key] +
-      "被干净地收纳走了。",
-    "good",
-  );
 }
 function doRead(id) {
   if (!has(id)) return notify("先拆出这本书。");
@@ -1219,18 +1147,6 @@ function validateSave(s) {
       !obj(s.weather) ||
       !num(s.weather.temp, -10, 10) ||
       !num(s.weather.until, 0, 2e7)
-    )
-      return false;
-    if (
-      !["cars", "helis", "balls"].every(
-        (k) => num(s.hidden?.[k], 0, 100) && num(s.found?.[k], 0, s.hidden[k]),
-      )
-    )
-      return false;
-    if (
-      !Array.isArray(s.pestTraces) ||
-      s.pestTraces.length > 100 ||
-      !s.pestTraces.every((t) => typeof t === "string" && t.length < 1000)
     )
       return false;
     if (

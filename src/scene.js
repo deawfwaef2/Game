@@ -30,7 +30,6 @@ let curtainMeshes = [],
   sunLight,
   ceilingLight,
   bagRoot,
-  pestRoot,
   decorRoot,
   roomReady = false,
   fallbackMode = false;
@@ -324,7 +323,7 @@ function buildRoom(e) {
   for (const x of [-0.58, 0.58])
     for (const z of [-0.95, 0.95])
       addBox(0.07, 0.23, 0.07, x, 0.12, z, wood, bed);
-  // A bedside cabinet with a clean fictional geometry-car inspection spot.
+  // A bedside cabinet; the bundle of letters from home sits on it.
   const bedside = mark(groupAt(-w / 2 + 0.5, 0, -1.85), "inspect");
   addBox(0.64, 0.54, 0.48, 0, 0.27, 0, wood, bedside, true);
   addBox(0.58, 0.02, 0.01, 0, 0.33, 0.25, darkwood, bedside);
@@ -584,7 +583,6 @@ function buildRoom(e) {
   ceilingLight.shadow.bias = -0.001;
   roomRoot.add(ceilingLight);
   bagRoot = mark(groupAt(0.55, 0, front - 1.05), "bags");
-  pestRoot = groupAt(0, 0, 0);
   decorRoot = groupAt(0, 0, 0);
   buildCity(e);
   roomRoot.updateMatrixWorld(true);
@@ -732,42 +730,6 @@ function syncRoom() {
     );
     handle.position.set(0, 0.36, 0);
     b.add(handle);
-  }
-  clearGroup(pestRoot);
-  if (state) {
-    for (let i = 0; i < Math.min(6, state.found.cars); i++) {
-      const car = groupAt(-env.w / 2 + 0.55 + i * 0.35, 0.1, -1.45, pestRoot);
-      addBox(0.14, 0.07, 0.08, 0, 0, 0, material("#b68e59"), car);
-      addBox(0.07, 0.045, 0.065, 0, 0.05, 0, material("#d3c799"), car);
-      for (const x of [-0.045, 0.045])
-        for (const z of [-0.05, 0.05]) {
-          const wh = cylinder(
-            0.022,
-            0.022,
-            0.015,
-            x,
-            -0.028,
-            z,
-            material("#394d3c"),
-            car,
-          );
-          wh.rotation.x = Math.PI / 2;
-        }
-    }
-    for (let i = 0; i < Math.min(5, state.found.helis); i++) {
-      const heli = groupAt(0.3 + i * 0.25, 1.7, -0.4, pestRoot);
-      addBox(0.1, 0.07, 0.07, 0, 0, 0, material("#a7b789"), heli);
-      addBox(0.22, 0.008, 0.025, 0, 0.07, 0, material("#546c54"), heli);
-      addBox(0.12, 0.015, 0.02, -0.08, 0, 0, material("#788b68"), heli);
-    }
-    for (let i = 0; i < Math.min(4, state.found.balls); i++) {
-      const ball = new THREE.Mesh(
-        new THREE.IcosahedronGeometry(0.09, 0),
-        material("#ced4ba"),
-      );
-      ball.position.set(env.w / 2 - 1 - i * 0.25, 0.1, 0.2);
-      pestRoot.add(ball);
-    }
   }
   clearGroup(decorRoot);
   if (state) {
@@ -1006,7 +968,7 @@ function updateTarget() {
     shower: ["淋浴区", "洗澡 · 洗衣"],
     trash: ["垃圾桶", "打扫 · 密封垃圾"],
     bags: ["采购物资", "拆袋 · 整理"],
-    inspect: ["床头柜", "检查隐藏干扰物"],
+    inspect: ["床头柜", "家里的信"],
     journal: ["旧日历", "查看生存手记"],
     table: ["小餐桌", "背包 · 用餐"],
   };
@@ -1129,12 +1091,6 @@ function frameLoop(now) {
     if (now - lastTarget > 90) {
       updateTarget();
       lastTarget = now;
-    }
-    if (pestRoot && phase === "playing") {
-      pestRoot.children.forEach((o, i) => {
-        if (o.position.y > 1)
-          o.position.y = 1.7 + Math.sin(now * 0.003 + i) * 0.05;
-      });
     }
     const activeView =
       (phase === "playing" ||

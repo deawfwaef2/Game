@@ -39,19 +39,19 @@ const ctx = {
   },
 };
 vm.createContext(ctx);
-for (const f of ["src/data.js", "src/core.js"])
+for (const f of ["src/data.js", "src/core.js", "src/life-text.js", "src/life.js"])
   vm.runInContext(fs.readFileSync(f, "utf8"), ctx);
 vm.runInContext(
   `
 let assertions=0;function ok(value,msg){assert.ok(value,msg);assertions++;}
 function reset(seed='ANDERS-1986',kit=STARTER){closePreparation();phase='title';currentSeed=seed;env=environment(seed);startPreparation();cart={...kit};beginGame();for(const b of G.inv){b.packed=false;b.location=DB[b.id].kind==='food'&&DB[b.id].life<60&&env.fridge?'fridge':'shelf';}G.bags.forEach(b=>b.opened=true);G.cooldowns={};}
 saveGame=()=>{};
-ok(CATALOG.length===129,'catalog count');ok(new Set(CATALOG.map(i=>i.id)).size===CATALOG.length,'unique ids');ok(CATALOG.every(i=>i.price>0&&i.weight>0&&Number.isInteger(i.servings)&&i.servings>0),'valid product data');
+ok(CATALOG.length===130,'catalog count');ok(new Set(CATALOG.map(i=>i.id)).size===CATALOG.length,'unique ids');ok(CATALOG.every(i=>i.price>0&&i.weight>0&&Number.isInteger(i.servings)&&i.servings>0),'valid product data');
 for(let i=0;i<100;i++){const seed='test-'+i;ok(JSON.stringify(environment(seed))===JSON.stringify(environment(seed)),'seed deterministic');}
 const envs=Array.from({length:100},(_,i)=>environment('t'+i));ok(envs.some(e=>!e.fridge)&&envs.some(e=>e.fridge),'fridge varies');ok(new Set(envs.map(e=>e.temp)).size>12,'temperature varies');
 for(const kit of [STARTER,YEAR_KIT,Object.fromEntries(CATALOG.map(i=>[i.id,3]))]){const p=packCart(kit);ok(p.bags.every(b=>b.weight<=8),'all bags <=8kg');ok(p.total.reduce((a,b)=>a+Object.values(b.items).reduce((a,n)=>a+n,0),0)===Object.values(kit).reduce((a,n)=>a+n,0),'no lost packages');}
 ok(cartSummary(YEAR_KIT).cost<=300&&cartSummary(YEAR_KIT).days>=365,'365-day calories affordable');
-reset();ok(validateSave(JSON.parse(JSON.stringify(G))),'fresh save round trip');let bad=JSON.parse(JSON.stringify(G));bad.stats={};ok(!validateSave(bad),'reject missing stats');bad=JSON.parse(JSON.stringify(G));delete bad.hidden;ok(!validateSave(bad),'reject missing hidden data');bad=JSON.parse(JSON.stringify(G));bad.inv[0].id='__proto__';ok(!validateSave(bad),'reject prototype id');bad=JSON.parse(JSON.stringify(G));bad.inv[0].uid='\\\" onclick=alert(1)';ok(!validateSave(bad),'reject injected uid');bad=JSON.parse(JSON.stringify(G));bad.env.w=999;ok(!validateSave(bad),'reject invalid world');
+reset();ok(validateSave(JSON.parse(JSON.stringify(G))),'fresh save round trip');let bad=JSON.parse(JSON.stringify(G));bad.stats={};ok(!validateSave(bad),'reject missing stats');bad=JSON.parse(JSON.stringify(G));bad.hidden={cars:2,helis:0,balls:0};bad.pestTraces=['x'];ok(validateSave(bad),'old saves with pest fields still load');bad=JSON.parse(JSON.stringify(G));bad.inv[0].id='__proto__';ok(!validateSave(bad),'reject prototype id');bad=JSON.parse(JSON.stringify(G));bad.inv[0].uid='\\\" onclick=alert(1)';ok(!validateSave(bad),'reject injected uid');bad=JSON.parse(JSON.stringify(G));bad.env.w=999;ok(!validateSave(bad),'reject invalid world');
 reset();let physical=JSON.parse(JSON.stringify(G));physical.inv[0].pose=[0,.5,0,0];physical.inv[0].location='room';physical.heldUID=physical.inv[0].uid;ok(validateSave(physical),'valid physical placement and hand UID');
 for(const pose of [[Infinity,.5,0,0],[0,NaN,0,0],[0,2.5,0,0],[9999,.5,0,0],[0,.5,-9999,0],[0,.5,0,Infinity]]){const s=JSON.parse(JSON.stringify(physical));s.inv[0].pose=pose;ok(!validateSave(s),'reject invalid physical pose');}
 let physicalBad=JSON.parse(JSON.stringify(physical));physicalBad.heldUID='invalid<uid>';ok(!validateSave(physicalBad),'reject invalid hand UID');
@@ -66,11 +66,32 @@ reset();const s1=G.stats.food,b=availableFood().find(b=>b.id==='rice'),before=b.
 reset();G.nails=.5;const beforeTime=G.minute;doAction('nails');ok(G.minute===beforeTime,'cannot farm already trimmed nails');
 reset();G.dirt=0;G.stats.morale=50;doAction('clean');ok(G.stats.morale<=50,'cannot farm empty room morale');
 reset();G.stats.morale=40;G.stats.water=12;const old=G.stats.morale;doRead('novel1');ok(G.stats.morale-old<2,'interrupted reading rewards actual time only');
-reset();G.hidden={cars:1,helis:1,balls:1};G.found={cars:1,helis:1,balls:1};clearPest('cars','carpowder');ok(G.hidden.cars===0&&G.found.cars===0,'clear exact pest');clearPest('helis','swatter');clearPest('balls','balltrap');ok(!Object.values(G.hidden).some(Boolean),'all three abstract categories clear');
+reset();ok(G.hidden===undefined&&G.found===undefined&&G.pestTraces===undefined&&!DB.carpowder&&!DB.swatter&&!DB.balltrap,'no pests and no stand-in pests');
 reset();addDisease('cold');addDisease('cold');ok(G.illness.length===1,'no duplicate disease');const ill=G.illness[0].remaining;simulate(60,'sleep');ok(G.illness[0].remaining<ill-60,'sleep helps illness duration');
 reset();G.minute=365*1440-5;G.nextEvent=1e9;simulate(5,'idle');ok(G.ended&&G.win,'365 victory path');reset();G.stats.health=.01;G.stats.water=0;simulate(5,'idle');ok(G.ended&&!G.win,'health loss path');reset();G.stats.morale=.001;simulate(5,'idle');ok(G.ended&&!G.win,'morale loss path');
 console.log('PASS',assertions,'deterministic assertions');
 // Run an actual resource-aware policy, not a cheat that resets survival meters.
+
+// v0.10 life layer: letters, radio, garden.
+reset();lifeEnsure();ok(G.life&&G.life.letters===0&&G.life.garden.length===3,'life state on new game');
+ok(!lifeOpenLetter(false),'day-3 letter cannot be opened on day 1 without choosing early');
+G.minute=2*1440+9*60;const lm0=G.stats.morale;ok(lifeOpenLetter(false)&&G.life.letters===1&&G.stats.morale>lm0,'due letter opens and lifts morale');
+ok(lifeOpenLetter(true)&&G.life.early===1,'early opening is allowed but counted');
+ok(LIFE_LETTERS.length===16&&LIFE_LETTERS.every((l,i)=>!i||l.d>LIFE_LETTERS[i-1].d)&&LIFE_LETTERS.at(-1).d<365,'16 letters in day order before day 365');
+ok(LIFE_LETTERS.every(l=>l.lines.length<=24),'letters fit two pages');
+G.minute=8*60;G.life.news=0;let pr=lifeProgramme();ok(pr.kind==='news'&&G.life.news===1&&/明天/.test(pr.lines.join('')),'morning news with forecast');
+const w=lifeWeather(5);ok(typeof w.overcast==='boolean'&&!lifeWeather(1).overcast,'deterministic sky; day 1 never overcast');
+G.minute=5*1440+20*60;pr=lifeProgramme();ok(pr.kind==='serial'&&G.life.serial===1,'weekly radio play on day 6 evening');pr=lifeProgramme();ok(pr.kind!=='serial','one episode per airing');
+ok(lifeAlertActive(9)&&!lifeAlertActive(8),'search alert window from the news');
+reset();lifeEnsure();G.inv.push({uid:uid(),id:'pots',units:1,packed:false,location:'room',created:0,age:0,opened:false,contaminated:false},{uid:uid(),id:'scallion',units:8,packed:false,location:'room',created:0,age:0,opened:false,contaminated:false},{uid:uid(),id:'tomatoseed',units:6,packed:false,location:'room',created:0,age:0,opened:false,contaminated:false});
+G.curtains=false;ok(lifeSow(0,'scallion')&&amount('scallion')===7,'sow scallion uses one bulb');ok(!lifeSow(0,'tomato'),'occupied pot');ok(lifeSow(1,'tomato'),'sow tomato');
+for(let d=0;d<14;d++){for(let h=0;h<24;h++){G.minute+=60;lifeGrowHour();}G.life.garden.forEach(p=>p&&(p.water=100));}
+ok(lifeReady(G.life.garden[0])===2,'scallion ready within two weeks with light and water');const invN=G.inv.length;const hb=lifeHarvest(0);ok(hb&&hb.id==="greens"&&!hb.packed&&G.inv.length===invN+1&&G.life.garden[0].growth<0.5,'harvest gives produce batch and regrows');
+ok(DB.greens.kind==='food'&&!CATALOG.some(i=>i.id==='greens'),'produce is food but never sold');
+ok(G.life.garden[1].growth<1,'tomato still growing after two weeks');
+G.life.garden[2]={crop:'sprout',growth:0.5,water:0,dry:0,fruit:0,harvests:0};for(let h=0;h<40;h++){G.minute+=60;lifeGrowHour();}ok(G.life.garden[2].dead,'dry sprouts die');
+const s2=JSON.parse(JSON.stringify(G));ok(validateSave(s2),'save with life layer validates');
+
 reset('ANDERS-1986',YEAR_KIT);const actionCounts={eat:0,water:0,sleep:0,read:0};let loops=0,lastDay=day();
 while(!G.ended&&loops++<30000){
  if(G.pendingKnock){doAction('silence');continue;}

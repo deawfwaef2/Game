@@ -205,3 +205,13 @@
 - `fixtures.js` 新增 `fxToilet`（隐藏 toilet 组里除交互代理外的旧网格，用 fxLoft/fxEllipse 重建），以及 `fxEllipse`/`fxShift` 两个辅助函数。
 - QA 环境（/var/tmp）会被清空：重装命令 `cd /var/tmp/closed365-qa && npm i playwright esbuild three@0.160.1`，`PLAYWRIGHT_BROWSERS_PATH=/var/tmp/closed365-browsers npx playwright install --only-shell chromium`，`sudo -n node node_modules/playwright/cli.js install-deps chromium`。
 - safe_checkpoint 会把整个 /home/user 算进 127MB 限额（包括 .npm 和 dist），提交前先删 /home/user/.npm 和 dist。`.gitattributes` 已对 src/vendor 和 index.html 关闭空白检查。
+
+### 2026-10-18 / v0.10.0-preview 家信、广播、窗台菜园；删除虫鼠及替代物
+- **用户最新指示：不要虫子老鼠，连方块/小汽车/小直升机/足球这类替代物也不要，不要让玩家恶心；想办法让游戏有趣，让人愿意玩完365天。** 这条取代了 HANDOFF 第22行的旧约束：干扰物系统已经整体删除（core 里的 hidden/found/pestTraces、inspect、clearPest，data 里的 carpowder/swatter/balltrap，scene 的 pestRoot，ui/world 的入口和文案）。以后不要以任何形式加回来。旧存档里的这些字段由 lifeEnsure 删除；validateSave 不再要求它们存在。
+- 新文件（build.py 列表和 template 里的标记都在 LIGHTING 之后）：
+  - `src/life-text.js`：信件、新闻、广播剧文本。
+  - `src/life.js`：核心逻辑，能在 node 里跑，simulation 会加载它。包装了 validateSave、freshState、loadState、hourlyUpdate、dailyUpdate、randomEvent、doLeisure。lifeWeather 与 lighting.js 的天空随机数完全一致。
+  - `src/life-world.js`：3D 部分。包装了 syncWorldRoom、syncRoom、worldTargetInfo、worldInteract、worldUpdatePaper、worldProduct。花盆在窗台板上（y 1.012，z 为 back+0.125，x 为 0.62/0.86/1.10）。信捆放在 "inspect" 床头柜顶上（用包围盒算位置）。字幕元素是 #lifeCaption。
+- 状态保存在 G.life = {letters, early, news, serial, serialDay, heardAlert, garden[3], harvests}。收获时会生成一个物资批次并直接放进手里（worldEquip），遵守“不自动摆放”的规则。产物 greens/sprouts/cherrytom 只写进 DB，不进 CATALOG，所以商店不卖。
+- 测试：新增 tests/life.cjs；商品数改为130；入门套餐价85.74；全年套餐剩余现金214.26；样片未拆件数104。
+- 后续可做：手记里加一页“这一年”的进度；拼图/棋盘进度做成桌上看得见的变化；季节温度曲线；可以在家里做的手工。

@@ -5755,7 +5755,7 @@ const OFFLINE_ROOM={"models":{"drawer_cabinet":"Z2xURgIAAABY5RAAuLQEAEpTT057ImFz
     </script>
     <script>
       /* 闭门365 — original game data, fictional 1980s subsidized prices. */
-const VERSION = "0.9.0-preview";
+const VERSION = "0.10.0-preview";
 const CATEGORIES = [
   ["all", "全部物资"],
   ["staple", "主食与干粮"],
@@ -6078,16 +6078,6 @@ item("trashbag", "垃圾袋 · 30只", 0.6, 0.2, "clean", 30, {
 item("sponge", "清洁海绵 · 3块", 0.3, 0.04, "clean", 12, {
   kind: "consumable",
 });
-item("carpowder", "小汽车清理粉 · 12份", 1.2, 0.3, "clean", 12, {
-  kind: "consumable",
-  desc: "干净抽象的“小汽车”专用清理道具，不出现真实虫子。",
-});
-item("swatter", "方块拍", 0.65, 0.12, "clean", 1, {
-  desc: "清理小直升机。只是几何小方块。",
-});
-item("balltrap", "足球收纳夹", 1.8, 0.45, "clean", 1, {
-  desc: "收纳会偷吃的小足球，不出现真实鼠类。",
-});
 item("disinfect", "表面消毒液", 0.8, 0.5, "clean", 15, { kind: "consumable" });
 item("gloves", "橡胶手套", 0.55, 0.08, "clean");
 item("aspirin", "退热止痛片 · 12片", 0.75, 0.03, "medical", 12, {
@@ -6127,7 +6117,7 @@ item("bottle", "空水壶 · 容量5L", 1.1, 0.35, "tool", 1, {
 });
 item("canister", "储水桶 · 容量15L", 2.6, 0.65, "tool", 1, { capacity: 15 });
 item("jar", "密封储物罐", 0.75, 0.3, "tool", 1, {
-  desc: "解包后启用密封存放，保护干粮不被足球偷吃。",
+  desc: "解包后启用密封存放，干粮更耐放、不易受潮。",
 });
 item("opener", "手动开罐器", 0.65, 0.06, "tool");
 item("lighter", "打火机", 0.35, 0.04, "tool", 40, { kind: "consumable" });
@@ -6136,7 +6126,7 @@ item("candle", "长燃蜡烛 · 6根", 0.65, 0.4, "tool", 24, {
   desc: "停电时在桌上点亮，降低黑暗带来的精神损耗。",
 });
 item("flashlight", "手电筒", 1.75, 0.22, "tool", 1, {
-  desc: "提高检查隐藏干扰物的发现概率。",
+  desc: "停电的夜里照亮配电箱和水管，检修更快。",
 });
 item("battery", "干电池 · 4节", 0.7, 0.12, "tool", 24, { kind: "consumable" });
 item("stove", "便携燃料炉", 4.2, 1.3, "tool", 1, {
@@ -6227,6 +6217,22 @@ item("plant", "耐阴绿植", 1.4, 1.2, "furniture", 1, {
   kind: "furniture",
   joy: 1,
 });
+item("pots", "陶土花盆与培养土 · 3套", 1.6, 4.5, "furniture", 1, {
+  kind: "furniture",
+  desc: "摆在窗台上，三个盆位。葱、豆芽、樱桃番茄都能种。",
+});
+item("scallion", "葱头 · 8个（可种）", 0.35, 0.4, "fresh", 8, {
+  kind: "seed",
+  desc: "插进湿土，九天左右能剪第一茬，剪了还会再长，一棵能剪六次。",
+});
+item("mungseed", "发芽绿豆 · 500g", 0.4, 0.5, "staple", 8, {
+  kind: "seed",
+  desc: "每次抓一把铺在湿土上，四天出一盆豆芽。不需要阳光，但每天要浇水。",
+});
+item("tomatoseed", "樱桃番茄种子 · 1包", 0.25, 0.02, "tool", 6, {
+  kind: "seed",
+  desc: "约五十天开花结果，之后每隔几天能摘一把。需要阳光和15°C以上的温度。",
+});
 item("blanket", "厚羊毛毯", 3.2, 1.6, "furniture", 1, {
   kind: "furniture",
   warm: 4,
@@ -6280,9 +6286,6 @@ const STARTER = {
   dishsoap: 1,
   broom: 1,
   trashbag: 1,
-  carpowder: 1,
-  swatter: 1,
-  balltrap: 1,
   nailclip: 1,
   scissors: 1,
   toothbrush: 1,
@@ -6304,6 +6307,9 @@ const STARTER = {
   blanket: 1,
 };
 const YEAR_KIT = {
+  pots: 1,
+  scallion: 1,
+  mungseed: 1,
   rice: 20,
   oats: 25,
   pasta: 22,
@@ -6328,9 +6334,6 @@ const YEAR_KIT = {
   dishsoap: 2,
   broom: 1,
   trashbag: 2,
-  carpowder: 1,
-  swatter: 1,
-  balltrap: 1,
   nailclip: 1,
   scissors: 1,
   toothbrush: 1,
@@ -6639,9 +6642,6 @@ function freshState(seed) {
     weather: { temp: 0, until: 0 },
     curtains: true,
     suspicion: 3,
-    hidden: { cars: Math.floor(e.wear / 2), helis: 0, balls: 0 },
-    found: { cars: 0, helis: 0, balls: 0 },
-    pestTraces: [],
     nextEvent: 22 * 60 + Math.floor(rngNext({ rng: hashSeed(seed) }) * 900),
     lastHour: 8,
     lastDay: 1,
@@ -6939,7 +6939,6 @@ function simulate(minutes, context) {
     );
 }
 function hourlyUpdate() {
-  if (G.hidden.helis > 0) G.stats.morale -= Math.min(1, G.hidden.helis * 0.13);
   if (G.stats.hygiene < 22 && G.dirt > 45 && rngNext(G) < 0.015)
     addDisease("stomach");
   if (temperature() < 12 && !has("sweater") && rngNext(G) < 0.008)
@@ -6953,31 +6952,6 @@ function dailyUpdate() {
   G.readToday = 0;
   G.suspicion = Math.max(0, G.suspicion - (G.curtains ? 1.4 : 0.4));
   G.foodHistory = G.foodHistory.slice(-12);
-  if (G.dirt > 32 && rngNext(G) < G.dirt / 140) {
-    const keys = ["cars", "helis", "balls"],
-      k = keys[Math.floor(rngNext(G) * 3)];
-    G.hidden[k] = Math.min(8, G.hidden[k] + 1);
-  }
-  if (G.hidden.balls && G.dirt > 28 && rngNext(G) < 0.4) {
-    const list = G.inv.filter(
-      (b) =>
-        !b.packed &&
-        b.location === "table" &&
-        DB[b.id]?.kind === "food" &&
-        b.units > 0,
-    );
-    if (list.length && !has("jar")) {
-      const b = list[Math.floor(rngNext(G) * list.length)];
-      b.units = Math.max(0, b.units - 1);
-      if (G.dirt > 50 && rngNext(G) < 0.35) b.contaminated = true;
-      G.pestTraces.push("桌面留下了一个整齐的圆形印记。某份食物似乎少了一点。");
-      G.pestTraces = G.pestTraces.slice(-20);
-      logEvent(
-        "醒来时，你看到了桌面上的圆形痕迹。检查一下家具和桌面物资。",
-        "warn",
-      );
-    }
-  }
   const spoiled = G.inv.filter(
     (b) => !b.packed && isSpoiled(b) && DB[b.id]?.kind === "food",
   );
@@ -7259,36 +7233,6 @@ function doAction(action, value) {
         );
         break;
       }
-    case "inspect": {
-      advanceTime(15, "inspect");
-      let found = 0;
-      const chance = has("flashlight") ? 0.8 : 0.48;
-      for (const k of ["cars", "helis", "balls"]) {
-        const undiscovered = G.hidden[k] - G.found[k];
-        if (undiscovered > 0 && rngNext(G) < chance) {
-          const n = 1 + Math.floor(rngNext(G) * undiscovered);
-          G.found[k] += n;
-          found += n;
-        }
-      }
-      logEvent(
-        found
-          ? `检查家具后发现${found}个几何干扰物。隐藏总数仍然未知。`
-          : "本次检查没有新发现。未发现不代表没有，保持清洁比反复搜索更重要。",
-        found ? "warn" : "normal",
-      );
-      notify(found ? `发现 ${found} 个几何干扰物` : "没有新发现，隐藏总数未知");
-      break;
-    }
-    case "clearcars":
-      clearPest("cars", "carpowder");
-      break;
-    case "clearhelis":
-      clearPest("helis", "swatter");
-      break;
-    case "clearballs":
-      clearPest("balls", "balltrap");
-      break;
     case "nails":
       if (G.nails <= 0.8) return notify("指甲已经修剪整齐，不必再剪。");
       if (!has("nailclip")) return notify("需要指甲刀。", "warn");
@@ -7364,8 +7308,9 @@ function doAction(action, value) {
       if (!has("repair")) return notify("需要维修工具。", "warn");
       if (G.power && G.waterOn) return notify("目前水电都正常。");
       use("repair");
-      G.powerUntil = Math.min(G.powerUntil, G.minute + 60);
-      G.waterUntil = Math.min(G.waterUntil, G.minute + 60);
+      const fix = has("flashlight") ? 30 : 60;
+      G.powerUntil = Math.min(G.powerUntil, G.minute + fix);
+      G.waterUntil = Math.min(G.waterUntil, G.minute + fix);
       advanceTime(45, "repair");
       logEvent("进行了力所能及的检查，故障剩余时间缩短至约1小时。");
       break;
@@ -7394,7 +7339,7 @@ function doAction(action, value) {
           location: "shelf",
           opened: false,
         });
-      advanceTime(10, "inspect");
+      advanceTime(10, "idle");
       logEvent(
         "房东旧抽屉里有一包饼干、一瓶水和一块肥皂。只够应急一次。",
         "good",
@@ -7405,20 +7350,6 @@ function doAction(action, value) {
   renderHUD();
   syncRoom();
   if (panelType && panelType !== "inventory") refreshPanel();
-}
-function clearPest(key, tool) {
-  if (G.found[key] < 1) return notify("先检查家具，找到后才能清理。");
-  if (!has(tool)) return notify("需要 " + DB[tool].name + "。", "warn");
-  if (DB[tool].kind === "consumable") use(tool);
-  G.found[key]--;
-  G.hidden[key] = Math.max(0, G.hidden[key] - 1);
-  G.stats.morale = clamp(G.stats.morale + 2);
-  advanceTime(8, "clean");
-  logEvent(
-    { cars: "一辆小汽车", helis: "一架小直升机", balls: "一个小足球" }[key] +
-      "被干净地收纳走了。",
-    "good",
-  );
 }
 function doRead(id) {
   if (!has(id)) return notify("先拆出这本书。");
@@ -7663,18 +7594,6 @@ function validateSave(s) {
     )
       return false;
     if (
-      !["cars", "helis", "balls"].every(
-        (k) => num(s.hidden?.[k], 0, 100) && num(s.found?.[k], 0, s.hidden[k]),
-      )
-    )
-      return false;
-    if (
-      !Array.isArray(s.pestTraces) ||
-      s.pestTraces.length > 100 ||
-      !s.pestTraces.every((t) => typeof t === "string" && t.length < 1000)
-    )
-      return false;
-    if (
       !Array.isArray(s.log) ||
       s.log.length > 100 ||
       !s.log.every(
@@ -7805,7 +7724,6 @@ let curtainMeshes = [],
   sunLight,
   ceilingLight,
   bagRoot,
-  pestRoot,
   decorRoot,
   roomReady = false,
   fallbackMode = false;
@@ -8099,7 +8017,7 @@ function buildRoom(e) {
   for (const x of [-0.58, 0.58])
     for (const z of [-0.95, 0.95])
       addBox(0.07, 0.23, 0.07, x, 0.12, z, wood, bed);
-  // A bedside cabinet with a clean fictional geometry-car inspection spot.
+  // A bedside cabinet; the bundle of letters from home sits on it.
   const bedside = mark(groupAt(-w / 2 + 0.5, 0, -1.85), "inspect");
   addBox(0.64, 0.54, 0.48, 0, 0.27, 0, wood, bedside, true);
   addBox(0.58, 0.02, 0.01, 0, 0.33, 0.25, darkwood, bedside);
@@ -8359,7 +8277,6 @@ function buildRoom(e) {
   ceilingLight.shadow.bias = -0.001;
   roomRoot.add(ceilingLight);
   bagRoot = mark(groupAt(0.55, 0, front - 1.05), "bags");
-  pestRoot = groupAt(0, 0, 0);
   decorRoot = groupAt(0, 0, 0);
   buildCity(e);
   roomRoot.updateMatrixWorld(true);
@@ -8507,42 +8424,6 @@ function syncRoom() {
     );
     handle.position.set(0, 0.36, 0);
     b.add(handle);
-  }
-  clearGroup(pestRoot);
-  if (state) {
-    for (let i = 0; i < Math.min(6, state.found.cars); i++) {
-      const car = groupAt(-env.w / 2 + 0.55 + i * 0.35, 0.1, -1.45, pestRoot);
-      addBox(0.14, 0.07, 0.08, 0, 0, 0, material("#b68e59"), car);
-      addBox(0.07, 0.045, 0.065, 0, 0.05, 0, material("#d3c799"), car);
-      for (const x of [-0.045, 0.045])
-        for (const z of [-0.05, 0.05]) {
-          const wh = cylinder(
-            0.022,
-            0.022,
-            0.015,
-            x,
-            -0.028,
-            z,
-            material("#394d3c"),
-            car,
-          );
-          wh.rotation.x = Math.PI / 2;
-        }
-    }
-    for (let i = 0; i < Math.min(5, state.found.helis); i++) {
-      const heli = groupAt(0.3 + i * 0.25, 1.7, -0.4, pestRoot);
-      addBox(0.1, 0.07, 0.07, 0, 0, 0, material("#a7b789"), heli);
-      addBox(0.22, 0.008, 0.025, 0, 0.07, 0, material("#546c54"), heli);
-      addBox(0.12, 0.015, 0.02, -0.08, 0, 0, material("#788b68"), heli);
-    }
-    for (let i = 0; i < Math.min(4, state.found.balls); i++) {
-      const ball = new THREE.Mesh(
-        new THREE.IcosahedronGeometry(0.09, 0),
-        material("#ced4ba"),
-      );
-      ball.position.set(env.w / 2 - 1 - i * 0.25, 0.1, 0.2);
-      pestRoot.add(ball);
-    }
   }
   clearGroup(decorRoot);
   if (state) {
@@ -8781,7 +8662,7 @@ function updateTarget() {
     shower: ["淋浴区", "洗澡 · 洗衣"],
     trash: ["垃圾桶", "打扫 · 密封垃圾"],
     bags: ["采购物资", "拆袋 · 整理"],
-    inspect: ["床头柜", "检查隐藏干扰物"],
+    inspect: ["床头柜", "家里的信"],
     journal: ["旧日历", "查看生存手记"],
     table: ["小餐桌", "背包 · 用餐"],
   };
@@ -8904,12 +8785,6 @@ function frameLoop(now) {
     if (now - lastTarget > 90) {
       updateTarget();
       lastTarget = now;
-    }
-    if (pestRoot && phase === "playing") {
-      pestRoot.children.forEach((o, i) => {
-        if (o.position.y > 1)
-          o.position.y = 1.7 + Math.sin(now * 0.003 + i) * 0.05;
-      });
     }
     const activeView =
       (phase === "playing" ||
@@ -9302,8 +9177,8 @@ function openStation(id) {
     html = `<div class="stat-grid"><div class="stat-tile"><span>头发长度</span><strong>${G.hair.toFixed(0)}<small>mm</small></strong><p>24mm后开始影响心情</p></div><div class="stat-tile"><span>指甲长度</span><strong>${G.nails.toFixed(1)}<small>mm</small></strong><p>4mm后需要修剪</p></div><div class="stat-tile"><span>衣物清洁</span><strong>${Math.round(G.clothes)}<small>%</small></strong><p>${G.dirtyClothes}套待洗衣物</p></div></div><div class="action-grid">${action("剪指甲", "10分钟 · 需要指甲刀", "nails", "", "⌁")}${action("给自己理发", "25分钟 · 需要理发剪", "hair", "", "✂")}${action("更换衣物", "5分钟 · 备用衣物保持干净", "change", "", "♧")}${action("洗衣服", "40分钟 · 水6L + 洗衣粉", "laundry", "", "▧")}</div>`;
   } else if (id === "trash" || id === "inspect") {
     title = "让房间仍像一个家。";
-    subtitle = "HOUSEKEEPING / ABSTRACT LITTLE DISTURBANCES";
-    html = `<div class="stat-grid"><div class="stat-tile"><span>房间整洁</span><strong>${Math.round(100 - G.dirt)}<small>%</small></strong><p>脏乱会影响精神</p></div><div class="stat-tile"><span>未洗餐具</span><strong>${G.dishes}<small>份</small></strong><p>清洗后更安心</p></div><div class="stat-tile"><span>待处理包装</span><strong>${G.trash}<small>份</small></strong><p>密封处理，无恶心画面</p></div></div><div class="action-grid">${action("清扫整理", "扫帚/拖把更有效 · 30–45分钟", "clean", "", "⌁")}${action("密封处理垃圾", "10分钟 · 一并丢弃过期物资", "trash", "", "▧")}${action("检查家具", "15分钟 · 概率发现，隐藏总数未知", "inspect", "", "⌕")}${action("清洗餐具", "12分钟 · 用水1L", "dishes", "", "◡")}</div><h3 class="section-label">只用可爱的几何物体表示，不出现真实虫鼠</h3><div class="action-grid">${action(`小汽车 · 已发现${G.found.cars}`, "需要小汽车清理粉 · 每次收纳1个", "clearcars", "", "▰")}${action(`小直升机 · 已发现${G.found.helis}`, "需要方块拍 · 每次收纳1个", "clearhelis", "", "╋")}${action(`小足球 · 已发现${G.found.balls}`, "需要足球收纳夹 · 会留下圆形痕迹", "clearballs", "", "◉")}${action("检查旧抽屉", G.emergencyUsed ? "已经检查过，没有更多物资" : "房东遗留的小量应急品 · 仅一次", "emergency", "", "▣")}</div><p class="panel-note">干扰物只会在脏乱、食物残渣等条件下逐渐出现。没有发现不代表没有，维持清洁比反复搜查更可靠。你不能看到隐藏总数量。</p>`;
+    subtitle = "HOUSEKEEPING";
+    html = `<div class="stat-grid"><div class="stat-tile"><span>房间整洁</span><strong>${Math.round(100 - G.dirt)}<small>%</small></strong><p>脏乱会影响精神</p></div><div class="stat-tile"><span>未洗餐具</span><strong>${G.dishes}<small>份</small></strong><p>清洗后更安心</p></div><div class="stat-tile"><span>待处理包装</span><strong>${G.trash}<small>份</small></strong><p>密封处理，无恶心画面</p></div></div><div class="action-grid">${action("清扫整理", "扫帚/拖把更有效 · 30–45分钟", "clean", "", "⌁")}${action("密封处理垃圾", "10分钟 · 一并丢弃过期物资", "trash", "", "▧")}${action("检查家具", "15分钟 · 概率发现，隐藏总数未知", "inspect", "", "⌕")}${action("清洗餐具", "12分钟 · 用水1L", "dishes", "", "◡")}</div><h3 class="section-label">房东的旧抽屉</h3><div class="action-grid">${action("检查旧抽屉", G.emergencyUsed ? "已经检查过，没有更多物资" : "房东遗留的小量应急品 · 仅一次", "emergency", "", "▣")}</div><p class="panel-note">脏乱只影响心情、卫生和健康，房间里不会出现任何虫鼠或替代物。</p>`;
   } else if (id === "window") {
     title = "窗外，还是那座城市。";
     subtitle = "WINDOW / A VIEW WITH CONSEQUENCES";
@@ -9427,7 +9302,7 @@ function openRoom() {
     "room",
     "门内，是你全部的世界。",
     "APARTMENT / EVERYDAY ROUTINES",
-    `<div class="stat-grid"><div class="stat-tile"><span>房况 / 户型</span><strong>${(env.w * env.d).toFixed(0)}<small>㎡</small></strong><p>${env.mirror ? "反向" : "标准"}布局 · ${env.floor}层</p></div><div class="stat-tile"><span>床垫质量</span><strong>${["", "Ⅰ", "Ⅱ", "Ⅲ"][env.bed]}<small>级</small></strong><p>${env.fridge ? "有旧冰箱" : "没有冰箱"} · 家具${["较完整", "有些陈旧", "明显磨损"][env.wear]}</p></div><div class="stat-tile"><span>室内温度</span><strong>${temperature()}<small>°C</small></strong><p>${G.power ? "供电正常" : "临时停电"} / ${G.waterOn ? "供水正常" : "临时停水"}</p></div></div><div class="action-grid">${stationButton("bags", "门边的采购袋", "解包、收纳与逐袋重量", "▧")}${stationButton("sink", "水槽与料理台", "饮水、储水、洗碗与用餐", "◌")}${stationButton("toilet", "卫生间", "别把身体需要拖到极限", "◉")}${stationButton("bed", "床与睡眠", "选择休息时长，危险会自动中断", "☾")}${stationButton("shower", "淋浴与洗衣", "洗澡、牙齿与换洗衣物", "⌁")}${stationButton("wardrobe", "镜子与衣柜", "头发、指甲、干净的衣服", "♧")}${stationButton("trash", "整理与检查", "打扫、垃圾、几何干扰物", "⌕")}${stationButton("desk", "书桌与消遣", "阅读、日记、纸牌、收音机", "▤")}${stationButton("window", "窗户与天空", "窗帘、温度与安静伸展", "▥")}${stationButton("door", "锁上的入户门", "保持安静、查看猫眼；不能采购", "▯")}</div><p class="panel-note">你可以在3D房间里步行靠近家具按 E，也可以在这里直接安排日常。方便操作不会额外惩罚你。</p>`,
+    `<div class="stat-grid"><div class="stat-tile"><span>房况 / 户型</span><strong>${(env.w * env.d).toFixed(0)}<small>㎡</small></strong><p>${env.mirror ? "反向" : "标准"}布局 · ${env.floor}层</p></div><div class="stat-tile"><span>床垫质量</span><strong>${["", "Ⅰ", "Ⅱ", "Ⅲ"][env.bed]}<small>级</small></strong><p>${env.fridge ? "有旧冰箱" : "没有冰箱"} · 家具${["较完整", "有些陈旧", "明显磨损"][env.wear]}</p></div><div class="stat-tile"><span>室内温度</span><strong>${temperature()}<small>°C</small></strong><p>${G.power ? "供电正常" : "临时停电"} / ${G.waterOn ? "供水正常" : "临时停水"}</p></div></div><div class="action-grid">${stationButton("bags", "门边的采购袋", "解包、收纳与逐袋重量", "▧")}${stationButton("sink", "水槽与料理台", "饮水、储水、洗碗与用餐", "◌")}${stationButton("toilet", "卫生间", "别把身体需要拖到极限", "◉")}${stationButton("bed", "床与睡眠", "选择休息时长，危险会自动中断", "☾")}${stationButton("shower", "淋浴与洗衣", "洗澡、牙齿与换洗衣物", "⌁")}${stationButton("wardrobe", "镜子与衣柜", "头发、指甲、干净的衣服", "♧")}${stationButton("trash", "整理与检查", "打扫、垃圾、旧抽屉", "⌕")}${stationButton("desk", "书桌与消遣", "阅读、日记、纸牌、收音机", "▤")}${stationButton("window", "窗户与天空", "窗帘、温度与安静伸展", "▥")}${stationButton("door", "锁上的入户门", "保持安静、查看猫眼；不能采购", "▯")}</div><p class="panel-note">你可以在3D房间里步行靠近家具按 E，也可以在这里直接安排日常。方便操作不会额外惩罚你。</p>`,
     true,
   );
 }
@@ -9508,7 +9383,7 @@ function openHelp() {
     "help",
     "一年的生活，从今天开始。",
     "HOW TO PLAY / A FAIR BUT DIFFICULT SURVIVAL",
-    `<p class="help-paragraph">你携带300帝国纸币，藏进偏僻高层公寓。采购时看清重量、份数与保质期。目标是存活365天，健康和精神耗尽都会结束本次生活。</p><div class="help-controls"><div><kbd>W A S D</kbd>移动</div><div><kbd>拖动鼠标</kbd>观察</div><div><kbd>E</kbd>靠近家具交互</div><div><kbd>I / Tab</kbd>物资 / 房间</div><div><kbd>B / T</kbd>消遣 / 时间</div><div><kbd>J / Esc</kbd>手记 / 暂停</div></div><h3 class="section-label">第一天，按这个顺序试试</h3><p class="help-paragraph">① 在采购页选「基础清单」或自己配给。<br>② 进房后打开「房间 → 门边采购袋」，拆袋，物资才可用。<br>③ 在水槽接水、装满水壶，提前应对随机停水。<br>④ 吃饭、上厕所、洗澡、换衣与打扫，安排读书或室内活动。<br>⑤ 状态妥当后按T睡觉，可选时长。红线或敲门会中断快进。</p><h3 class="section-label">别把生存当成只填饱肚子</h3><p class="help-paragraph">重复口味、过度睡眠、疾病、脏衣服和混乱都会消耗精神。书会读完，活动也会变得重复。食物会按游戏时间变质，冰箱仅在有电时有效。食用QTE可直接选择「慢慢吃」，多用10分钟即可稳定完成。</p><h3 class="section-label">没有虫鼠，没有恶心画面</h3><p class="help-paragraph">只会出现抽象的小汽车、小直升机和小足球。先检查家具，概率找到，再用对应道具收纳。隐藏数量未知，洁净房间能减少出现。排泄和生病仅用数值与文字呈现。</p><p class="panel-note">手机：左下摇杆移动，按住画面右侧拖动观察，E按钮交互。所有家具也能通过「房间」面板操作。3D不可用时仍可玩核心生存循环。<br>本版本已实现生存与随机事件；真实外出追捕、复杂手动搬家具与完整烹饪配方留作后续迭代，不虚称完整商业成品。</p>`,
+    `<p class="help-paragraph">你携带300帝国纸币，藏进偏僻高层公寓。采购时看清重量、份数与保质期。目标是存活365天，健康和精神耗尽都会结束本次生活。</p><div class="help-controls"><div><kbd>W A S D</kbd>移动</div><div><kbd>拖动鼠标</kbd>观察</div><div><kbd>E</kbd>靠近家具交互</div><div><kbd>I / Tab</kbd>物资 / 房间</div><div><kbd>B / T</kbd>消遣 / 时间</div><div><kbd>J / Esc</kbd>手记 / 暂停</div></div><h3 class="section-label">第一天，按这个顺序试试</h3><p class="help-paragraph">① 在采购页选「基础清单」或自己配给。<br>② 进房后打开「房间 → 门边采购袋」，拆袋，物资才可用。<br>③ 在水槽接水、装满水壶，提前应对随机停水。<br>④ 吃饭、上厕所、洗澡、换衣与打扫，安排读书或室内活动。<br>⑤ 状态妥当后按T睡觉，可选时长。红线或敲门会中断快进。</p><h3 class="section-label">别把生存当成只填饱肚子</h3><p class="help-paragraph">重复口味、过度睡眠、疾病、脏衣服和混乱都会消耗精神。书会读完，活动也会变得重复。食物会按游戏时间变质，冰箱仅在有电时有效。食用QTE可直接选择「慢慢吃」，多用10分钟即可稳定完成。</p><h3 class="section-label">没有虫鼠，没有恶心画面</h3><p class="help-paragraph">房间脏了只会影响心情、卫生和健康。游戏里不会出现虫子、老鼠，也没有任何替代它们的东西。</p><p class="panel-note">手机：左下摇杆移动，按住画面右侧拖动观察，E按钮交互。所有家具也能通过「房间」面板操作。3D不可用时仍可玩核心生存循环。<br>本版本已实现生存与随机事件；真实外出追捕、复杂手动搬家具与完整烹饪配方留作后续迭代，不虚称完整商业成品。</p>`,
   );
 }
 function refreshPanel() {
@@ -10641,17 +10516,6 @@ function syncWorldRoom() {
       !!state && (has("candle") || state.candleUntil > state.minute);
   if (W.flame) W.flame.visible = !!state && state.candleUntil > state.minute;
   if (!state) return;
-  if (pestRoot) {
-    pestRoot.children.forEach((o) => {
-      const kind =
-        o.position.y > 1 ? "helis" : o.position.x > 0 ? "balls" : "cars";
-      worldTag(
-        o,
-        "pest:" + kind,
-        { cars: "小汽车", helis: "小直升机", balls: "小足球" }[kind],
-      );
-    });
-  }
   if (decorRoot)
     decorRoot.children.forEach((g) => {
       if (Math.abs(g.position.x - 0.5) < 0.02 && g.position.y > 0.7)
@@ -11409,10 +11273,6 @@ function worldUseHeld() {
     candle: ["candle", "点亮一根蜡烛", 2],
     bottle: ["fill", "接满储水容器", 3],
     canister: ["fill", "接满储水容器", 3],
-    flashlight: ["inspect", "用手电检查家具", 3],
-    carpowder: ["clearcars", "收纳小汽车", 2],
-    swatter: ["clearhelis", "收纳小直升机", 2],
-    balltrap: ["clearballs", "收纳小足球", 2],
   };
   const a = acts[it.id];
   if (a) return worldAction(a[0], a[1], a[2]);
@@ -11445,8 +11305,6 @@ function worldTargetInfo(o) {
         : `E 解开袋口  ·  门边还有 ${bagsAtDoor().length} 件`,
     ];
   }
-  if (id.startsWith("pest:"))
-    return [o.userData.worldName, "E 使用对应工具收纳  ·  隐藏总数未知"];
   if (id.startsWith("tool:")) return [o.userData.worldName, "E 直接使用"];
   const names = {
     bed: ["旧床", `E 躺下睡 ${W.sleepHours} 小时  ·  滚轮 / ↑↓ 调时长`],
@@ -11476,7 +11334,7 @@ function worldTargetInfo(o) {
     changeclothes: ["叠好的换洗衣物", "E 换上一套干净衣物"],
     drawer: [
       "床头抽屉",
-      `E ${W.drawerOpen ? "推回" : "拉开"}抽屉  ·  Shift+E 检查家具底部`,
+      `E ${W.drawerOpen ? "推回" : "拉开"}抽屉`,
     ],
     inspect: ["床头柜", "E 检查家具  ·  看向抽屉可拉开"],
     emergency: ["房东的应急纸包", "E 拆开  ·  只够应急一次"],
@@ -11494,7 +11352,7 @@ function worldTargetInfo(o) {
     toilet: ["卫生间", "E 处理小便  ·  Shift+E 处理大便"],
     shower: ["淋浴区", "E 打开花洒洗澡  ·  需要水"],
     laundry: ["洗衣盆", "E 手洗脏衣物  ·  需要水与洗衣粉"],
-    clean: ["扫帚与簸箕", "E 扫净房间  ·  Shift+E 检查几何干扰物"],
+    clean: ["扫帚与簸箕", "E 扫净房间"],
     trash: [
       "垃圾桶",
       W.held
@@ -11585,14 +11443,6 @@ function worldInteract(shift = false) {
     return worldEquip(W.focus.userData.uid, !shift);
   if (id.startsWith("bag:"))
     return worldTakeFromBag(W.focus?.userData.bagId ?? Number(id.slice(4)));
-  if (id.startsWith("pest:"))
-    return worldAction(
-      { cars: "clearcars", helis: "clearhelis", balls: "clearballs" }[
-        id.slice(5)
-      ],
-      "把几何小东西收纳走",
-      2,
-    );
   if (id.startsWith("tool:")) {
     const a = {
       scissors: ["hair", "修短头发"],
@@ -11643,7 +11493,6 @@ function worldInteract(shift = false) {
       if (W.held) return worldUseHeld();
       return worldAction("dishes", "洗好碗碟，擦净桌面", 2.5);
     case "drawer":
-      if (shift) return worldAction("inspect", "蹲下检查家具底部", 3);
       W.drawerOpen = !W.drawerOpen;
       syncWorldRoom();
       return;
@@ -11660,11 +11509,7 @@ function worldInteract(shift = false) {
     case "laundry":
       return worldAction("laundry", "手洗并晾好换下的衣物", 3.5);
     case "clean":
-      return worldAction(
-        shift ? "inspect" : "clean",
-        shift ? "检查房间的角落" : "扫净地板，收拾房间",
-        3.5,
-      );
+      return worldAction("clean", "扫净地板，收拾房间", 3.5);
     case "trash":
       return worldAction("trash", "密封垃圾，清走变质物资", 2);
     case "mirror":
@@ -12142,7 +11987,7 @@ if (W.enabled) {
     <p class="help-paragraph">回房后，E解开门边的袋口，再按E伸手取出一组物品，自己对准储物架隔板、冰箱隔层、桌面或地面按R放下；没有自动整理。到储物架前拿食物；需要烹煮的主食先拿到炉边。左键使用手中物品，R对准桌面放置，或放回架子。书拿在手里读，不弹消遣菜单。</p>
     <p class="help-paragraph">床边滚轮或↑↓调整睡眠小时，E躺下。卫生间E小便、Shift+E大便；花洒E洗澡；柜门打开后E取换洗衣物，洗衣盆E洗衣。扫帚、指甲刀、理发剪、牙刷都是可直接使用的实物。Shift+E是看向物体时提示的辅助动作。</p>
     <p class="help-paragraph">Tab翻开实体手记，滚轮翻页，查看完整身体状态、物资、水电和日志。T抬腕看表。Esc只打开必要的暂停/存档。手机使用摇杆和右侧交互、辅助、使用、放回按钮。</p>
-    <p class="help-paragraph">目标365天，初始300纸币。重复口味/读物、疾病、脏乱、长期独处仍影响精神；危险和敲门会中断跳时。没有真实虫鼠或恶心画面，只有干净的几何干扰物。真实外出与追捕未实现，开局确认进房后永久禁止购买或补货，只能依靠已有存量。</p>`,
+    <p class="help-paragraph">目标365天，初始300纸币。重复口味/读物、疾病、脏乱、长期独处仍影响精神；危险和敲门会中断跳时。不会出现虫鼠或任何替代物。这是一个全程不出门的游戏：开局确认进房后永久禁止购买或补货，只能依靠已有存量。</p>`,
     );
   updatePhase = () => {
     legacyUI.updatePhase();
@@ -12205,7 +12050,6 @@ function worldBuildStore() {
   colliders = [];
   curtainMeshes = [];
   lampLights = [];
-  pestRoot = null;
   bagRoot = null;
   decorRoot = null;
   roomRoot = new THREE.Group();
@@ -16573,7 +16417,6 @@ const I_SPEC = {
   disinfect: ["hdpe", [0.04, 0.22], "#7d8fb6"],
   trashbag: ["box", [0.14, 0.09, 0.09]],
   sponge: ["sponge", [0.1, 0.03, 0.07]],
-  carpowder: ["box", [0.11, 0.15, 0.05]],
   gloves: ["cloth", [0.2, 0.02, 0.12], "#e0c447"],
   aspirin: ["med", [0.1, 0.05, 0.025]],
   digest: ["med", [0.1, 0.05, 0.025]],
@@ -18385,6 +18228,792 @@ roomLight = function () {
 };
 initLighting();
 if (R.ready) roomLight();
+
+    </script>
+    <script>
+      /* 闭门365 · v0.10 text for the life layer: letters written by the family the night before you left,
+   radio news that slowly tells what happens to the Grey Crow society outside, and a weekly radio play. */
+const LIFE_LETTERS = [
+  { d: 3, from: "小禾", lines: ["哥：", "这是第一封。你肯定没忍住，", "第一天就想拆，对吧？", "妈说你走得急，连伞都没带，", "我就把信塞进了你的旧书包。", "一共十六封，每封写了日子，", "不许提前拆，我会知道的。", "", "你现在大概在一个很小的屋子里，", "窗户对着别人家的屋顶。", "要按时吃饭，别一天只吃一顿。", "别把好吃的罐头先吃光，", "你小时候就这样。", "", "我们会好好的，你也是。", "—— 小禾"] },
+  { d: 10, from: "妈妈", lines: ["儿子：", "日子要过得有个样子。", "早上起来叠被、洗脸、梳头。", "人一乱，心就跟着乱。", "屋子再小也要扫，", "碗吃完就洗，别攒着。", "", "你爸不会写信，", "他让我告诉你：门别乱开。", "谁敲都别开，", "家里人不会去找你。", "", "衣服脏了就搓一搓，", "晾在屋里也能干。", "", "—— 妈"] },
+  { d: 21, from: "小禾", lines: ["哥：", "三个星期了。", "我猜你已经开始自言自语了。", "没关系，我也对着你的空床说话。", "", "妈说葱头插进土里就能活，", "剪了还会再长。", "要是你带了花盆，", "就在窗台上种几棵吧。", "绿豆泡在湿布里四天就出芽，", "番茄要等很久，但会结果。", "", "看着东西一天天长，", "日子就不是一样的了。", "", "—— 小禾"] },
+  { d: 35, from: "爸爸", lines: ["我不会写。", "你记住三件事。", "", "一、门不开。", "二、晚上别让灯光", "　　从窗口透出去。", "三、人得动。", "　　每天做几下伸展，", "　　别整天躺着。", "", "收音机早上有新闻，", "听听外面在说什么，", "心里有数。", "", "", "—— 爸"] },
+  { d: 50, from: "小禾", lines: ["哥：", "五十天！", "我学会骑车了，", "骑的是你那辆。别生气，", "我把车座调低了，", "等你回来再给你调回去。", "", "写这封信的时候我在想，", "第五十天的你在干什么。", "大概在看书吧，", "或者又在发呆。", "", "发呆也行。", "但要记得喝水。", "", "—— 小禾"] },
+  { d: 70, from: "妈妈", lines: ["儿子：", "要是病了，别硬扛。", "药按说明吃，多喝水，多睡。", "肚子不舒服就吃清淡的。", "", "过期的东西别舍不得，", "该扔就扔，", "吃坏了更划不来。", "", "我每天晚上都给你留一盏灯，", "就在厨房。", "你看不见，", "但它是亮着的。", "", "", "—— 妈"] },
+  { d: 90, from: "小禾", lines: ["哥：", "三个月了。", "你一定瘦了。", "", "我本来想在电台点歌节目里", "给你点一首歌，", "后来想想不行，会暴露你。", "所以你就假装，", "晚上收音机里放的每一首", "都是我点的。", "", "第一首是你最讨厌的那首。", "哈哈。", "", "", "—— 小禾"] },
+  { d: 120, from: "小禾", lines: ["哥：", "我觉得最难熬的", "大概就是现在了。", "不是开始，也不是结束，", "是中间这一大段。", "", "每天都差不多，", "所以要给自己找点事。", "拼图、下棋、写日记，", "或者把屋子重新收拾一遍。", "", "你以前跟我说，", "一天只做好一件小事就行。", "我现在把这句话还给你。", "", "—— 小禾"] },
+  { d: 150, from: "妈妈", lines: ["儿子：", "我在想你都吃些什么。", "", "米要泡一会儿再煮，", "豆子要泡一夜。", "罐头的汤别倒，", "拌在饭里也是味道。", "一样东西吃腻了，", "就换着吃，", "加一点盐和葱就不一样。", "", "等你回来，", "我给你包饺子。", "白菜猪肉的。", "", "—— 妈"] },
+  { d: 180, from: "小禾", lines: ["哥：", "一半了！！！", "", "今天你可以奖励自己。", "开一个最舍不得吃的罐头，", "或者把最想看的那本书", "从头再看一遍。", "", "我在家里的日历上", "也画了一个圈。", "妈看见了，没说话，", "后来我看见她在厨房哭。", "不是难过，是松了口气。", "", "", "—— 小禾"] },
+  { d: 210, from: "爸爸", lines: ["你妈睡不好。", "我跟她说，", "你从小就能熬。", "", "别让我说错。", "", "", "", "", "", "", "", "", "", "", "—— 爸"] },
+  { d: 240, from: "小禾", lines: ["哥：", "等你回来，我们去海边。", "我查好了，坐一夜火车就到。", "你请我吃烤鱼，", "因为你欠我十六封信的邮票钱。", "", "我还要跟你说一件事，", "等你回来再说。", "（不是坏事。）", "", "你现在肯定很想知道，", "那就再撑一百多天。", "", "", "", "—— 小禾"] },
+  { d: 270, from: "小禾", lines: ["哥：", "如果我没算错，", "我已经十五岁了。", "你错过了我的生日，", "我原谅你。", "", "你在屋里是不是", "也给自己过了个什么日子？", "没有的话，今天就过一个。", "吃点好的，", "把窗帘拉开一点，", "看看太阳。", "", "白天开一会儿没关系的。", "", "—— 小禾"] },
+  { d: 300, from: "妈妈", lines: ["儿子：", "还剩六十多天。", "", "这时候最怕的是松懈。", "门还是不能开，", "灯还是要小心。", "东西够不够，再数一数。", "", "你从小做事", "总是最后一步出错。", "这次别。", "", "我们都在等你。", "", "", "—— 妈"] },
+  { d: 330, from: "小禾", lines: ["哥：", "最后一个月。", "", "我现在每天放学", "都绕到车站看一眼，", "虽然知道你还不会回来。", "", "你知道吗，", "写这些信的那天晚上，", "我写到第十五封就哭了，", "爸帮我写完了最后一封的开头。", "", "所以最后一封，", "字会难看一点。", "", "—— 小禾"] },
+  { d: 360, from: "全家", lines: ["孩子：", "（这一行是爸写的）", "", "哥！还有五天！", "（从这里开始是小禾）", "", "你做到了，", "差不多做到了。", "最后几天，", "也要像第一天那样小心。", "", "那天早上，", "我们会在车站等你。", "妈说要带伞。", "", "—— 爸、妈、小禾"] },
+];
+// Radio news: one item becomes available on its day and stays "latest" until the next one.
+const LIFE_NEWS = [
+  { d: 1, t: "港区三号仓库昨夜起火。帝国警署称，火灾可能与“灰鸦会”的账目纠纷有关。" },
+  { d: 4, t: "警署宣布成立专案组，专门调查灰鸦会。市民提供线索可拨打热线。" },
+  { d: 9, t: "据报道，灰鸦会正在城中四处打听一名“欠债人”的下落。警方提醒：陌生人敲门不要开。", alert: true },
+  { d: 16, t: "电力公司通知：老城区线路老化，近期可能出现短时停电，请市民备好照明。" },
+  { d: 24, t: "专案组查封了灰鸦会经营的三家地下赌场，带走二十余人。" },
+  { d: 33, t: "北区多栋旧楼出现自称“查水表”的人挨户敲门。警方表示，供水公司近期没有上门安排。", alert: true },
+  { d: 42, t: "副食品价格小幅上涨。市政府表示，粮油供应充足，不必抢购。" },
+  { d: 52, t: "灰鸦会二号人物“铁钩”在码头被捕。警方称这是专案组成立以来最大的进展。" },
+  { d: 63, t: "老城区供水管道检修，个别楼栋可能间歇停水，请提前储水。" },
+  { d: 75, t: "码头一带昨夜发生冲突。据悉灰鸦会内部因“铁钩”被捕出现分裂。" },
+  { d: 88, t: "专案组公布了一批灰鸦会的账本复印件，涉及多名商人与官员。" },
+  { d: 101, t: "西岭区有居民反映，深夜有人在楼道里挨层查看门牌。警方已加强巡逻。", alert: true },
+  { d: 115, t: "帝国议会通过《证人保护条例》修正案，愿意作证者可获得新身份。" },
+  { d: 130, t: "灰鸦会旗下运输公司被吊销执照，城南两座仓库被贴上封条。" },
+  { d: 146, t: "法院确定，灰鸦会案将于明年春天开庭。检方称证据“相当充分”。" },
+  { d: 160, t: "一名灰鸦会成员向警方自首，并交出了一把仓库钥匙。" },
+  { d: 178, t: "半年回顾：专案组累计逮捕灰鸦会成员六十七人，城中治安案件明显下降。" },
+  { d: 195, t: "灰鸦会残余人员据传在旧城区重新聚集，警方提醒高层住户夜间关好门窗。", alert: true },
+  { d: 214, t: "灰鸦会首领“老鸦”的下落成谜，有传闻称他已经离开帝国。" },
+  { d: 233, t: "边境检查站加强检查。警方表示，“老鸦”仍在国内的可能性很大。" },
+  { d: 252, t: "旧城区一栋公寓楼昨夜有人假冒邮差敲门，被巡警当场带走。", alert: true },
+  { d: 271, t: "“老鸦”在北方边境小镇被捕。消息传出后，码头工人自发放了鞭炮。" },
+  { d: 290, t: "检方宣布，灰鸦会案提前开庭。“老鸦”拒绝认罪。" },
+  { d: 309, t: "庭审第三周，多名证人出庭。灰鸦会的放债名册被当庭宣读。" },
+  { d: 328, t: "灰鸦会剩余的十一名在逃人员中，已有九人投案。警方称组织“基本瓦解”。" },
+  { d: 346, t: "法院宣布，灰鸦会案将于本月底宣判。" },
+  { d: 358, t: "宣判：“老鸦”被判终身监禁，灰鸦会被依法取缔，其全部债务关系一律无效。" },
+];
+const LIFE_FILLER = [
+  "市立动物园的老象“团团”今天过三十岁生日。",
+  "城东电车线路恢复了夜班车。",
+  "气象台说，今年的雨水比往年多一点。",
+  "工人文化宫周末放映老电影《雾中桥》。",
+  "帝国棋赛决赛进入第七局，双方仍是平局。",
+  "邮政局提醒：寄往北方的包裹会晚三天。",
+  "图书馆延长了周末开放时间。",
+  "港口今天到了一船柑橘，菜场里能闻到香味。",
+  "市中心的老钟楼修好了，又开始准点报时。",
+  "电台下周开始播出新的外语讲座节目。",
+];
+// Weekly radio play, Saturday-like evenings (day % 7 === 6), 19:00–23:00.
+const LIFE_SERIAL = [
+  "雾港旅馆来了一位只住一晚的客人，他付了一个月的房钱。",
+  "女老板阿梅在客人的箱子里发现了一张旧船票，日期是十年前。",
+  "客人说自己在等一艘船。可港口早就不走那条航线了。",
+  "旅馆的老门房认出了客人：他是十年前那场海难的幸存者。",
+  "暴风雨夜，旅馆停电。客人点起蜡烛，讲起船上的最后一晚。",
+  "阿梅翻出父亲的日记，发现他也在那艘船上。",
+  "镇上来了一位警官，打听一个“左手有疤的人”。",
+  "客人把左手藏进了口袋。阿梅什么也没说。",
+  "门房在码头看见一艘没有灯的船，船头写着旧船的名字。",
+  "阿梅去码头问船，船主说那艘船是他上个月刚买下的废船。",
+  "警官住进了旅馆，就在客人的隔壁。",
+  "半夜，有人把一封信塞进了阿梅的门缝：别相信警官。",
+  "客人终于开口：海难不是意外，是有人故意凿穿了船底。",
+  "警官的真名被揭开——他是当年船主的儿子。",
+  "三个人在旅馆的餐厅里坐了一整夜，谁也没先离开。",
+  "门房留下一张纸条后失踪了：答案在灯塔。",
+  "阿梅和客人冒雨爬上灯塔，找到了一只生锈的铁盒。",
+  "铁盒里是船长的航海日志，最后一页被撕掉了。",
+  "警官承认，那一页在他手里。他一直不敢看。",
+  "最后一页写着：船底是船长自己凿穿的，为了保险金。",
+  "船长，就是门房。",
+  "门房在灯塔下等着他们，手里拿着一盏没点亮的灯。",
+  "门房说，他每天给旅馆守门，是在替那艘船守夜。",
+  "警官没有逮捕他。他说，有些债，法律算不清。",
+  "春天到了，客人终于上了一艘真的船，回到了家乡。",
+  "大结局：阿梅把旅馆改名叫“归港”。门房仍然每天守在门口。",
+];
+
+    </script>
+    <script>
+      /* 闭门365 · v0.10 life layer — reasons to keep living 365 days indoors, all in the 3D room:
+   1. Sixteen letters from home in a bundle on the bedside cabinet, each marked with the day it may be opened.
+   2. A radio that actually broadcasts: morning/noon/evening news that follows the Grey Crow case through the
+      year (some bulletins warn of door-to-door searches), tomorrow's weather (the same seeded sky the window
+      shows) and a weekly radio play.
+   3. A windowsill garden: scallions, mung-bean sprouts and cherry tomatoes that need water, light and warmth.
+   No pests and no stand-ins for pests anywhere. */
+const LIFE_CROPS = {
+  scallion: { name: "葱", seed: "scallion", days: 9, light: true, drink: 0.55, regrow: 0.45, max: 6, yield: ["greens", 2] },
+  sprout: { name: "豆芽", seed: "mungseed", days: 4, light: false, drink: 1.1, max: 1, yield: ["sprouts", 3] },
+  tomato: { name: "樱桃番茄", seed: "tomatoseed", days: 50, light: true, drink: 0.8, warm: 15, fruitDays: 3, max: 16, yield: ["cherrytom", 1] },
+};
+const LIFE_PRODUCE = {
+  greens: { name: "窗台上剪下的葱", kcal: 20, life: 5, joy: 6, flavor: "greens" },
+  sprouts: { name: "自己发的豆芽", kcal: 45, life: 3, joy: 5, flavor: "sprouts" },
+  cherrytom: { name: "自己种的樱桃番茄", kcal: 30, life: 7, joy: 8, water: 3, flavor: "cherrytom" },
+};
+for (const [id, p] of Object.entries(LIFE_PRODUCE))
+  DB[id] = { id, price: 0, weight: 0.08, servings: 1, category: "fresh", kind: "food", grown: true, ...p };
+
+function lifeHash(s) {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619);
+  return h >>> 0;
+}
+// Same generator as fxRand(env.seed + "-sky-" + day) in lighting.js, so the forecast matches the window.
+function lifeWeather(d) {
+  let s = lifeHash(String(env.seed) + "-sky-" + d) || 1;
+  s = (s * 1664525 + 1013904223) >>> 0;
+  const r = s / 4294967296,
+    overcast = d > 1 && r < 0.32;
+  return { overcast, hazy: !overcast && r < 0.5 };
+}
+function lifeSmooth(a, b, x) {
+  const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
+  return t * t * (3 - 2 * t);
+}
+// 0..1 daylight reaching the windowsill at a game minute.
+function lifeSunlight(minute = G.minute) {
+  const h = (minute / 60) % 24,
+    d = Math.floor(minute / 1440) + 1,
+    w = lifeWeather(d);
+  let L = lifeSmooth(5.9, 7.2, h) * (1 - lifeSmooth(17.8, 19.1, h));
+  L *= 0.45 + 0.55 * Math.max(0, Math.sin((Math.PI * (h - 6.4)) / 12.2));
+  L *= w.overcast ? 0.4 : w.hazy ? 0.75 : 1;
+  return L * (G.curtains ? 0.3 : 1);
+}
+function lifeDefault() {
+  return { letters: 0, early: 0, read: [], news: 0, serial: 0, serialDay: 0, heardAlert: 0, garden: [null, null, null], harvests: 0 };
+}
+function lifeEnsure() {
+  if (!G) return;
+  const d = lifeDefault();
+  if (!G.life || typeof G.life !== "object") G.life = d;
+  for (const k of Object.keys(d)) if (G.life[k] === undefined) G.life[k] = d[k];
+  if (!Array.isArray(G.life.garden)) G.life.garden = [null, null, null];
+  G.life.garden = G.life.garden.slice(0, 3).map((p) => (p && LIFE_CROPS[p.crop] ? p : null));
+  while (G.life.garden.length < 3) G.life.garden.push(null);
+  G.life.letters = Math.max(0, Math.min(LIFE_LETTERS.length, G.life.letters | 0));
+  // Old saves may still carry the removed pest system; drop it entirely.
+  delete G.hidden;
+  delete G.found;
+  delete G.pestTraces;
+}
+const lifeBase = { validateSave, freshState, loadState, hourlyUpdate, dailyUpdate, randomEvent, doLeisure };
+validateSave = function (s) {
+  if (!lifeBase.validateSave(s)) return false;
+  const L = s.life;
+  if (L === undefined) return true;
+  const n = (v, a, b) => typeof v === "number" && Number.isFinite(v) && v >= a && v <= b;
+  return (
+    !!L && typeof L === "object" && n(L.letters, 0, 16) && n(L.news, 0, 100) && n(L.serial, 0, 10000) &&
+    Array.isArray(L.garden) && L.garden.length <= 3 &&
+    L.garden.every((p) => p === null || (p && Object.hasOwn(LIFE_CROPS, p.crop) && n(p.growth, 0, 2) && n(p.water, 0, 100)))
+  );
+};
+freshState = function (seed) {
+  const s = lifeBase.freshState(seed);
+  s.life = lifeDefault();
+  return s;
+};
+loadState = function (s) {
+  const r = lifeBase.loadState(s);
+  lifeEnsure();
+  return r;
+};
+
+/* ---------- Letters ---------- */
+function lifeNextLetter() {
+  lifeEnsure();
+  return LIFE_LETTERS[G.life.letters] || null;
+}
+function lifeOpenLetter(early = false) {
+  lifeEnsure();
+  const L = lifeNextLetter();
+  if (!L) return false;
+  const due = day() >= L.d;
+  if (!due && !early) return false;
+  G.life.letters++;
+  if (!due) G.life.early++;
+  G.stats.morale = clamp(G.stats.morale + (due ? 12 : 3));
+  advanceTime(10, "read");
+  logEvent(
+    due
+      ? `拆开了${L.from}写的第${G.life.letters}封信。字迹很熟悉，屋子好像没那么空了。`
+      : `你没忍住，提前拆了写着“第${L.d}天”的信。读完有点空落落的。`,
+    due ? "story" : "normal",
+  );
+  return true;
+}
+function lifeLetterHint() {
+  const L = lifeNextLetter();
+  if (!L) return `十六封都拆完了  ·  E 重读`;
+  const left = L.d - day();
+  if (left <= 0) return `E 拆开第${G.life.letters + 1}封（${L.from}）· 今天可以拆了`;
+  return `下一封写着“第${L.d}天再拆”，还有${left}天${G.life.letters ? "  ·  E 重读旧信" : ""}  ·  Shift+E 偷偷提前拆`;
+}
+
+/* ---------- Radio ---------- */
+function lifeAlertActive(d = day()) {
+  return LIFE_NEWS.some((n) => n.alert && d >= n.d && d <= n.d + 2);
+}
+function lifeForecast(d) {
+  const w = lifeWeather(d);
+  return w.overcast ? "阴天，见不到太阳" : w.hazy ? "多云，有薄雾，午后能见到一点阳光" : "晴，阳光充足";
+}
+function lifeProgramme(peek = false) {
+  lifeEnsure();
+  const h = hour(),
+    d = day(),
+    L = G.life;
+  const newsHour = (h >= 6.5 && h < 9.5) || (h >= 12 && h < 13.5) || (h >= 18 && h < 19.5);
+  const serialTime = d % 7 === 6 && h >= 19.5 && h < 23 && L.serialDay !== d;
+  if (serialTime) {
+    const n = L.serial % LIFE_SERIAL.length,
+      rerun = L.serial >= LIFE_SERIAL.length;
+    if (!peek) {
+      L.serial++;
+      L.serialDay = d;
+    }
+    return {
+      kind: "serial",
+      joy: rerun ? 5 : 11,
+      title: `广播剧《雾港旅馆》${rerun ? "重播 · " : ""}第${n + 1}集`,
+      lines: [n ? "上回说到……" : "今晚开播的新广播剧。", LIFE_SERIAL[n], n + 1 < LIFE_SERIAL.length ? "欲知后事，下周此时。" : "全剧终。谢谢收听。"],
+    };
+  }
+  if (newsHour) {
+    const avail = LIFE_NEWS.filter((n) => n.d <= d),
+      latest = avail.length,
+      fresh = latest > L.news,
+      item = fresh ? avail[L.news] : null;
+    if (!peek && fresh) {
+      L.news++;
+      if (item.alert) L.heardAlert = d;
+    }
+    const lines = [item ? item.t : LIFE_FILLER[(d * 7 + Math.floor(h)) % LIFE_FILLER.length]];
+    if (lifeAlertActive(d)) lines.push("播音员提醒：这几天楼里如有陌生人敲门，请勿开门。");
+    lines.push(`天气预报：明天，第${d + 1}天，${lifeForecast(d + 1)}。`);
+    if ((d + 1) % 7 === 6) lines.push("明晚八点，广播剧《雾港旅馆》继续播出。");
+    else if (d % 7 === 6 && h < 19.5) lines.push("今晚八点，广播剧《雾港旅馆》，敬请收听。");
+    return { kind: "news", joy: item ? 6 : 3, title: h < 10 ? "早间新闻" : h < 14 ? "午间新闻" : "晚间新闻", lines };
+  }
+  const songs = ["《港口的灯》", "《雨后电车》", "《远处的河》", "《北方的信》", "《夜班》", "《归港》", "《第七个春天》"];
+  return {
+    kind: "music",
+    joy: 0,
+    title: h >= 22 || h < 5 ? "深夜音乐" : "点歌时间",
+    lines: [`下一首：${songs[(d + Math.floor(h)) % songs.length]}。`, "整点新闻在早上七点、中午十二点和傍晚六点。"],
+  };
+}
+function lifeRadioHint() {
+  if (!G) return "";
+  const p = lifeProgramme(true);
+  return p.kind === "serial" ? "正在播：" + p.title : p.kind === "news" ? "现在是" + p.title : "新闻在7点、12点、18点";
+}
+doLeisure = function (id) {
+  if (id !== "radio" || !G || !has("radio")) return lifeBase.doLeisure(id);
+  if (!G.power && !has("battery")) return lifeBase.doLeisure(id);
+  const p = lifeProgramme();
+  if (p.joy) G.stats.morale = clamp(G.stats.morale + p.joy * 0.5);
+  logEvent(`收音机 · ${p.title}：${p.lines[0]}`, p.kind === "music" ? "good" : "story");
+  lifeCaption(p);
+  return lifeBase.doLeisure(id);
+};
+function lifeCaption(p) {
+  if (typeof document === "undefined") return;
+  let el = document.getElementById("lifeCaption");
+  if (!el) {
+    el = document.createElement("div");
+    el.id = "lifeCaption";
+    el.setAttribute("role", "status");
+    document.body.appendChild(el);
+  }
+  clearTimeout(lifeCaption.t);
+  let i = 0;
+  const show = () => {
+    if (i >= p.lines.length) {
+      el.classList.remove("on");
+      return;
+    }
+    el.innerHTML = `<small>FM 94.6 · 安德士人民广播电台 · ${p.title}</small><p></p>`;
+    el.querySelector("p").textContent = p.lines[i++];
+    el.classList.add("on");
+    lifeCaption.t = setTimeout(show, Math.max(3800, el.querySelector("p").textContent.length * 160));
+  };
+  show();
+}
+
+/* ---------- Windowsill garden ---------- */
+function lifeSlots() {
+  return typeof has === "function" && has("pots") ? 3 : 0;
+}
+function lifeSeeds() {
+  return Object.entries(LIFE_CROPS)
+    .filter(([, c]) => has(c.seed))
+    .map(([k]) => k);
+}
+function lifeTemp() {
+  return typeof temperature === "function" ? temperature() : 20;
+}
+function lifeGrowHour() {
+  lifeEnsure();
+  if (!lifeSlots()) return;
+  const t = lifeTemp(),
+    sun = lifeSunlight();
+  G.life.garden.forEach((p) => {
+    if (!p || p.dead) return;
+    const c = LIFE_CROPS[p.crop];
+    p.water = Math.max(0, p.water - (100 * c.drink * (t > 26 ? 1.5 : t < 12 ? 0.7 : 1)) / 24);
+    if (p.water <= 0) {
+      p.dry = (p.dry || 0) + 1;
+      if (p.dry > (p.crop === "sprout" ? 30 : 60)) {
+        p.dead = true;
+        logEvent(`窗台上的${c.name}干死了。土裂开了细纹。`, "warn");
+      }
+      return;
+    }
+    p.dry = 0;
+    let f = c.light ? 0.3 + 1.9 * sun : 1;
+    if (c.warm) f *= t < c.warm - 5 ? 0.1 : t < c.warm ? 0.45 : t > 31 ? 0.6 : 1;
+    else f *= t < 8 ? 0.25 : t < 13 ? 0.6 : t > 32 ? 0.7 : 1;
+    if (p.growth < 1 || !c.fruitDays) p.growth = Math.min(1.25, p.growth + f / (c.days * 24));
+    else p.fruit = Math.min(4, (p.fruit || 0) + f / (c.fruitDays * 24));
+  });
+}
+hourlyUpdate = function () {
+  lifeBase.hourlyUpdate();
+  lifeGrowHour();
+};
+function lifeSow(i, crop) {
+  lifeEnsure();
+  const c = LIFE_CROPS[crop];
+  if (!lifeSlots() || G.life.garden[i] || !c || !has(c.seed)) return false;
+  use(c.seed);
+  G.life.garden[i] = { crop, growth: 0, water: 90, dry: 0, fruit: 0, harvests: 0, planted: G.minute };
+  advanceTime(10, "leisure");
+  G.stats.morale = clamp(G.stats.morale + 2);
+  logEvent(crop === "sprout" ? "抓了一把绿豆铺在湿土上，盖上一层湿布。" : crop === "tomato" ? "把番茄种子按进土里。要等很久，但它会结果。" : "把葱头一个个插进土里，浇透了水。", "good");
+  return true;
+}
+function lifeWater(i) {
+  const p = G.life.garden[i];
+  if (!p || p.dead) return false;
+  if (!spendWater(0.25)) {
+    notify("需要0.25L水：水龙头没水时会用储水。", "warn");
+    return false;
+  }
+  p.water = 100;
+  advanceTime(3, "leisure");
+  G.stats.morale = clamp(G.stats.morale + 1);
+  logEvent(`给${LIFE_CROPS[p.crop].name}浇了水。`, "normal");
+  return true;
+}
+function lifeReady(p) {
+  if (!p || p.dead) return 0;
+  const c = LIFE_CROPS[p.crop];
+  if (c.fruitDays) return p.growth >= 1 ? Math.floor(p.fruit || 0) : 0;
+  return p.growth >= 1 ? c.yield[1] : 0;
+}
+// Returns the new batch; the caller puts it in the player's hand — nothing is placed automatically.
+function lifeHarvest(i) {
+  const p = G.life.garden[i],
+    n = lifeReady(p);
+  if (!n) return null;
+  const c = LIFE_CROPS[p.crop];
+  const batch = { uid: uid(), id: c.yield[0], units: n, packed: false, created: G.minute, age: 0, location: "room", opened: true, contaminated: false };
+  G.inv.push(batch);
+  p.harvests += c.fruitDays ? n : 1;
+  G.life.harvests += 1;
+  if (c.fruitDays) p.fruit -= n;
+  else p.growth = c.regrow || 0;
+  if (p.harvests >= c.max || !c.regrow && !c.fruitDays) G.life.garden[i] = null;
+  advanceTime(5, "leisure");
+  G.stats.morale = clamp(G.stats.morale + 5);
+  logEvent(`收获了${DB[c.yield[0]].name}。是你自己种出来的。`, "good");
+  return batch;
+}
+function lifeClear(i) {
+  G.life.garden[i] = null;
+  advanceTime(5, "clean");
+}
+function lifeGardenHint(i) {
+  const p = G.life.garden[i];
+  if (!p) {
+    const seeds = lifeSeeds();
+    if (!seeds.length) return ["空花盆", "没有可种的种子或葱头"];
+    const k = seeds[(W.lifeSeed || 0) % seeds.length];
+    return ["空花盆", `E 种下${LIFE_CROPS[k].name}（还有${Math.ceil(amount(LIFE_CROPS[k].seed))}份）${seeds.length > 1 ? "  ·  Shift+E 换一种" : ""}`];
+  }
+  const c = LIFE_CROPS[p.crop];
+  if (p.dead) return [`枯掉的${c.name}`, "E 清掉，花盆可以重新种"];
+  const soil = p.water > 60 ? "土还湿" : p.water > 20 ? "土有点干" : p.water > 0 ? "土快干透了" : "土已经干裂";
+  const ready = lifeReady(p);
+  if (ready) return [c.name, `E 收获${c.fruitDays ? ready + "份" : ""}（拿在手里）  ·  ${soil}  ·  Shift+E 浇水`];
+  const stage = c.fruitDays && p.growth >= 1 ? "挂着青果" : p.growth > 0.75 ? "快好了" : p.growth > 0.35 ? "长高了一截" : p.growth > 0.08 ? "冒出了芽" : "刚种下";
+  return [c.name, `${stage}  ·  ${soil}  ·  E 浇水 0.25L${c.light && G.curtains ? "  ·  窗帘拉着，光线不足" : ""}`];
+}
+
+/* ---------- Daily rhythm, searches ---------- */
+dailyUpdate = function () {
+  lifeBase.dailyUpdate();
+  lifeEnsure();
+  const L = lifeNextLetter();
+  if (L && L.d === day()) logEvent(`床头那叠信里，写着“第${L.d}天”的那一封今天可以拆了。`, "story");
+  const p = G.life.garden.find((x) => lifeReady(x));
+  if (p) logEvent(`窗台上的${LIFE_CROPS[p.crop].name}可以收了。`, "good");
+};
+randomEvent = function () {
+  if (G && lifeAlertActive() && !G.pendingKnock && rngNext(G) < 0.35) {
+    G.pendingKnock = true;
+    if (!G.curtains && hour() > 18) G.suspicion = clamp(G.suspicion + 12);
+    logEvent(
+      G.life?.heardAlert && day() - G.life.heardAlert <= 2
+        ? "楼道里有人挨家挨户地敲门，和广播里说的一样。你早有准备：别出声。"
+        : "楼道里有人挨家挨户地敲门，节奏很耐心。保持安静。",
+      "warn",
+    );
+    notify("有人在挨户敲门。别出声。", "warn");
+    return;
+  }
+  return lifeBase.randomEvent();
+};
+
+    </script>
+    <script>
+      /* 闭门365 · v0.10 life layer, 3D side: the letter bundle, windowsill pots and their plants, the letter page in
+   the hands, radio captions, and models for home-grown produce. Everything is touched in the room — no panels. */
+const LW = { root: null, stamp: "", mats: {} };
+function lwMat(key, color, opts = {}) {
+  if (!LW.mats[key])
+    LW.mats[key] = new THREE.MeshStandardMaterial({ color, roughness: opts.r ?? 0.85, metalness: opts.m ?? 0, side: opts.side ?? THREE.FrontSide });
+  return LW.mats[key];
+}
+function lwMesh(parent, geo, mat, x = 0, y = 0, z = 0) {
+  const m = new THREE.Mesh(geo, mat);
+  m.position.set(x, y, z);
+  m.castShadow = true;
+  m.receiveShadow = true;
+  m.userData.noAO = true;
+  parent.add(m);
+  return m;
+}
+function lwRand(seed) {
+  let s = lifeHash(String(seed)) || 1;
+  return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296);
+}
+function lwPot(g) {
+  const clay = lwMat("clay", "#a75f3c", { r: 0.92 });
+  const prof = [[0.001, 0], [0.05, 0], [0.053, 0.006], [0.066, 0.092], [0.075, 0.094], [0.076, 0.118], [0.07, 0.12], [0.064, 0.104]].map(([x, y]) => new THREE.Vector2(x, y));
+  lwMesh(g, new THREE.LatheGeometry(prof, 28), clay, 0, 0.012, 0).material.side = THREE.DoubleSide;
+  lwMesh(g, new THREE.CylinderGeometry(0.074, 0.068, 0.012, 28), lwMat("saucer", "#94522f", { r: 0.9 }), 0, 0.006, 0);
+  lwMesh(g, new THREE.CylinderGeometry(0.064, 0.064, 0.006, 24), lwMat("soil", "#3b2a1e", { r: 1 }), 0, 0.112, 0);
+}
+function lwPlant(g, p, i) {
+  if (!p) return;
+  const R = lwRand(env.seed + "-pot-" + i + "-" + p.planted),
+    gr = Math.min(1, p.growth),
+    wilt = p.dead ? 1 : p.water <= 0 ? Math.min(1, (p.dry || 0) / 24) : 0,
+    top = 0.115;
+  const green = p.dead ? lwMat("deadleaf", "#7a6340") : wilt > 0.3 ? lwMat("wiltleaf", "#7f8a45") : lwMat("leaf", "#4d7d31", { side: THREE.DoubleSide });
+  if (p.crop === "scallion") {
+    const n = 8;
+    for (let k = 0; k < n; k++) {
+      const a = (k / n) * Math.PI * 2 + R(),
+        r = 0.015 + R() * 0.03,
+        h = p.dead ? 0.03 : 0.025 + gr * (0.2 + R() * 0.07);
+      lwMesh(g, new THREE.SphereGeometry(0.009, 8, 6), lwMat("bulb", "#e8e2c8"), Math.cos(a) * r, top + 0.004, Math.sin(a) * r).scale.y = 0.8;
+      for (let j = 0; j < 2; j++) {
+        const s = new THREE.Group();
+        s.position.set(Math.cos(a) * r, top + 0.006, Math.sin(a) * r);
+        s.rotation.set((R() - 0.5) * (0.25 + wilt * 1.1), R() * 6, (R() - 0.5) * (0.25 + wilt * 1.1));
+        g.add(s);
+        const hh = h * (j ? 0.75 : 1);
+        lwMesh(s, new THREE.CylinderGeometry(0.0022, 0.0042, hh, 6), green, 0, hh / 2, 0);
+      }
+    }
+  } else if (p.crop === "sprout") {
+    if (gr < 0.18 && !p.dead) {
+      const cloth = lwMesh(g, new THREE.BoxGeometry(0.12, 0.004, 0.12), lwMat("cloth", "#d9d2bd"), 0, top + 0.006, 0);
+      cloth.rotation.y = 0.4;
+      return;
+    }
+    const n = 46,
+      stem = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.0016, 0.0019, 1, 5), p.dead ? lwMat("deadsprout", "#9b8a62") : lwMat("sprout", "#efeacb"), n),
+      head = new THREE.InstancedMesh(new THREE.SphereGeometry(0.0042, 6, 5), lwMat("sprouthead", "#c9c46a"), n),
+      M = new THREE.Matrix4(),
+      Q = new THREE.Quaternion(),
+      E = new THREE.Euler();
+    for (let k = 0; k < n; k++) {
+      const a = R() * Math.PI * 2,
+        r = Math.sqrt(R()) * 0.055,
+        h = (p.dead ? 0.015 : 0.012 + gr * (0.055 + R() * 0.025)) * (1 - wilt * 0.4);
+      E.set((R() - 0.5) * 0.4, 0, (R() - 0.5) * 0.4);
+      Q.setFromEuler(E);
+      M.compose(new THREE.Vector3(Math.cos(a) * r, top + h / 2, Math.sin(a) * r), Q, new THREE.Vector3(1, h, 1));
+      stem.setMatrixAt(k, M);
+      M.compose(new THREE.Vector3(Math.cos(a) * r, top + h, Math.sin(a) * r), Q, new THREE.Vector3(1, 1.3, 1));
+      head.setMatrixAt(k, M);
+    }
+    for (const m of [stem, head]) {
+      m.castShadow = true;
+      m.userData.noAO = true;
+      g.add(m);
+    }
+  } else if (p.crop === "tomato") {
+    const H = p.dead ? 0.12 : 0.04 + gr * 0.4;
+    if (gr > 0.3) lwMesh(g, new THREE.CylinderGeometry(0.003, 0.003, 0.5, 6), lwMat("stake", "#9c7b52"), 0.03, top + 0.25, -0.02);
+    const stemG = new THREE.Group();
+    stemG.position.y = top;
+    stemG.rotation.z = wilt * 0.5;
+    g.add(stemG);
+    lwMesh(stemG, new THREE.CylinderGeometry(0.0028, 0.0045, H, 6), lwMat("stem", "#5b7b34"), 0, H / 2, 0);
+    const leaves = Math.round(2 + gr * 12);
+    for (let k = 0; k < leaves; k++) {
+      const y = H * (0.15 + 0.85 * (k / Math.max(1, leaves - 1))),
+        a = k * 2.4,
+        L = new THREE.Group();
+      L.position.set(0, y, 0);
+      L.rotation.set(0, a, 0);
+      stemG.add(L);
+      const leaf = lwMesh(L, new THREE.PlaneGeometry(0.06, 0.028), green, 0.034, 0, 0);
+      leaf.rotation.set(-Math.PI / 2 + 0.35 + wilt * 0.9, 0, 0);
+    }
+    if (!p.dead && gr > 0.82) {
+      const fruiting = p.growth >= 1,
+        ripe = Math.min(8, Math.floor(p.fruit || 0) * 3),
+        total = fruiting ? Math.min(10, ripe + 3) : 0;
+      for (let k = 0; k < (fruiting ? 2 : 4); k++) lwMesh(stemG, new THREE.SphereGeometry(0.005, 6, 5), lwMat("flower", "#e8c93a"), Math.cos(k * 2) * 0.03, H * (0.7 + k * 0.07), Math.sin(k * 2) * 0.03);
+      for (let k = 0; k < total; k++) {
+        const a = k * 1.9 + 0.5;
+        lwMesh(stemG, new THREE.SphereGeometry(0.0115, 10, 8), k < ripe ? lwMat("ripe", "#c4321f", { r: 0.35 }) : lwMat("unripe", "#86a43f", { r: 0.4 }), Math.cos(a) * 0.035, H * (0.45 + (k % 4) * 0.08), Math.sin(a) * 0.035);
+      }
+    }
+  }
+}
+function lwLetters(parent, opened, total) {
+  const paper = lwMat("envelope", "#e7dcc2", { r: 0.95 }),
+    string = lwMat("string", "#8a5b3a");
+  const left = total - opened;
+  if (left > 0) {
+    const h = left * 0.0032;
+    lwMesh(parent, new THREE.BoxGeometry(0.165, h, 0.112), paper, 0, h / 2, 0);
+    lwMesh(parent, new THREE.BoxGeometry(0.168, h + 0.002, 0.004), string, 0, h / 2, 0);
+    lwMesh(parent, new THREE.BoxGeometry(0.004, h + 0.002, 0.115), string, 0.03, h / 2, 0);
+    lwMesh(parent, new THREE.BoxGeometry(0.11, 0.0012, 0.03), lwMat("label", "#f2ead5"), -0.01, h + 0.0007, -0.02);
+  }
+  const R = lwRand("opened");
+  for (let k = 0; k < Math.min(opened, 8); k++) {
+    const e = lwMesh(parent, new THREE.BoxGeometry(0.165, 0.0025, 0.112), lwMat("envelope-open", "#efe6cf", { r: 0.95 }), 0.05 + R() * 0.03, 0.0013 + k * 0.0026, 0.13 + R() * 0.03);
+    e.rotation.y = (R() - 0.5) * 0.7;
+  }
+}
+function lwBuild() {
+  if (typeof roomRoot === "undefined" || !roomRoot || !G || phase !== "playing" || W.store) return;
+  lifeEnsure();
+  const slots = lifeSlots(),
+    stamp = JSON.stringify([
+      env.seed,
+      slots,
+      G.life.letters,
+      G.life.garden.map((p) => p && [p.crop, Math.round(p.growth * 25), Math.floor((p.fruit || 0)), p.dead, p.water <= 0 ? Math.round(Math.min(24, p.dry || 0) / 6) : -1]),
+    ]);
+  if (LW.root && LW.root.parent === roomRoot && stamp === LW.stamp) return;
+  LW.stamp = stamp;
+  if (LW.root) {
+    roomRoot.remove(LW.root);
+    LW.root.traverse((o) => o.geometry && o.geometry.dispose());
+  }
+  LW.root = new THREE.Group();
+  LW.root.name = "life";
+  roomRoot.add(LW.root);
+  // Windowsill pots: on the painted window board (top ≈1.011 m, room side of the casement).
+  const back = -env.d / 2;
+  for (let i = 0; i < slots; i++) {
+    const g = new THREE.Group();
+    g.position.set(0.62 + i * 0.24, 1.012, back + 0.125);
+    g.rotation.y = i * 1.3;
+    LW.root.add(g);
+    lwPot(g);
+    lwPlant(g, G.life.garden[i], i);
+    worldTag(g, "garden:" + i, "窗台花盆");
+  }
+  // Letter bundle on the bedside cabinet top.
+  const base = worldFindBase("inspect");
+  if (base) {
+    base.updateWorldMatrix(true, true);
+    const box = new THREE.Box3();
+    base.traverse((o) => {
+      if (o.isMesh && o.visible && !o.userData.interactionProxy && o.material?.colorWrite !== false) box.expandByObject(o);
+    });
+    if (!box.isEmpty()) {
+      const c = roomRoot.worldToLocal(new THREE.Vector3((box.min.x + box.max.x) / 2, box.max.y, (box.min.z + box.max.z) / 2));
+      const g = new THREE.Group();
+      g.position.set(c.x - 0.04, c.y + 0.001, c.z - 0.05);
+      g.rotation.y = 0.25;
+      LW.root.add(g);
+      lwLetters(g, G.life.letters, LIFE_LETTERS.length);
+      worldTag(g, "letters", "家里的信");
+    }
+  }
+  sceneDirty = true;
+}
+const lwBase = { syncWorldRoom, syncRoom, worldTargetInfo, worldInteract, worldUpdatePaper, worldProduct };
+syncWorldRoom = function () {
+  const r = lwBase.syncWorldRoom.apply(this, arguments);
+  try { lwBuild(); } catch (e) { console.warn("life props", e); }
+  return r;
+};
+syncRoom = function () {
+  const r = lwBase.syncRoom.apply(this, arguments);
+  try { lwBuild(); } catch (e) { console.warn("life props", e); }
+  return r;
+};
+worldTargetInfo = function (o) {
+  const id = o?.userData.interact || "";
+  if (G && !(typeof worldIsShopping === "function" && worldIsShopping())) {
+    if (id === "letters" || id === "inspect") return ["家里的信 · " + (LIFE_LETTERS.length - G.life.letters) + "封未拆", lifeLetterHint()];
+    if (id.startsWith("garden:")) return lifeGardenHint(Number(id.slice(7)));
+    if (id === "radio") {
+      const [n, h] = lwBase.worldTargetInfo(o);
+      return [n, h + "  ·  " + lifeRadioHint()];
+    }
+  }
+  return lwBase.worldTargetInfo(o);
+};
+function lwShowLetter(index) {
+  W.lifeLetter = index;
+  W.glance = "letter";
+  W.page = 0;
+}
+worldInteract = function (shift = false) {
+  const id = W.focus?.userData.interact || "";
+  const free = W.enabled && worldVisible() && !paused && !panelType && !W.busy && !W.glance && G && !(typeof worldIsShopping === "function" && worldIsShopping()) && phase === "playing";
+  if (free && (id === "letters" || id === "inspect")) {
+    lifeEnsure();
+    const L = lifeNextLetter();
+    if (L && (day() >= L.d || shift)) {
+      const early = day() < L.d;
+      return worldStart(early ? "犹豫了一下，还是解开了绳子" : "解开绳子，抽出一封信", 2.2, () => {
+        if (lifeOpenLetter(early)) lwShowLetter(G.life.letters - 1);
+      }, "use");
+    }
+    if (G.life.letters) {
+      lwShowLetter(G.life.letters - 1);
+      worldSetHand();
+      worldRenderHUD();
+      return;
+    }
+    showToast(lifeLetterHint());
+    return;
+  }
+  if (free && id.startsWith("garden:")) {
+    const i = Number(id.slice(7)),
+      p = G.life.garden[i];
+    if (!p) {
+      const seeds = lifeSeeds();
+      if (!seeds.length) return showToast("没有可种的东西。葱头、发芽绿豆、番茄种子要在开局采购时带上。");
+      if (shift && seeds.length > 1) {
+        W.lifeSeed = ((W.lifeSeed || 0) + 1) % seeds.length;
+        return worldRenderHUD();
+      }
+      const k = seeds[(W.lifeSeed || 0) % seeds.length];
+      return worldStart(`种下${LIFE_CROPS[k].name}`, 3, () => lifeSow(i, k), "use");
+    }
+    if (p.dead) return worldStart("把枯苗拔掉，松一松土", 2.5, () => lifeClear(i), "use");
+    if (lifeReady(p) && !shift) {
+      if (W.held) return showToast("手里有东西。先对准一个平面按 R 放下，再来收。");
+      return worldStart(`收${LIFE_CROPS[p.crop].name}`, 2.6, () => {
+        const b = lifeHarvest(i);
+        if (b) worldEquip(b.uid, false);
+      }, "use");
+    }
+    if (p.water > 75) return showToast("土还湿着，不用浇。浇多了根会烂。");
+    return worldStart(`给${LIFE_CROPS[p.crop].name}浇水`, 2, () => lifeWater(i), "use", "bottle");
+  }
+  return lwBase.worldInteract(shift);
+};
+// The letter page in both hands: two pages of handwriting on aged paper.
+worldUpdatePaper = function (force = false) {
+  if (W.glance !== "letter") return lwBase.worldUpdatePaper(force);
+  const model = W.handModel,
+    c = model?.userData.canvas;
+  if (!c) return;
+  const n = Math.max(1, G.life.letters),
+    idx = (((W.lifeLetter ?? n - 1) + (W.page || 0)) % n + n) % n,
+    stamp = "letter" + idx;
+  if (!force && W.paperStamp === stamp) return;
+  W.paperStamp = stamp;
+  const L = LIFE_LETTERS[idx],
+    x = c.getContext("2d"),
+    cw = c.width,
+    ch = c.height;
+  x.fillStyle = "#e9e0c9";
+  x.fillRect(0, 0, cw, ch);
+  const R = lwRand("paper" + idx);
+  for (let k = 0; k < 900; k++) {
+    x.fillStyle = `rgba(120,96,60,${R() * 0.05})`;
+    x.fillRect(R() * cw, R() * ch, 1 + R() * 2, 1 + R() * 2);
+  }
+  x.strokeStyle = "rgba(90,80,60,0.18)";
+  x.beginPath();
+  x.moveTo(cw / 2, 0);
+  x.lineTo(cw / 2, ch);
+  x.stroke();
+  x.strokeStyle = "rgba(70,100,140,0.16)";
+  for (let y = 112; y < ch - 40; y += 48) {
+    x.beginPath();
+    x.moveTo(36, y + 14);
+    x.lineTo(cw / 2 - 30, y + 14);
+    x.moveTo(cw / 2 + 30, y + 14);
+    x.lineTo(cw - 36, y + 14);
+    x.stroke();
+  }
+  x.fillStyle = "#7d6a4c";
+  x.font = "22px 'Noto Serif CJK SC','Songti SC',serif";
+  x.textAlign = "left";
+  x.fillText(`第${idx + 1}封 · ${L.from} · 写着“第${L.d}天再拆”`, 40, 58);
+  x.textAlign = "right";
+  x.fillText(n > 1 ? `滚轮翻看其他信（${idx + 1}/${n}）` : "Tab / R 收好", cw - 40, 58);
+  x.textAlign = "left";
+  x.fillStyle = "#24314a";
+  x.font = "30px 'Kaiti SC','STKaiti','KaiTi','Noto Serif CJK SC',serif";
+  L.lines.forEach((t, k) => {
+    const page = k < 12 ? 0 : 1,
+      row = k % 12;
+    x.save();
+    x.translate(page * (cw / 2) + 46 + (R() - 0.5) * 3, 120 + row * 48);
+    x.rotate((R() - 0.5) * 0.012);
+    x.fillText(t, 0, 0, cw / 2 - 86);
+    x.restore();
+  });
+  model.userData.page.material.map.needsUpdate = true;
+};
+// Home-grown produce held in the hand or set down on a surface.
+worldProduct = function (id, parent = null, bare = false) {
+  if (!LIFE_PRODUCE[id]) return lwBase.worldProduct(id, parent, bare);
+  const g = new THREE.Group(),
+    R = lwRand(id);
+  if (id === "greens") {
+    for (let k = 0; k < 9; k++) {
+      const s = lwMesh(g, new THREE.CylinderGeometry(0.003, 0.004, 0.2, 6), lwMat("leaf", "#4d7d31", { side: THREE.DoubleSide }), (R() - 0.5) * 0.02, 0.1, (R() - 0.5) * 0.02);
+      s.rotation.z = (R() - 0.5) * 0.25;
+    }
+    lwMesh(g, new THREE.TorusGeometry(0.011, 0.002, 6, 12), lwMat("string", "#8a5b3a"), 0, 0.05, 0).rotation.x = Math.PI / 2;
+    g.userData.height = 0.2;
+  } else {
+    lwMesh(g, new THREE.CylinderGeometry(0.07, 0.05, 0.045, 24, 1, true), lwMat("bowl", "#e8e4d6", { r: 0.4, side: THREE.DoubleSide }), 0, 0.0225, 0);
+    lwMesh(g, new THREE.CylinderGeometry(0.05, 0.05, 0.004, 20), lwMat("bowl", "#e8e4d6"), 0, 0.002, 0);
+    const n = id === "sprouts" ? 30 : 8;
+    for (let k = 0; k < n; k++) {
+      const a = R() * 6.28,
+        r = Math.sqrt(R()) * 0.05;
+      if (id === "sprouts") {
+        const m = lwMesh(g, new THREE.CylinderGeometry(0.002, 0.002, 0.05, 5), lwMat("sprout", "#efeacb"), Math.cos(a) * r, 0.035, Math.sin(a) * r);
+        m.rotation.set(R() * 1.4, R() * 6, R() * 1.4);
+      } else lwMesh(g, new THREE.SphereGeometry(0.012, 10, 8), lwMat("ripe", "#c4321f", { r: 0.35 }), Math.cos(a) * r, 0.025 + (k % 3) * 0.008, Math.sin(a) * r);
+    }
+    g.userData.height = 0.06;
+  }
+  if (parent) parent.add(g);
+  return g;
+};
+(function lwStyle() {
+  const st = document.createElement("style");
+  st.textContent = `#lifeCaption{position:fixed;left:50%;bottom:17%;transform:translate(-50%,8px);max-width:min(720px,88vw);padding:12px 20px 14px;background:rgba(18,17,14,.62);backdrop-filter:blur(3px);border-left:2px solid #c9a86a;color:#efe7d4;font:16px/1.65 'Noto Serif CJK SC','Songti SC',serif;letter-spacing:.04em;opacity:0;transition:opacity .5s,transform .5s;pointer-events:none;z-index:40}
+#lifeCaption.on{opacity:1;transform:translate(-50%,0)}#lifeCaption small{display:block;font:11px/1.4 ui-monospace,monospace;letter-spacing:.12em;color:#c9a86a;margin-bottom:4px}#lifeCaption p{margin:0}`;
+  document.head.appendChild(st);
+})();
 
     </script>
   </body>

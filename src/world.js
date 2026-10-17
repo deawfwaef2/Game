@@ -677,17 +677,6 @@ function syncWorldRoom() {
       !!state && (has("candle") || state.candleUntil > state.minute);
   if (W.flame) W.flame.visible = !!state && state.candleUntil > state.minute;
   if (!state) return;
-  if (pestRoot) {
-    pestRoot.children.forEach((o) => {
-      const kind =
-        o.position.y > 1 ? "helis" : o.position.x > 0 ? "balls" : "cars";
-      worldTag(
-        o,
-        "pest:" + kind,
-        { cars: "小汽车", helis: "小直升机", balls: "小足球" }[kind],
-      );
-    });
-  }
   if (decorRoot)
     decorRoot.children.forEach((g) => {
       if (Math.abs(g.position.x - 0.5) < 0.02 && g.position.y > 0.7)
@@ -1445,10 +1434,6 @@ function worldUseHeld() {
     candle: ["candle", "点亮一根蜡烛", 2],
     bottle: ["fill", "接满储水容器", 3],
     canister: ["fill", "接满储水容器", 3],
-    flashlight: ["inspect", "用手电检查家具", 3],
-    carpowder: ["clearcars", "收纳小汽车", 2],
-    swatter: ["clearhelis", "收纳小直升机", 2],
-    balltrap: ["clearballs", "收纳小足球", 2],
   };
   const a = acts[it.id];
   if (a) return worldAction(a[0], a[1], a[2]);
@@ -1481,8 +1466,6 @@ function worldTargetInfo(o) {
         : `E 解开袋口  ·  门边还有 ${bagsAtDoor().length} 件`,
     ];
   }
-  if (id.startsWith("pest:"))
-    return [o.userData.worldName, "E 使用对应工具收纳  ·  隐藏总数未知"];
   if (id.startsWith("tool:")) return [o.userData.worldName, "E 直接使用"];
   const names = {
     bed: ["旧床", `E 躺下睡 ${W.sleepHours} 小时  ·  滚轮 / ↑↓ 调时长`],
@@ -1512,7 +1495,7 @@ function worldTargetInfo(o) {
     changeclothes: ["叠好的换洗衣物", "E 换上一套干净衣物"],
     drawer: [
       "床头抽屉",
-      `E ${W.drawerOpen ? "推回" : "拉开"}抽屉  ·  Shift+E 检查家具底部`,
+      `E ${W.drawerOpen ? "推回" : "拉开"}抽屉`,
     ],
     inspect: ["床头柜", "E 检查家具  ·  看向抽屉可拉开"],
     emergency: ["房东的应急纸包", "E 拆开  ·  只够应急一次"],
@@ -1530,7 +1513,7 @@ function worldTargetInfo(o) {
     toilet: ["卫生间", "E 处理小便  ·  Shift+E 处理大便"],
     shower: ["淋浴区", "E 打开花洒洗澡  ·  需要水"],
     laundry: ["洗衣盆", "E 手洗脏衣物  ·  需要水与洗衣粉"],
-    clean: ["扫帚与簸箕", "E 扫净房间  ·  Shift+E 检查几何干扰物"],
+    clean: ["扫帚与簸箕", "E 扫净房间"],
     trash: [
       "垃圾桶",
       W.held
@@ -1621,14 +1604,6 @@ function worldInteract(shift = false) {
     return worldEquip(W.focus.userData.uid, !shift);
   if (id.startsWith("bag:"))
     return worldTakeFromBag(W.focus?.userData.bagId ?? Number(id.slice(4)));
-  if (id.startsWith("pest:"))
-    return worldAction(
-      { cars: "clearcars", helis: "clearhelis", balls: "clearballs" }[
-        id.slice(5)
-      ],
-      "把几何小东西收纳走",
-      2,
-    );
   if (id.startsWith("tool:")) {
     const a = {
       scissors: ["hair", "修短头发"],
@@ -1679,7 +1654,6 @@ function worldInteract(shift = false) {
       if (W.held) return worldUseHeld();
       return worldAction("dishes", "洗好碗碟，擦净桌面", 2.5);
     case "drawer":
-      if (shift) return worldAction("inspect", "蹲下检查家具底部", 3);
       W.drawerOpen = !W.drawerOpen;
       syncWorldRoom();
       return;
@@ -1696,11 +1670,7 @@ function worldInteract(shift = false) {
     case "laundry":
       return worldAction("laundry", "手洗并晾好换下的衣物", 3.5);
     case "clean":
-      return worldAction(
-        shift ? "inspect" : "clean",
-        shift ? "检查房间的角落" : "扫净地板，收拾房间",
-        3.5,
-      );
+      return worldAction("clean", "扫净地板，收拾房间", 3.5);
     case "trash":
       return worldAction("trash", "密封垃圾，清走变质物资", 2);
     case "mirror":
@@ -2178,7 +2148,7 @@ if (W.enabled) {
     <p class="help-paragraph">回房后，E解开门边的袋口，再按E伸手取出一组物品，自己对准储物架隔板、冰箱隔层、桌面或地面按R放下；没有自动整理。到储物架前拿食物；需要烹煮的主食先拿到炉边。左键使用手中物品，R对准桌面放置，或放回架子。书拿在手里读，不弹消遣菜单。</p>
     <p class="help-paragraph">床边滚轮或↑↓调整睡眠小时，E躺下。卫生间E小便、Shift+E大便；花洒E洗澡；柜门打开后E取换洗衣物，洗衣盆E洗衣。扫帚、指甲刀、理发剪、牙刷都是可直接使用的实物。Shift+E是看向物体时提示的辅助动作。</p>
     <p class="help-paragraph">Tab翻开实体手记，滚轮翻页，查看完整身体状态、物资、水电和日志。T抬腕看表。Esc只打开必要的暂停/存档。手机使用摇杆和右侧交互、辅助、使用、放回按钮。</p>
-    <p class="help-paragraph">目标365天，初始300纸币。重复口味/读物、疾病、脏乱、长期独处仍影响精神；危险和敲门会中断跳时。没有真实虫鼠或恶心画面，只有干净的几何干扰物。真实外出与追捕未实现，开局确认进房后永久禁止购买或补货，只能依靠已有存量。</p>`,
+    <p class="help-paragraph">目标365天，初始300纸币。重复口味/读物、疾病、脏乱、长期独处仍影响精神；危险和敲门会中断跳时。不会出现虫鼠或任何替代物。这是一个全程不出门的游戏：开局确认进房后永久禁止购买或补货，只能依靠已有存量。</p>`,
     );
   updatePhase = () => {
     legacyUI.updatePhase();

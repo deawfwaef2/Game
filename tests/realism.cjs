@@ -61,7 +61,7 @@ const { chromium } = require("playwright"),
         phase: "playing",
         locked: true,
         canBuy: false,
-        packed: 100,
+        packed: 104,
       },
     );
     assert.strictEqual(

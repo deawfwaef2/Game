@@ -1,5 +1,5 @@
 /* 闭门365 — original game data, fictional 1980s subsidized prices. */
-const VERSION = "0.9.0-preview";
+const VERSION = "0.10.0-preview";
 const CATEGORIES = [
   ["all", "全部物资"],
   ["staple", "主食与干粮"],
@@ -322,16 +322,6 @@ item("trashbag", "垃圾袋 · 30只", 0.6, 0.2, "clean", 30, {
 item("sponge", "清洁海绵 · 3块", 0.3, 0.04, "clean", 12, {
   kind: "consumable",
 });
-item("carpowder", "小汽车清理粉 · 12份", 1.2, 0.3, "clean", 12, {
-  kind: "consumable",
-  desc: "干净抽象的“小汽车”专用清理道具，不出现真实虫子。",
-});
-item("swatter", "方块拍", 0.65, 0.12, "clean", 1, {
-  desc: "清理小直升机。只是几何小方块。",
-});
-item("balltrap", "足球收纳夹", 1.8, 0.45, "clean", 1, {
-  desc: "收纳会偷吃的小足球，不出现真实鼠类。",
-});
 item("disinfect", "表面消毒液", 0.8, 0.5, "clean", 15, { kind: "consumable" });
 item("gloves", "橡胶手套", 0.55, 0.08, "clean");
 item("aspirin", "退热止痛片 · 12片", 0.75, 0.03, "medical", 12, {
@@ -371,7 +361,7 @@ item("bottle", "空水壶 · 容量5L", 1.1, 0.35, "tool", 1, {
 });
 item("canister", "储水桶 · 容量15L", 2.6, 0.65, "tool", 1, { capacity: 15 });
 item("jar", "密封储物罐", 0.75, 0.3, "tool", 1, {
-  desc: "解包后启用密封存放，保护干粮不被足球偷吃。",
+  desc: "解包后启用密封存放，干粮更耐放、不易受潮。",
 });
 item("opener", "手动开罐器", 0.65, 0.06, "tool");
 item("lighter", "打火机", 0.35, 0.04, "tool", 40, { kind: "consumable" });
@@ -380,7 +370,7 @@ item("candle", "长燃蜡烛 · 6根", 0.65, 0.4, "tool", 24, {
   desc: "停电时在桌上点亮，降低黑暗带来的精神损耗。",
 });
 item("flashlight", "手电筒", 1.75, 0.22, "tool", 1, {
-  desc: "提高检查隐藏干扰物的发现概率。",
+  desc: "停电的夜里照亮配电箱和水管，检修更快。",
 });
 item("battery", "干电池 · 4节", 0.7, 0.12, "tool", 24, { kind: "consumable" });
 item("stove", "便携燃料炉", 4.2, 1.3, "tool", 1, {
@@ -471,6 +461,22 @@ item("plant", "耐阴绿植", 1.4, 1.2, "furniture", 1, {
   kind: "furniture",
   joy: 1,
 });
+item("pots", "陶土花盆与培养土 · 3套", 1.6, 4.5, "furniture", 1, {
+  kind: "furniture",
+  desc: "摆在窗台上，三个盆位。葱、豆芽、樱桃番茄都能种。",
+});
+item("scallion", "葱头 · 8个（可种）", 0.35, 0.4, "fresh", 8, {
+  kind: "seed",
+  desc: "插进湿土，九天左右能剪第一茬，剪了还会再长，一棵能剪六次。",
+});
+item("mungseed", "发芽绿豆 · 500g", 0.4, 0.5, "staple", 8, {
+  kind: "seed",
+  desc: "每次抓一把铺在湿土上，四天出一盆豆芽。不需要阳光，但每天要浇水。",
+});
+item("tomatoseed", "樱桃番茄种子 · 1包", 0.25, 0.02, "tool", 6, {
+  kind: "seed",
+  desc: "约五十天开花结果，之后每隔几天能摘一把。需要阳光和15°C以上的温度。",
+});
 item("blanket", "厚羊毛毯", 3.2, 1.6, "furniture", 1, {
   kind: "furniture",
   warm: 4,
@@ -524,9 +530,6 @@ const STARTER = {
   dishsoap: 1,
   broom: 1,
   trashbag: 1,
-  carpowder: 1,
-  swatter: 1,
-  balltrap: 1,
   nailclip: 1,
   scissors: 1,
   toothbrush: 1,
@@ -548,6 +551,9 @@ const STARTER = {
   blanket: 1,
 };
 const YEAR_KIT = {
+  pots: 1,
+  scallion: 1,
+  mungseed: 1,
   rice: 20,
   oats: 25,
   pasta: 22,
@@ -572,9 +578,6 @@ const YEAR_KIT = {
   dishsoap: 2,
   broom: 1,
   trashbag: 2,
-  carpowder: 1,
-  swatter: 1,
-  balltrap: 1,
   nailclip: 1,
   scissors: 1,
   toothbrush: 1,

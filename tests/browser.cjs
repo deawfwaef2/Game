@@ -91,6 +91,8 @@ fs.mkdirSync(artifacts, { recursive: true });
         worldUpdateTarget();
         return targetId;
       };
+      // Test shortcut for clearing the hand: set the item down on the floor by the table.
+      window.qaDrop = () => (() => { const b = W.held && G.inv.find((x) => x.uid === W.held.uid); if (b) { b.location = "room"; b.pose = [0, 0, 0.6, 0]; } W.held = null; G.heldUID = null; worldSetHand(); syncWorldRoom(); })();
       window.qaFinish = () => {
         if (!W.busy) throw Error("Expected physical action");
         W.busy.start -= W.busy.seconds * 1000 + 20;
@@ -186,10 +188,39 @@ fs.mkdirSync(artifacts, { recursive: true });
       await page.evaluate(() => G.bags.filter((b) => !b.opened).length),
       8,
     );
-    const nextBag = await page.evaluate(() => G.bags.find((b) => !b.opened).id);
-    await aim(page, "bag:" + nextBag, { from: [0, 1.62, front - 1.6] });
-    await act(page, "Shift+E");
+    // Nothing is sorted automatically: reach into the opened bag, lift one group, place it by hand.
+    await aim(page, "bag:" + firstBag, { from: [0, 1.62, front - 1.6] });
+    await page.keyboard.press("e");
+    const liftedUID = await page.evaluate(() => W.held?.uid);
+    assert.ok(liftedUID, "E on an opened bag should put one pack group in the hand");
+    assert.strictEqual(
+      await page.evaluate((u) => G.inv.find((b) => b.uid === u).packed, liftedUID),
+      false,
+    );
+    await aim(page, "bag:" + firstBag, { from: [0, 1.62, front - 1.6] });
+    await page.keyboard.press("e");
+    assert.strictEqual(await page.evaluate(() => W.held.uid), liftedUID, "hand is full: no second item");
+    await aim(page, "pantry", { localAt: [width / 2 - 0.25, 0.88, 0.41], localFrom: [width / 2 - 1.5, 1.4, 0.41] }, "pantry");
+    await page.keyboard.press("r");
+    assert.strictEqual(await page.evaluate(() => W.held), null);
+    assert.strictEqual(
+      await page.evaluate((u) => G.inv.find((b) => b.uid === u).location, liftedUID),
+      "shelf",
+    );
+    assert.ok(await page.evaluate((u) => Array.isArray(G.inv.find((b) => b.uid === u).pose), liftedUID));
+    // Repeating that cycle for ~100 groups is covered by unit logic; finish the rest directly.
+    await page.evaluate(() => {
+      G.bags.forEach((b) => (b.opened = true));
+      G.inv.forEach((b) => {
+        if (b.packed) {
+          b.packed = false;
+          b.location = DB[b.id].category === "fresh" ? "fridge" : "shelf";
+        }
+      });
+      syncRoom();
+    });
     assert.strictEqual(await page.evaluate(() => countPackages()), 0);
+    assert.strictEqual(await page.evaluate(() => bagsAtDoor().length), 0);
     const crackerUID = await page.evaluate(
       () => G.inv.find((b) => b.id === "crackers").uid,
     );
@@ -233,7 +264,7 @@ fs.mkdirSync(artifacts, { recursive: true });
         .evaluate((e) => e.classList.contains("visible")),
       false,
     );
-    await page.evaluate(() => worldPutBack(false));
+    await page.evaluate(() => qaDrop());
     await aim(page, "sink");
     await act(page);
     await act(page, "r");
@@ -250,13 +281,18 @@ fs.mkdirSync(artifacts, { recursive: true });
     assert.strictEqual(await page.evaluate(() => W.held.prepared), true);
     await act(page, "Space");
     const coldUID = await page.evaluate(() => W.held.uid);
+    // The fridge stands against the side wall, its door facing into the room (-x local).
     await aim(page, "fridge", {
-      localAt: [width / 2 - 0.53, 0.9, -0.27],
-      localFrom: [width / 2 - 0.53, 1.62, 0.9],
+      localAt: [width / 2 - 0.7, 1.0, -0.72],
+      localFrom: [width / 2 - 1.75, 1.62, -0.72],
     });
     await page.keyboard.press("e");
     await page.evaluate(() => qaDoors());
     assert.strictEqual(await page.evaluate(() => W.doors.fridge.open), true);
+    await aim(page, "fridge", {
+      localAt: [width / 2 - 0.42, 0.95, -0.72],
+      localFrom: [width / 2 - 1.45, 1.45, -0.72],
+    });
     await page.keyboard.press("r");
     assert.strictEqual(
       await page.evaluate(
@@ -266,13 +302,13 @@ fs.mkdirSync(artifacts, { recursive: true });
       "fridge",
     );
     await aim(page, "stock:" + coldUID, {
-      localFrom: [width / 2 - 0.76, 1.62, 1.25],
+      localFrom: [width / 2 - 1.45, 1.45, -0.72],
     });
     await page.keyboard.press("e");
     assert.strictEqual(await page.evaluate(() => W.held.uid), coldUID);
-    await page.evaluate(() => worldPutBack(false));
+    await page.evaluate(() => qaDrop());
     console.log(
-      "PASS individual bags / Shift+E unpack / physical take-place-retake / meal without modal / water / cooking / refrigerator door and storage",
+      "PASS individual bags / open bag / take one group by hand / manual shelf+fridge placement / retake / meal without modal / water / cooking / refrigerator door and storage",
     );
     const bookUID = await page.evaluate(
       () => G.inv.find((b) => DB[b.id].kind === "book").uid,
@@ -484,9 +520,12 @@ fs.mkdirSync(artifacts, { recursive: true });
     await page.locator("#mobileInteract").tap();
     await page.evaluate(() => qaFinish());
     await aim(page, "bag:0", { from: [0, 1.62, front - 1.6] });
-    await page.locator('[data-world="shift"]').tap();
+    await page.locator("#mobileInteract").tap();
     await page.evaluate(() => qaFinish());
-    assert.strictEqual(await page.evaluate(() => countPackages()), 0);
+    assert.strictEqual(await page.evaluate(() => G.bags[0].opened), true);
+    await page.locator("#mobileInteract").tap();
+    assert.ok(await page.evaluate(() => !!W.held), "mobile tap lifts one group out of the opened bag");
+    await page.evaluate(() => qaDrop());
     await page.locator('[data-world="note"]').tap();
     assert.strictEqual(await page.evaluate(() => W.glance), "notebook");
     await page.locator('[data-world="up"]').tap();

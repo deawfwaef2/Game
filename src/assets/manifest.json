@@ -112,5 +112,104 @@
     "source": "AI-generated for this game",
     "license": "generated asset",
     "processing": "single aged facade bay normalised to align with physical window frames/sills; layered onto 3D city geometry"
+  },
+  {
+    "name": "electric_stove",
+    "author": {
+      "Kuutti Siitonen": "All"
+    },
+    "license": "CC0-1.0",
+    "source": "https://polyhaven.com/a/electric_stove",
+    "processing": "embedded glTF binary; textures resampled to maximum 1024px"
+  },
+  {
+    "name": "pot_enamel_01",
+    "author": {
+      "Kuutti Siitonen": "All"
+    },
+    "license": "CC0-1.0",
+    "source": "https://polyhaven.com/a/pot_enamel_01",
+    "processing": "embedded glTF binary; textures resampled to maximum 512px"
+  },
+  {
+    "name": "modern_ceiling_lamp_01",
+    "author": {
+      "James Ray Cock": "All"
+    },
+    "license": "CC0-1.0",
+    "source": "https://polyhaven.com/a/modern_ceiling_lamp_01",
+    "processing": "embedded glTF binary; textures resampled to maximum 512px"
+  },
+  {
+    "name": "wooden_broom",
+    "author": {
+      "Balen": "All"
+    },
+    "license": "CC0-1.0",
+    "source": "https://polyhaven.com/a/wooden_broom",
+    "processing": "embedded glTF binary; textures resampled to maximum 512px"
+  },
+  {
+    "name": "dustpan",
+    "author": {
+      "Balen": "All"
+    },
+    "license": "CC0-1.0",
+    "source": "https://polyhaven.com/a/dustpan",
+    "processing": "embedded glTF binary; textures resampled to maximum 512px"
+  },
+  {
+    "name": "wall_clock",
+    "author": {
+      "PierreB3D": "All"
+    },
+    "license": "CC0-1.0",
+    "source": "https://polyhaven.com/a/wall_clock",
+    "processing": "embedded glTF binary; textures resampled to maximum 512px"
+  },
+  {
+    "name": "long_white_tiles",
+    "license": "CC0-1.0",
+    "source": "https://polyhaven.com/a/long_white_tiles",
+    "processing": "resized JPEG; original PBR diffuse/normal/ARM maps"
+  },
+  {
+    "name": "interior_tiles",
+    "license": "CC0-1.0",
+    "source": "https://polyhaven.com/a/interior_tiles",
+    "processing": "resized JPEG; original PBR diffuse/normal/ARM maps"
+  },
+  {
+    "name": "old_linoleum_flooring_01",
+    "license": "CC0-1.0",
+    "source": "https://polyhaven.com/a/old_linoleum_flooring_01",
+    "processing": "resized JPEG; original PBR diffuse/normal/ARM maps"
+  },
+  {
+    "name": "wallpaper-1986_diff",
+    "author": {
+      "Generated for this project (Arena.ai image generation)": "All"
+    },
+    "license": "Project asset; no third-party source",
+    "source": "src/assets/textures/wallpaper-1986_diff.jpg",
+    "processing": "1980s floral-stripe wallpaper texture, generated in-session and embedded as data URI"
+  },
+  {
+    "name": "rug-oriental_diff",
+    "author": {
+      "Generated for this project (Arena.ai image generation)": "All"
+    },
+    "license": "Project asset; no third-party source",
+    "source": "src/assets/textures/rug-oriental_diff.jpg",
+    "processing": "worn oriental rug texture, generated in-session and embedded as data URI"
+  },
+  {
+    "name": "walnut-veneer_diff",
+    "author": {
+      "Generated for this project (Arena.ai image generation)": "All"
+    },
+    "license": "Project asset; no third-party source",
+    "source": "src/assets/textures/walnut-veneer_diff.jpg",
+    "processing": "walnut furniture veneer texture, generated in-session and embedded as data URI"
   }
 ]

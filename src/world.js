@@ -428,6 +428,33 @@ function worldProduct(id, parent = null) {
   g.userData.height = h;
   return g;
 }
+// A pack group is shown as the real number of packages (up to a readable cap), not one token box.
+function worldStockCluster(b, parent) {
+  const it = DB[b.id],
+    packs = Math.ceil(b.units / Math.max(1, it.servings)),
+    show = Math.min(packs, it.weight > 1.5 ? 2 : it.weight > 0.6 ? 4 : 6);
+  if (show <= 1 || it.kind === "book") return worldProduct(b.id, parent);
+  const g = new THREE.Group();
+  parent.add(g);
+  const first = worldProduct(b.id, g),
+    size = new THREE.Box3().setFromObject(first).getSize(new THREE.Vector3());
+  const cols = show <= 2 ? show : show <= 4 ? 2 : 3,
+    rows = Math.ceil(show / cols);
+  for (let i = 0; i < show; i++) {
+    const o = i ? worldProduct(b.id, g) : first,
+      c = i % cols,
+      r = Math.floor(i / cols);
+    o.position.set(
+      (c - (cols - 1) / 2) * (size.x + 0.008),
+      0,
+      (r - (rows - 1) / 2) * (size.z + 0.008),
+    );
+    o.rotation.y = (((i * 37) % 7) - 3) * 0.014;
+  }
+  g.userData.productId = b.id;
+  g.userData.height = first.userData.height;
+  return g;
+}
 function worldFindBase(id) {
   return roomRoot?.children.find((o) => o.userData.interact === id);
 }
@@ -613,8 +640,10 @@ function installWorldRoom() {
     phase === "playing" &&
     G?.heldUID &&
     G.inv.some((b) => b.uid === G.heldUID && !b.packed && b.units > 0)
-  )
+  ) {
+    W.held = null;
     worldEquip(G.heldUID, false);
+  }
   else {
     W.held = null;
     W.glance = "";
@@ -627,7 +656,7 @@ function syncWorldRoom() {
   const state = G && phase !== "title" ? G : null;
   if (bagRoot) {
     bagRoot.children.forEach((o, i) => {
-      const b = state?.bags.filter((x) => !x.opened)[i];
+      const b = state ? bagsAtDoor()[i] : null;
       if (b)
         worldTag(
           o,
@@ -674,7 +703,7 @@ function syncWorldRoom() {
       b.pose.length === 4 &&
       b.pose.every(Number.isFinite)
     ) {
-      const g = worldProduct(b.id, W.props);
+      const g = worldStockCluster(b, W.props);
       g.position.set(b.pose[0], b.pose[1], b.pose[2]);
       g.rotation.y = b.pose[3];
       worldTag(g, "stock:" + b.uid, DB[b.id].name, { uid: b.uid });
@@ -710,11 +739,12 @@ function syncWorldRoom() {
     W.fridgePage = clamp(W.fridgePage, 0, W.fridgePages - 1);
     coldStock.slice(W.fridgePage * 9, W.fridgePage * 9 + 9).forEach((b, i) => {
       const g = worldProduct(b.id, W.props);
-      g.scale.setScalar(0.72);
+      const shelves = W.fridgeShelfY || [0.13, 0.59, 1.05];
+      g.scale.setScalar(W.fridgeShelfY ? 0.6 : 0.72);
       const pos = new THREE.Vector3(
-        ((i % 3) - 1) * 0.23,
-        0.13 + Math.floor(i / 3) * 0.46,
-        0.1,
+        ((i % 3) - 1) * (W.fridgeShelfY ? 0.17 : 0.23),
+        shelves[Math.floor(i / 3) % shelves.length],
+        W.fridgeShelfY ? 0.0 : 0.1,
       );
       fridge.localToWorld(pos);
       roomRoot.worldToLocal(pos);
@@ -1097,9 +1127,25 @@ function worldEquip(uidValue, split = true) {
   if (!b || b.packed || b.units <= 0) return;
   if (W.busy) return;
   if (W.held?.uid === b.uid) return;
-  if (W.held) worldPutBack(false);
+  if (W.held) {
+    showToast(
+      `手里已经拿着${DB[W.held.id]?.name || "东西"}。先对准一个平面按 R 放下。`,
+    );
+    return;
+  }
   let chosen = b;
-  if (split && b.units > DB[b.id].servings && DB[b.id].kind !== "book") {
+  if (!split) {
+    // Shift+E lifts the whole pack group, but never more than a person can carry at once.
+    const it = DB[b.id],
+      packs = Math.ceil(b.units / Math.max(1, it.servings)),
+      carry = Math.max(1, Math.floor(12 / Math.max(0.05, it.weight)));
+    if (packs > carry && it.kind !== "book") {
+      const units = carry * it.servings;
+      b.units -= units;
+      chosen = { ...b, uid: uid(), units };
+      G.inv.push(chosen);
+    }
+  } else if (b.units > DB[b.id].servings && DB[b.id].kind !== "book") {
     const units = DB[b.id].servings;
     b.units -= units;
     chosen = { ...b, uid: uid(), units };
@@ -1121,6 +1167,42 @@ function worldEquip(uidValue, split = true) {
   saveGame(false);
   worldSfx(500, 0.04);
 }
+// Placement is always the player's decision: the item lands exactly on the aimed surface or stays in hand.
+function worldSurfaceSpot(hit) {
+  if (!hit?.point || !hit.face || hit.distance > 2.6 || !roomRoot) return null;
+  const normal = hit.face.normal
+    .clone()
+    .transformDirection(hit.object.matrixWorld);
+  if (Math.abs(normal.y) < 0.75 || normal.y < 0) return null;
+  const p = roomRoot.worldToLocal(hit.point.clone());
+  if (p.y > 1.95 || p.y < -0.02) return null;
+  let location = "room",
+    yaw = lookYaw * (env.mirror ? -1 : 1);
+  const inside = (group, hx, y0, y1, hz) => {
+    if (!group) return false;
+    const q = group.worldToLocal(hit.point.clone());
+    return Math.abs(q.x) < hx && q.y > y0 && q.y < y1 && Math.abs(q.z) < hz;
+  };
+  const fridge = worldFindBase("fridge");
+  if (inside(fridge, 0.33, 0.02, 1.62, 0.36)) {
+    if (!W.doors.fridge?.open) return null;
+    location = "fridge";
+    yaw = fridge.rotation.y;
+  } else if (inside(W.pantry, 0.7, 0.05, 1.75, 0.24)) {
+    location = "shelf";
+    yaw = W.pantry.rotation.y;
+  } else if (inside(worldFindBase("table"), 0.6, 0.3, 0.7, 0.36))
+    location = "table";
+  return {
+    location,
+    pose: [
+      clamp(p.x, -env.w / 2 + 0.1, env.w / 2 - 0.1),
+      clamp(p.y + 0.003, 0, 1.95),
+      clamp(p.z, -env.d / 2 + 0.1, env.d / 2 - 0.1),
+      yaw,
+    ],
+  };
+}
 function worldPutBack(place = true) {
   if (W.busy) return;
   if (W.glance) {
@@ -1131,38 +1213,23 @@ function worldPutBack(place = true) {
   if (!W.held) return;
   const b = G.inv.find((x) => x.uid === W.held.uid);
   if (b) {
-    const hit = W.hit;
-    const id = targetId;
-    if (place && id === "fridge" && W.doors.fridge?.open) {
-      b.location = "fridge";
-      delete b.pose;
-    } else if (place && id === "pantry") {
-      b.location = "shelf";
-      delete b.pose;
-    } else if (place && hit?.point && hit.distance < 2.4 && hit.face) {
-      const normal = hit.face.normal
-        .clone()
-        .transformDirection(hit.object.matrixWorld);
-      if (normal.y > 0.75 && hit.point.y < 1.35) {
-        const p = roomRoot.worldToLocal(hit.point.clone());
-        b.pose = [
-          clamp(p.x, -env.w / 2 + 0.15, env.w / 2 - 0.15),
-          clamp(p.y + 0.013, 0.025, 1.35),
-          clamp(p.z, -env.d / 2 + 0.15, env.d / 2 - 0.15),
-          lookYaw * (env.mirror ? -1 : 1),
-        ];
-        b.location =
-          Math.abs(p.x + 0.6) < 0.65 && Math.abs(p.z - 0.8) < 0.4
-            ? "table"
-            : "room";
-      } else {
-        b.location = "shelf";
-        delete b.pose;
-      }
-    } else {
-      b.location = "shelf";
-      delete b.pose;
+    if (!place) return;
+    const spot = worldSurfaceSpot(W.hit);
+    if (!spot) {
+      const fridge = worldFindBase("fridge"),
+        q = W.hit?.point && fridge?.worldToLocal(W.hit.point.clone());
+      showToast(
+        q && Math.abs(q.x) < 0.4 && Math.abs(q.z) < 0.42 && !W.doors.fridge?.open
+          ? "冰箱门关着。先按 E 打开，再对准里面的隔层按 R。"
+          : "这里放不稳。对准桌面、架子隔板、冰箱隔层或地面，再按 R。",
+      );
+      return;
     }
+    b.pose = spot.pose;
+    b.location = spot.location;
+    logEvent(
+      `把${DB[b.id].name}放到${{ fridge: "冰箱里", shelf: "储物架上", table: "餐桌上", room: "这里" }[spot.location]}。`,
+    );
   }
   W.held = null;
   G.heldUID = null;
@@ -1170,6 +1237,52 @@ function worldPutBack(place = true) {
   syncWorldRoom();
   saveGame(false);
   worldSfx(300, 0.04);
+}
+// Bags stay physical: open one, then reach in and lift out one pack group at a time.
+function worldBagContents(bagId) {
+  return G ? G.inv.filter((b) => b.bag === bagId && b.packed && b.units > 0) : [];
+}
+function worldTakeFromBag(bagId) {
+  const bag = G?.bags.find((b) => b.id === bagId);
+  if (!bag) return;
+  if (W.held) {
+    showToast(
+      `手里已经拿着${DB[W.held.id]?.name || "东西"}。先把它放到一个平面上。`,
+    );
+    return;
+  }
+  if (!bag.opened)
+    return worldStart(
+      bag.crate ? "撕开纸箱封条" : "解开打结的塑料袋口",
+      0.9,
+      () => {
+        bag.opened = true;
+        advanceTime(1, "unpack");
+        saveGame(false);
+        syncRoom();
+      },
+      "unpack",
+    );
+  const list = worldBagContents(bagId);
+  if (!list.length) return;
+  let b = list.at(-1);
+  const it = DB[b.id],
+    packs = Math.ceil(b.units / Math.max(1, it.servings)),
+    carry = Math.max(1, Math.floor(12 / Math.max(0.05, it.weight)));
+  if (packs > carry) {
+    const units = carry * it.servings;
+    b.units -= units;
+    b = { ...b, uid: uid(), units };
+    G.inv.push(b);
+  }
+  b.packed = false;
+  b.location = "room";
+  delete b.pose;
+  if (!worldBagContents(bagId).length)
+    logEvent(`${bag.crate ? "纸箱" : "塑料袋"}空了，压平收好。`);
+  worldEquip(b.uid, false);
+  syncRoom();
+  renderHUD();
 }
 function worldGlance(kind = "notebook") {
   if (!worldVisible() || W.busy) return;
@@ -1350,14 +1463,24 @@ function worldTargetInfo(o) {
       total = b && stockSummary().items.find((row) => row.id === b.id);
     return [
       it?.name || "物资",
-      `E 拿起${b && (isSpoiled(b) || b.contaminated) ? " · 不宜食用" : ""}  ·  本包${b ? Math.ceil(b.units) : 0} · 总存量${Math.ceil(total?.total || 0)}份/次${total?.packed ? " · 含未拆" + Math.ceil(total.packed) : ""}`,
+      `E 拿一份  ·  Shift+E 整组搬走${b && (isSpoiled(b) || b.contaminated) ? " · 不宜食用" : ""}  ·  这里${b ? Math.ceil(b.units) : 0}份 · 总存量${Math.ceil(total?.total || 0)}${total?.packed ? " · 袋中" + Math.ceil(total.packed) : ""}`,
     ];
   }
-  if (id.startsWith("bag:"))
+  if (id.startsWith("bag:")) {
+    const bag = G?.bags.find((x) => x.id === o.userData.bagId),
+      left = bag ? worldBagContents(bag.id) : [],
+      next = left.at(-1),
+      packs = next ? Math.ceil(next.units / Math.max(1, DB[next.id].servings)) : 0;
+    const kind = bag?.crate ? "纸箱" : "塑料袋";
+    if (!bag) return [o.userData.worldName, ""];
+    if (W.held) return [kind, "手里有东西 · 先对准一个平面按 R 放下"];
     return [
-      o.userData.worldName,
-      "E 拆开这一袋  ·  按住 Shift + E 连续整理所有袋子",
+      `${kind} · ${bag.weight.toFixed(1)} kg`,
+      bag.opened && next
+        ? `E 取出 ${DB[next.id].name}${packs > 1 ? " ×" + Math.min(packs, Math.max(1, Math.floor(12 / Math.max(0.05, DB[next.id].weight)))) : ""}  ·  里面还有 ${left.length} 种`
+        : `E 解开袋口  ·  门边还有 ${bagsAtDoor().length} 件`,
     ];
+  }
   if (id.startsWith("pest:"))
     return [o.userData.worldName, "E 使用对应工具收纳  ·  隐藏总数未知"];
   if (id.startsWith("tool:")) return [o.userData.worldName, "E 直接使用"];
@@ -1383,7 +1506,7 @@ function worldTargetInfo(o) {
     ],
     fridge: [
       "旧冰箱",
-      `E ${W.doors.fridge?.open ? "关上" : "打开"}冰箱门${W.doors.fridge?.open && W.fridgePages > 1 ? "  ·  滚轮换层" : ""}${W.held ? "  ·  R 放入冷藏" : ""}`,
+      `E ${W.doors.fridge?.open ? "关上" : "打开"}冰箱门${W.held ? (W.doors.fridge?.open ? "  ·  对准隔层按 R 放入" : "  ·  先开门才能放入") : ""}${env.fridge && G && !G.power ? "  ·  停电中，不制冷" : ""}`,
     ],
     wardrobe: ["旧衣柜", `E ${W.doors.wardrobe?.open ? "关上" : "打开"}柜门`],
     changeclothes: ["叠好的换洗衣物", "E 换上一套干净衣物"],
@@ -1425,7 +1548,7 @@ function worldTargetInfo(o) {
     ],
     pantry: [
       "储物架",
-      `E 拿取  ·  滚轮换格 ${W.stockPage + 1}/${W.stockPages}${W.held ? "  ·  R 归还" : ""}`,
+      W.held ? "对准空着的隔板按 R 放上去" : "对准某一件物品按 E 拿起",
     ],
     plant: ["窗边绿植", "E 浇一点水  ·  每天一次就好"],
     candle: ["蜡烛托盘", "E 点亮一根蜡烛  ·  持续六小时"],
@@ -1494,14 +1617,10 @@ function worldInteract(shift = false) {
     return typeof worldShopInteract === "function"
       ? worldShopInteract(id, shift)
       : undefined;
-  if (id.startsWith("stock:")) return worldEquip(W.focus.userData.uid);
+  if (id.startsWith("stock:"))
+    return worldEquip(W.focus.userData.uid, !shift);
   if (id.startsWith("bag:"))
-    return worldStart(
-      shift ? "把门边的物资收好" : "解开袋口，收好物资",
-      shift ? 3 : 1.1,
-      () => unpackBag(W.focus?.userData.bagId ?? Number(id.slice(4)), shift),
-      "unpack",
-    );
+    return worldTakeFromBag(W.focus?.userData.bagId ?? Number(id.slice(4)));
   if (id.startsWith("pest:"))
     return worldAction(
       { cars: "clearcars", helis: "clearhelis", balls: "clearballs" }[
@@ -1620,9 +1739,11 @@ function worldInteract(shift = false) {
       return worldGlance();
     case "bookpick":
     case "desk": {
-      const b = G.inv.find((b) => !b.packed && DB[b.id].kind === "book");
+      const b = G.inv.find(
+        (b) => !b.packed && DB[b.id].kind === "book" && !b.pose && b.uid !== W.held?.uid,
+      );
       if (b) return worldEquip(b.uid);
-      showToast("先把采购袋里的书拆出来。");
+      showToast("书桌上没有书。书在哪里，就走过去对准它按 E。");
       return;
     }
     case "radio":
@@ -1633,16 +1754,13 @@ function worldInteract(shift = false) {
         () => doLeisure("radio"),
         "leisure",
       );
-    case "pantry": {
-      const obj = W.props.children.find(
-        (o) =>
-          o.userData.uid &&
-          G.inv.find((b) => b.uid === o.userData.uid)?.location !== "fridge",
+    case "pantry":
+      showToast(
+        W.held
+          ? "对准一层隔板的空位按 R，把手里的东西放上去。"
+          : "对准架子上的某一件物品按 E 拿起。",
       );
-      if (obj) return worldEquip(obj.userData.uid);
-      showToast("储物架空了，看看门边还有没有未拆的袋子。");
       return;
-    }
   }
   if (W.held) return worldUseHeld();
   showToast("走近物品，把准星对准它，再按 E。");
@@ -2042,9 +2160,7 @@ if (W.enabled) {
     showToast("走到床边，用滚轮调好时长，按 E 躺下。不用再打开时间面板。");
   openLeisure = () => {
     if (W.committing) return;
-    const b = G?.inv.find((b) => !b.packed && DB[b.id].kind === "book");
-    if (b) worldEquip(b.uid);
-    else showToast("先拆出一本书，再从书桌上拿起。");
+    showToast("走到书所在的位置，对准它按 E 拿起。");
   };
   openStation = (id) => {
     if (!W.committing) {
@@ -2059,7 +2175,7 @@ if (W.enabled) {
       "让房间成为操作界面。",
       "PHYSICAL PLAY / OFFLINE EDITION",
       `<p class="help-paragraph">V或右上角按钮切换自由/定点移动；手机默认定点。四边箭头点一下自动走到标注地点，途中可停，到位后仍需E交互；拖动可环顾，不会自动购买或使用物品。Esc可关胶片画面。</p><p class="help-paragraph">WASD走动，按住画面拖动视角。走到货架前对准商品按E拿入篮中，R放回一件；门边的配给箱可快速登记整套物资。到机械收银台按E付款。商品价格、重量、份数和保质期会在你看向它时显示。</p>
-    <p class="help-paragraph">回房后，E拆开门边的袋子，Shift+E连续整理。到储物架前拿食物；需要烹煮的主食先拿到炉边。左键使用手中物品，R对准桌面放置，或放回架子。书拿在手里读，不弹消遣菜单。</p>
+    <p class="help-paragraph">回房后，E解开门边的袋口，再按E伸手取出一组物品，自己对准储物架隔板、冰箱隔层、桌面或地面按R放下；没有自动整理。到储物架前拿食物；需要烹煮的主食先拿到炉边。左键使用手中物品，R对准桌面放置，或放回架子。书拿在手里读，不弹消遣菜单。</p>
     <p class="help-paragraph">床边滚轮或↑↓调整睡眠小时，E躺下。卫生间E小便、Shift+E大便；花洒E洗澡；柜门打开后E取换洗衣物，洗衣盆E洗衣。扫帚、指甲刀、理发剪、牙刷都是可直接使用的实物。Shift+E是看向物体时提示的辅助动作。</p>
     <p class="help-paragraph">Tab翻开实体手记，滚轮翻页，查看完整身体状态、物资、水电和日志。T抬腕看表。Esc只打开必要的暂停/存档。手机使用摇杆和右侧交互、辅助、使用、放回按钮。</p>
     <p class="help-paragraph">目标365天，初始300纸币。重复口味/读物、疾病、脏乱、长期独处仍影响精神；危险和敲门会中断跳时。没有真实虫鼠或恶心画面，只有干净的几何干扰物。真实外出与追捕未实现，开局确认进房后永久禁止购买或补货，只能依靠已有存量。</p>`,

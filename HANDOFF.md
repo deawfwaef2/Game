@@ -178,3 +178,12 @@
 - README/DESIGN/RESULTS/暂停帮助均已更新两模式、V、途中停、胶片开关、外景范围和局限；没有称全城可探索、每扇窗有室内、全量美术已完成。完整页面CDP截图在tests/artifacts仅作QA，不随离线ZIP发。
 - /tmp是小tmpfs，浏览器cache已移到/var/tmp并在旧/tmp路径用符号链接兼容测试；开发依赖/浏览器不在持久工作区。下次做大版本仍先检查128MB，Git检查点用同盘/var/tmp打包+原子交换，避免松散大二进制瞬时超限。
 - 安全注意：Git的GIT_CURL_VERBOSE即使值为0也会开启详细日志；后续认证进程应删除该变量而不是赋0。该次输出中的Authorization已经被Git脱敏，没有密钥写进文件/提交；最终同步只打印返回码和refs。
+
+### 2026-10-17 / v0.7.0-preview 写实室内 + 手动拆袋摆放
+- 用户否定v0.6：冰箱朝向错误、整体仍低级、要求最大化拟真、**不要自动放置**。本轮按此改。
+- 新模块`src/interior.js`（模板标记INTERIOR，在CITY_FILM之后）：包装roomDecorate/worldProduct/syncWorldRoom/roomLight/worldFrame。资源加载可能早于此脚本解析，所以末尾若`R.ready`立即`interiorApply()`。
+- RoundedBoxGeometry的parameters是1×1×1，interiorApply先按包围盒改写parameters再识别旧部件。
+- 交互：`worldTakeFromBag`（E开袋、E取一组、手满拒绝）、`worldPutBack`只放到瞄准的稳定平面；`worldPutBack(false)`不再“放回原处”。测试改用`qaDrop()`清手。
+- 样片入口改为`index.html#sample`（或iframe里`window.CLOSED365_SAMPLE=true`）；不再生成`写实房间样片.html`；ZIP改到`dist/`（gitignore）并作为Release附件。
+- 视觉QA：`tools/qa-views.cjs [seed] [filter]`；`tools/qa-hud.cjs`抓带HUD的CDP截图。**注意：读取刚生成的图片必须等生成命令结束后再读，不要并行。**
+- 新资源：Poly Haven CC0 模型（电炉、搪瓷锅、吊灯、挂钟、扫帚、簸箕）与贴图（地砖、长墙砖、油毡）；墙纸/地毯/胡桃木贴皮为本项目生成贴图，manifest已登记。

@@ -299,10 +299,10 @@ function navRefreshLayout() {
       0.95,
       b + 0.57,
     ]);
-    add("stove", "电炉", w / 2 - 0.65, b + 1.65, "stove", [
-      w / 2 - 0.55,
-      1.02,
-      b + 0.56,
+    add("stove", "电炉", w / 2 - 0.62, b + 1.55, "stove", [
+      w / 2 - 0.36,
+      0.95,
+      b + 0.4,
     ]);
     add("pantry", "储物架", w / 2 - 1.35, 0.2, "pantry", [
       w / 2 - 0.24,
@@ -310,10 +310,11 @@ function navRefreshLayout() {
       0.41,
     ]);
     if (env.fridge)
-      add("fridge", "冰箱前", w / 2 - 0.9, 0.65, "fridge", [
-        w / 2 - 0.53,
-        0.9,
-        -0.27,
+      // Stand in front of the door (it faces into the room), slightly off the hinge side.
+      add("fridge", "冰箱前", w / 2 - 1.55, -0.62, "fridge", [
+        w / 2 - 0.41,
+        0.95,
+        -0.72,
       ]);
     add("bath", "卫生间", w / 2 - 1.1, f - 1.35, "toilet", [
       w / 2 - 0.49,

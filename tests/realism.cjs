@@ -53,7 +53,7 @@ const { chromium } = require("playwright"),
         phase,
         locked: G.tradeLocked,
         canBuy: canPurchase(),
-        unpacked: countPackages(),
+        packed: countPackages(),
       })),
       {
         sample: true,
@@ -61,7 +61,7 @@ const { chromium } = require("playwright"),
         phase: "playing",
         locked: true,
         canBuy: false,
-        unpacked: 0,
+        packed: 100,
       },
     );
     assert.strictEqual(
@@ -118,6 +118,14 @@ const { chromium } = require("playwright"),
       saved,
     );
     await page.evaluate(() => {
+      // Stand-in for the player's manual unpacking (covered step by step in browser.cjs).
+      G.inv.forEach((b) => {
+        if (b.packed) {
+          b.packed = false;
+          b.location = "shelf";
+        }
+      });
+      syncRoom();
       const book = G.inv.find((b) => DB[b.id].kind === "book");
       worldEquip(book.uid);
     });
@@ -128,7 +136,7 @@ const { chromium } = require("playwright"),
     );
     // A trigger box above the mattress must not make dropped food hover in empty air.
     const place = await page.evaluate(() => {
-      worldPutBack(false);
+      { const b = W.held && G.inv.find((x) => x.uid === W.held.uid); if (b) { b.location = "room"; b.pose = [0, 0, 0.6, 0]; } W.held = null; G.heldUID = null; }
       worldEquip(G.inv.find((b) => b.id === "fish").uid);
       const uid = W.held.uid;
       camera.position.copy(
@@ -195,10 +203,11 @@ const { chromium } = require("playwright"),
     await host.setContent(
       '<iframe id="game" sandbox="allow-scripts" style="width:1100px;height:730px;border:0"></iframe>',
     );
-    let html = fs.readFileSync("写实房间样片.html", "utf8");
+    // index.html#sample replaced the separate sample file; srcdoc has no hash, so use the same switch.
+    let html = fs.readFileSync("index.html", "utf8");
     html = html.replace(
       "<head>",
-      "<head><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'none';\">",
+      "<head><script>window.CLOSED365_SAMPLE = true;</script><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'none';\">",
     );
     await host.locator("#game").evaluate((el, html) => {
       el.srcdoc = html;

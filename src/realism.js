@@ -1052,7 +1052,7 @@ function roomStartSample() {
   cart = { ...YEAR_KIT };
   storeLegacyBegin();
   G.curtains = false;
-  unpackBag(0, true);
+  // Nothing is sorted for the player: the bags wait at the door to be opened and placed by hand.
   syncRoom();
   camera.position.copy(
     roomRoot.localToWorld(new THREE.Vector3(0.45, 1.62, 2.12)),
@@ -1065,7 +1065,7 @@ function roomStartSample() {
   renderer.shadowMap.needsUpdate = true;
   sceneDirty = true;
   showToast(
-    "独立房间样片：已用开局预算购入并拆好全年物资，之后不能再买。不覆盖正式存档。",
+    "独立房间样片：全年物资已买好，袋子在门边。亲手拆袋，一件件放到架子、冰箱或桌上。不覆盖正式存档。",
     "info",
   );
   return true;

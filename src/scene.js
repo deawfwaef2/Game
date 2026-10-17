@@ -463,8 +463,10 @@ function buildRoom(e) {
   );
   addBox(0.35, 0.015, 0.04, w / 2 - 0.55, 1.31, back + 0.11, metal);
   if (e.fridge) {
-    const fridge = mark(groupAt(w / 2 - 0.53, 0, -0.67), "fridge");
-    addBox(0.82, 1.55, 0.7, 0, 0.81, 0, material("#b9bda8"), fridge, true);
+    // Side against the right wall, door facing into the room (the v0.6 fridge faced the counter).
+    const fridge = mark(groupAt(w / 2 - 0.41, 0, -0.72), "fridge");
+    fridge.rotation.y = -Math.PI / 2;
+    addBox(0.62, 1.5, 0.64, 0, 0.75, 0, material("#b9bda8"), fridge, true);
     addBox(0.76, 0.39, 0.055, 0, 1.33, 0.38, cream, fridge);
     addBox(0.76, 1.02, 0.055, 0, 0.61, 0.38, cream, fridge);
     addBox(0.025, 0.24, 0.055, -0.28, 1.24, 0.43, metal, fridge);
@@ -708,9 +710,13 @@ function syncRoom() {
   );
   clearGroup(bagRoot);
   const unopened = state
-    ? state.bags.filter((b) => !b.opened)
+    ? bagsAtDoor()
     : [{ id: 0 }, { id: 1 }, { id: 2 }];
-  for (let i = 0; i < Math.min(7, unopened.length); i++) {
+  for (let i = 0; i < Math.min(typeof interiorBag === "function" ? 18 : 7, unopened.length); i++) {
+    if (typeof interiorBag === "function" && typeof R !== "undefined" && R.ready) {
+      interiorBag(bagRoot, unopened[i], i, state);
+      continue;
+    }
     const b = groupAt(
       (i % 3) * 0.27 - 0.25,
       0,

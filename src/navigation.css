@@ -181,3 +181,18 @@ body.nav-street #worldHint {
     backdrop-filter: none;
   }
 }
+/* v0.7: in street mode the bottom arrow owns the lower centre; lift captions above it. */
+body.nav-street #worldSubtitle {
+  bottom: 158px;
+}
+body.nav-street #worldFocus {
+  bottom: 196px;
+}
+@media (max-width: 760px) {
+  body.nav-street #worldSubtitle {
+    bottom: 136px;
+  }
+  body.nav-street #worldFocus {
+    bottom: 170px;
+  }
+}

@@ -6,3 +6,7 @@ tests/artifacts/
 .env
 .env.*
 *.log
+
+dist/
+Game-playable.zip
+写实房间样片.html

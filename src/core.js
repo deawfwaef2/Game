@@ -285,8 +285,17 @@ function beginGame() {
   return true;
 }
 
+// Bags/crates that still physically hold something at the door (opened or not).
+function bagsAtDoor() {
+  if (!G) return [];
+  const full = new Set(
+    G.inv.filter((x) => x.packed && x.units > 0).map((x) => x.bag),
+  );
+  return G.bags.filter((b) => full.has(b.id));
+}
+// Rule-panel fallback (no WebGL) only. The 3D room never sorts items for the player.
 function unpackBag(index, all = false) {
-  const targets = G.bags.filter((b) => !b.opened && (all || b.id === index));
+  const targets = bagsAtDoor().filter((b) => all || b.id === index);
   if (!targets.length) return notify("这些袋子已经拆开了。");
   for (const bag of targets) {
     bag.opened = true;
@@ -303,7 +312,7 @@ function unpackBag(index, all = false) {
   }
   advanceTime(Math.min(90, targets.length * 2), "unpack");
   logEvent(
-    `拆开了${targets.length}袋物资。易坏食材${env.fridge ? "已自动冷藏" : "放入阴凉处，请优先食用"}。`,
+    `拆开了${targets.length}袋物资，逐件归到${env.fridge ? "冰箱和" : ""}储物处。`,
     "good",
   );
   saveGame(false);
@@ -1152,7 +1161,7 @@ function validateSave(s) {
           !b.pose.every(Number.isFinite) ||
           Math.abs(b.pose[0]) > expected.w / 2 ||
           b.pose[1] < 0 ||
-          b.pose[1] > 1.5 ||
+          b.pose[1] > 2 ||
           Math.abs(b.pose[2]) > expected.d / 2 ||
           Math.abs(b.pose[3]) > 10000)
       )

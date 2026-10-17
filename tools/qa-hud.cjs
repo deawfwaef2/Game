@@ -1,0 +1,20 @@
+const { chromium } = require("playwright"), path = require("path"), fs = require("fs");
+(async () => {
+  const b = await chromium.launch({ args: ["--no-sandbox", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"] });
+  const p = await b.newPage({ viewport: { width: 1280, height: 800 } });
+  await p.goto("file://" + path.resolve("index.html") + "#sample", { timeout: 90000 });
+  await p.evaluate(() => ROOM_READY);
+  await p.waitForTimeout(1500);
+  await p.evaluate(() => { const bag = bagRoot.children[2]; const pt = new THREE.Box3().setFromObject(bag).getCenter(new THREE.Vector3());
+    camera.position.copy(roomRoot.localToWorld(new THREE.Vector3(0.55, 1.62, env.d/2 - 2.2))); camera.lookAt(pt); lookYaw = camera.rotation.y; lookPitch = camera.rotation.x; worldUpdateTarget(); });
+  await p.waitForTimeout(800);
+  const c = await p.context().newCDPSession(p);
+  let r = await c.send("Page.captureScreenshot", { format: "jpeg", quality: 85 });
+  fs.writeFileSync("tests/artifacts/views/20-hud-bag.jpg", Buffer.from(r.data, "base64"));
+  await p.keyboard.press("e"); await p.waitForFunction(() => !W.busy && G.bags.some(b=>b.opened), null, {timeout: 60000}); console.log(await p.evaluate(() => ({ busy: W.busy && W.busy.label, opened: G.bags.filter(b=>b.opened).length, t: targetId, toast: document.querySelector("#toast")?.textContent, paused, mode: typeof navMode !== "undefined" ? navMode : "" })));
+  await p.keyboard.press("e"); await p.waitForFunction(() => !!W.held, null, {timeout: 60000}); await p.waitForTimeout(3000);
+  r = await c.send("Page.captureScreenshot", { format: "jpeg", quality: 85 });
+  fs.writeFileSync("tests/artifacts/views/21-hud-held.jpg", Buffer.from(r.data, "base64"));
+  console.log(await p.evaluate(() => ({ held: W.held, target: targetId })));
+  await b.close();
+})();

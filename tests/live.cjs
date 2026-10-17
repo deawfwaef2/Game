@@ -71,10 +71,15 @@ const assert = require("assert"),
       worldUpdateTarget();
     });
     assert.ok((await page.evaluate(() => targetId)).startsWith("bag:"));
-    await page.keyboard.press("Shift+E");
-    await page.waitForFunction(() => countPackages() === 0, null, {
+    // Live frames: E unties the bag (timed action), E again lifts one group into the hand.
+    const before = await page.evaluate(() => countPackages());
+    await page.keyboard.press("e");
+    await page.waitForFunction(() => G.bags.some((b) => b.opened) && !W.busy, null, {
       timeout: 20000,
     });
+    await page.keyboard.press("e");
+    await page.waitForFunction(() => !!W.held, null, { timeout: 20000 });
+    assert.ok((await page.evaluate(() => countPackages())) < before);
     assert.strictEqual(await page.evaluate(() => panelType), "");
     assert.strictEqual(await page.evaluate(() => validateSave(G)), true);
     assert.deepStrictEqual(errors, []);

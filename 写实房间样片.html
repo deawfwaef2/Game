@@ -11422,7 +11422,7 @@ function initWorldDOM() {
     <label>读取存档<input type="file" class="import-input" accept=".json,application/json" hidden></label>
     <button id="worldReturnTitle">保存并回到门外</button>
     <div class="world-pause-small"><button id="worldLock">锁定鼠标</button><button id="worldShadows">开关阴影</button><button id="worldSound">开关声音</button></div>
-    <p id="worldPauseNotice" role="status" aria-live="polite"></p><p>WASD走动 · 拖动环顾 · E交互 · 左键使用手中物品<br>R放置/放回 · Tab手记 · 床边滚轮调睡眠 · Shift+E辅助动作<br>日常在场景里完成。时间推进仍会在危险或敲门时停下。<br>离线版 ${VERSION} · 旧v3存档仍可读取</p>
+    <p id="worldPauseNotice" role="status" aria-live="polite"></p><p>WASD走动 · 拖动环顾 · E交互 · 左键使用手中物品<br>R放置/放回 · Tab手记 · 床边滚轮调睡眠 · Shift+E辅助动作<br>V切换自由/定点；定点模式点四边箭头走路，途中可停。<br>日常在场景里完成。时间推进仍会在危险或敲门时停下。<br>离线版 ${VERSION} · 旧v3存档仍可读取</p>
   </div></section>`;
   document.body.insertAdjacentHTML("beforeend", html);
   $("#worldResume").onclick = () => worldPause(false);
@@ -11536,7 +11536,7 @@ if (W.enabled) {
       "help",
       "让房间成为操作界面。",
       "PHYSICAL PLAY / OFFLINE EDITION",
-      `<p class="help-paragraph">WASD走动，按住画面拖动视角。走到货架前对准商品按E拿入篮中，R放回一件；门边的配给箱可快速登记整套物资。到机械收银台按E付款。商品价格、重量、份数和保质期会在你看向它时显示。</p>
+      `<p class="help-paragraph">V或右上角按钮切换自由/定点移动；手机默认定点。四边箭头点一下自动走到标注地点，途中可停，到位后仍需E交互；拖动可环顾，不会自动购买或使用物品。Esc可关胶片画面。</p><p class="help-paragraph">WASD走动，按住画面拖动视角。走到货架前对准商品按E拿入篮中，R放回一件；门边的配给箱可快速登记整套物资。到机械收银台按E付款。商品价格、重量、份数和保质期会在你看向它时显示。</p>
     <p class="help-paragraph">回房后，E拆开门边的袋子，Shift+E连续整理。到储物架前拿食物；需要烹煮的主食先拿到炉边。左键使用手中物品，R对准桌面放置，或放回架子。书拿在手里读，不弹消遣菜单。</p>
     <p class="help-paragraph">床边滚轮或↑↓调整睡眠小时，E躺下。卫生间E小便、Shift+E大便；花洒E洗澡；柜门打开后E取换洗衣物，洗衣盆E洗衣。扫帚、指甲刀、理发剪、牙刷都是可直接使用的实物。Shift+E是看向物体时提示的辅助动作。</p>
     <p class="help-paragraph">Tab翻开实体手记，滚轮翻页，查看完整身体状态、物资、水电和日志。T抬腕看表。Esc只打开必要的暂停/存档。手机使用摇杆和右侧交互、辅助、使用、放回按钮。</p>
@@ -14556,5 +14556,5 @@ worldBuildStore = function () {
 };
 
     </script>
-  <script>ROOM_READY.then(function(){if(R.ready)roomStartSample();});</script></body>
+  <script>ROOM_READY.then(function(){if(R.ready){roomStartSample();navSetMode('street',false);worldFrame(performance.now(),.016);}});</script></body>
 </html>

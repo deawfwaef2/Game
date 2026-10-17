@@ -29,7 +29,7 @@ assert len(html.encode())<20_000_000
 # Never expose a partially written/uncompiled root entry point.
 tmp=ROOT/'index.html.tmp';tmp.write_text(html);tmp.replace(ROOT/'index.html')
 # A separate self-contained entry opens the sample immediately, without touching the saved run.
-sample=html.replace('</body>',"<script>ROOM_READY.then(function(){if(R.ready)roomStartSample();});</script></body>")
+sample=html.replace('</body>',"<script>ROOM_READY.then(function(){if(R.ready){roomStartSample();navSetMode('street',false);worldFrame(performance.now(),.016);}});</script></body>")
 sample_tmp=ROOT/'写实房间样片.html.tmp';sample_tmp.write_text(sample);sample_tmp.replace(ROOT/'写实房间样片.html')
 zip_tmp=ROOT/'Game-playable.zip.tmp'
 with ZipFile(zip_tmp,'w',ZIP_DEFLATED,compresslevel=8) as z:

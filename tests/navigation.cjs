@@ -234,6 +234,23 @@ const { chromium } = require("playwright"),
     await page.locator("#filmToggle").tap();
     assert.strictEqual(await page.evaluate(() => C.film), false);
     await page.locator("#worldResume").tap();
+    const cold = await page.evaluate(() => {
+      saveGame(false);
+      return { minute: G.minute, position: G.position };
+    });
+    await page.reload({ waitUntil: "domcontentloaded", timeout: 60000 });
+    await page.evaluate(() => cancelAnimationFrame(animId));
+    await page.evaluate(() => ROOM_READY);
+    assert.strictEqual(await page.evaluate(() => N.mode), "street");
+    assert.strictEqual(await page.evaluate(() => C.film), false);
+    await page.locator("#continueButton").tap();
+    await page.evaluate(() => worldFrame(performance.now(), 0.016));
+    assert.strictEqual(await page.evaluate(() => N.walking), false);
+    assert.strictEqual(await page.evaluate(() => G.minute), cold.minute);
+    assert.deepStrictEqual(
+      await page.evaluate(() => camera.position.toArray()),
+      cold.position.slice(0, 3),
+    );
     const beforeLive = await page.evaluate(() => {
       navStop(false);
       navRefreshLayout();

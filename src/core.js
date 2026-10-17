@@ -1089,16 +1089,26 @@ function validateSave(s) {
       return false;
     // Optional v0.4 physical placements. Older v3 saves omit these fields.
     for (const b of s.inv) {
-      if (b.pose !== undefined && b.pose !== null &&
-          (!Array.isArray(b.pose) || b.pose.length !== 4 ||
-           !b.pose.every(Number.isFinite) ||
-           Math.abs(b.pose[0]) > expected.w / 2 ||
-           b.pose[1] < 0 || b.pose[1] > 1.5 ||
-           Math.abs(b.pose[2]) > expected.d / 2 ||
-           Math.abs(b.pose[3]) > 10000)) return false;
+      if (
+        b.pose !== undefined &&
+        b.pose !== null &&
+        (!Array.isArray(b.pose) ||
+          b.pose.length !== 4 ||
+          !b.pose.every(Number.isFinite) ||
+          Math.abs(b.pose[0]) > expected.w / 2 ||
+          b.pose[1] < 0 ||
+          b.pose[1] > 1.5 ||
+          Math.abs(b.pose[2]) > expected.d / 2 ||
+          Math.abs(b.pose[3]) > 10000)
+      )
+        return false;
     }
-    if (s.heldUID !== undefined && s.heldUID !== null &&
-        (typeof s.heldUID !== "string" || !/^i[a-z0-9]{3,24}$/.test(s.heldUID))) return false;
+    if (
+      s.heldUID !== undefined &&
+      s.heldUID !== null &&
+      (typeof s.heldUID !== "string" || !/^i[a-z0-9]{3,24}$/.test(s.heldUID))
+    )
+      return false;
     if (
       !Array.isArray(s.bags) ||
       s.bags.length > 10000 ||

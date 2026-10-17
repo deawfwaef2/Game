@@ -20,7 +20,10 @@ assert len(html.encode())<4_000_000
 tmp=ROOT/'index.html.tmp';tmp.write_text(html);tmp.replace(ROOT/'index.html')
 zip_tmp=ROOT/'Game-playable.zip.tmp'
 with ZipFile(zip_tmp,'w',ZIP_DEFLATED,compresslevel=8) as z:
-    for name in ['index.html','README.md','DESIGN.md','HANDOFF.md','tests/RESULTS.md','src/vendor/THREE-LICENSE.txt']:
+    names=['index.html','README.md','DESIGN.md','HANDOFF.md','tests/RESULTS.md','tools/build.py']
+    names += [str(p.relative_to(ROOT)) for p in sorted(SRC.rglob('*')) if p.is_file()]
+    names += [str(p.relative_to(ROOT)) for p in sorted((ROOT/'tests').glob('*.cjs'))]
+    for name in dict.fromkeys(names):
         f=ROOT/name
         if f.exists():z.write(f,name)
 zip_tmp.replace(ROOT/'Game-playable.zip')

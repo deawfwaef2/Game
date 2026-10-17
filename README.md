@@ -83,8 +83,10 @@ npm --prefix /tmp/closed365-qa install playwright
 PLAYWRIGHT_BROWSERS_PATH=/tmp/closed365-browsers /tmp/closed365-qa/node_modules/.bin/playwright install chromium
 # Linux缺库时另运行 playwright install-deps chromium
 NODE_PATH=/tmp/closed365-qa/node_modules PLAYWRIGHT_BROWSERS_PATH=/tmp/closed365-browsers node tests/browser.cjs
+# 可选：单独验证实际活动RAF循环（CI降低分辨率/关闭阴影，不重设生存数值）
+NODE_PATH=/tmp/closed365-qa/node_modules PLAYWRIGHT_BROWSERS_PATH=/tmp/closed365-browsers node tests/live.cjs
 ```
 
-0.4浏览器回归正在从旧按钮流程迁移到实物射线/按键流程，验收以 `tests/RESULTS.md` 中明确标注的版本为准。不要拿0.3.1旧面板测试冒充0.4新交互测试。
+0.4浏览器回归已改成实物射线/按键流程，不再依赖旧面板按钮。测试方法、已通过项目与软件GPU截图限制见 `tests/RESULTS.md`。离线ZIP同时附带模块化源码，方便在无法推送GitHub时仍保存完整开发成果。
 
 Three.js r160.1采用MIT许可，见 `src/vendor/THREE-LICENSE.txt`。工作区请保持128MB以内，浏览器、依赖和测试产物不要提交。

@@ -1,7 +1,12 @@
-// Focused offline/mobile/storage smoke. Run with NODE_PATH and browser path in README.
+// v0.4 physical-world regression. No dependence on retired daily-panel buttons.
+// Software-GPU CI uses production raycasts/input handlers with manually stepped animation.
 const { chromium } = require("playwright");
 const assert = require("assert"),
-  fs = require("fs");
+  fs = require("fs"),
+  path = require("path");
+const fileURL = "file://" + path.resolve("index.html");
+const artifacts = path.resolve("tests/artifacts");
+fs.mkdirSync(artifacts, { recursive: true });
 (async () => {
   const browser = await chromium.launch({
     args: [
@@ -11,171 +16,531 @@ const assert = require("assert"),
     ],
   });
   const errors = [];
-  const context = await browser.newContext({
-    viewport: { width: 1280, height: 820 },
-  });
-  let p;
-  try {
-    p = await context.newPage();
+  let requests = 0;
+  let page;
+  const attach = (p) => {
     p.setDefaultTimeout(15000);
     p.on("pageerror", (e) => errors.push(e.message));
-    let network = 0;
     p.on("request", (r) => {
-      if (!r.url().startsWith("file:") && !r.url().startsWith("data:"))
-        network++;
+      if (!/^(file:|data:|blob:)/.test(r.url())) requests++;
     });
-    await p.goto("file://" + process.cwd() + "/index.html");
-    await p.waitForTimeout(400);
-    assert.strictEqual(await p.evaluate(() => fallbackMode), false);
-    console.log("FILE OFFLINE 3D: OK; external requests", network);
-    // Stop the render scheduler for deterministic DOM testing on software GPU CI.
-    // Game actions still execute the same production simulation; manual renders are checked below.
+  };
+  async function boot(p) {
+    attach(p);
+    await p.goto(fileURL, { waitUntil: "domcontentloaded", timeout: 45000 });
     await p.evaluate(() => cancelAnimationFrame(animId));
-    await p.locator("#newGameButton").click();
-    await p.locator("#starterKit").click();
-    await p.locator('[data-category="hygiene"]').click();
-    await p.locator("#shopSearch").fill("指甲");
-    assert.strictEqual(await p.locator(".product-card").count(), 1);
-    await p.locator('[data-product="nailclip"]').click();
-    assert.ok((await p.locator("#panelTitle").textContent()).includes("指甲"));
-    await p.locator("#closePanel").click();
-    await p.locator("#shopSearch").fill("");
-    await p.locator("#checkoutButton").click();
-    await p.evaluate(() => {
-      renderer.render(scene, camera);
-    });
-    await p.locator('[data-ui="room"]').click();
-    await p.locator('[data-station="bags"]').click();
-    await p.locator('[data-unpack="all"]').click();
-    assert.strictEqual(await p.evaluate(() => countPackages()), 0);
-    await p.locator("#closePanel").click();
-    await p.locator('[data-ui="inventory"]').click();
-    const firstFood = p.locator("[data-eat]").first();
-    await firstFood.click();
-    await p.locator("#qteSlow").click();
-    await p.locator('[data-ui="room"]').click();
-    await p.locator('[data-station="sink"]').click();
-    await p.locator('[data-act="drink"]').click();
-    await p.locator('[data-act="fill"]').click();
-    assert.strictEqual(await p.evaluate(() => G.tank), 5);
-    await p.locator("#closePanel").click();
-    await p.locator('[data-ui="time"]').click();
-    await p.locator('[data-hourset="4"]').click();
-    await p.locator("#sleepNow").click();
-    await p.locator('[data-ui="leisure"]').click();
-    await p.locator("[data-book]").first().click();
-    await p.locator("#closePanel").click();
-    console.log(
-      "Real UI: shopping/search/details/unpack/QTE/water/sleep/book OK",
-    );
-    assert.strictEqual(await p.evaluate(() => validateSave(G)), true);
-    await p.evaluate(() => {
-      renderer.render(scene, camera);
-    });
-    console.log(
-      "Post-action WebGL context lost?",
-      await p.evaluate(() => renderer.getContext().isContextLost()),
-    );
-    await p.locator('[data-ui="save"]').click();
-    const download = p.waitForEvent("download");
-    await p.locator('[data-ui="export"]').click();
-    const dl = await download;
-    await dl.saveAs("tests/artifacts/browser-save.json");
-    assert.ok(dl.suggestedFilename().endsWith(".json"));
-    const saved = JSON.parse(
-      fs.readFileSync("tests/artifacts/browser-save.json", "utf8"),
-    );
-    assert.strictEqual(saved.format, "closed365-v3");
-    await p.evaluate(() => {
-      renderer.dispose();
-      renderer.forceContextLoss();
-    });
-    await p.close();
-    p = await context.newPage();
-    p.setDefaultTimeout(30000);
-    p.on("pageerror", (e) => errors.push(e.message));
-    await p.goto("file://" + process.cwd() + "/index.html", {
-      waitUntil: "domcontentloaded",
-      timeout: 45000,
-    });
-    await p.waitForTimeout(400);
-    await p.evaluate(() => cancelAnimationFrame(animId));
-    assert.strictEqual(await p.locator("#continueButton").isDisabled(), false);
-    await p.locator("#continueButton").click();
-    assert.strictEqual(await p.evaluate(() => phase), "playing");
-    await p.evaluate(() => cancelAnimationFrame(animId));
-    console.log("File-origin save/export/reload/continue OK");
-    await p.locator('[data-ui="save"]').click();
+  }
+  async function release(p) {
+    if (!p) return;
     await p
-      .locator("#panel .import-input")
-      .setInputFiles("tests/artifacts/browser-save.json");
-    assert.strictEqual(await p.evaluate(() => phase), "playing");
-    console.log("JSON import OK");
-    await p.evaluate(() => {
-      renderer.dispose();
-      renderer.forceContextLoss();
-    });
+      .evaluate(() => {
+        cancelAnimationFrame(animId);
+        renderer?.dispose();
+        renderer?.forceContextLoss();
+      })
+      .catch(() => {});
     await p.close();
-    p = null;
-    const phone = await browser.newPage({
+  }
+  async function helpers(p) {
+    await p.evaluate(() => {
+      window.qaAim = (id, options = {}) => {
+        scene.updateMatrixWorld(true);
+        let object;
+        roomRoot.traverse((o) => {
+          if (!object && o.userData.interact === id) object = o;
+        });
+        if (!object) throw Error("Physical object missing: " + id);
+        let point = new THREE.Box3()
+          .setFromObject(object)
+          .getCenter(new THREE.Vector3());
+        const product = id.startsWith("buy:")
+          ? id.slice(4)
+          : object.userData.productId;
+        if (product) {
+          let label;
+          object.traverse((m) => {
+            if (
+              !label &&
+              m.isMesh &&
+              m.material === W.productMaterials.get(product)
+            )
+              label = m;
+          });
+          if (label) point = label.getWorldPosition(new THREE.Vector3());
+        }
+        if (id === "shopCheckout") point.set(-3.0, 1.16, 4.58);
+        if (options.at) point.fromArray(options.at);
+        if (options.localAt)
+          point = roomRoot.localToWorld(new THREE.Vector3(...options.localAt));
+        if (options.from) camera.position.fromArray(options.from);
+        else if (options.localFrom)
+          camera.position.copy(
+            roomRoot.localToWorld(new THREE.Vector3(...options.localFrom)),
+          );
+        else {
+          const direction = new THREE.Vector3(0, 0, 1).transformDirection(
+            object.matrixWorld,
+          );
+          camera.position.copy(point).addScaledVector(direction, 1.15);
+          camera.position.y = 1.62;
+        }
+        camera.lookAt(point);
+        lookYaw = camera.rotation.y;
+        lookPitch = camera.rotation.x;
+        camera.updateMatrixWorld(true);
+        worldUpdateTarget();
+        return targetId;
+      };
+      window.qaFinish = () => {
+        if (!W.busy) throw Error("Expected physical action");
+        W.busy.start -= W.busy.seconds * 1000 + 20;
+        worldFrame(performance.now(), 0.1);
+      };
+      window.qaDoors = () => {
+        for (let i = 0; i < 25; i++) worldFrame(performance.now(), 0.1);
+        scene.updateMatrixWorld(true);
+      };
+    });
+  }
+  async function aim(p, id, options = {}, expected = id) {
+    const hit = await p.evaluate(
+      ([id, opts]) => qaAim(id, opts),
+      [id, options],
+    );
+    assert.strictEqual(
+      hit,
+      expected,
+      `center ray should reach ${id}, got ${hit}`,
+    );
+  }
+  async function act(p, key = "e") {
+    await p.keyboard.press(key);
+    await p.evaluate(() => qaFinish());
+    assert.strictEqual(await p.evaluate(() => panelType), "");
+  }
+  try {
+    const context = await browser.newContext({
+      viewport: { width: 1280, height: 820 },
+    });
+    page = await context.newPage();
+    await boot(page);
+    assert.strictEqual(await page.evaluate(() => fallbackMode), false);
+    assert.strictEqual(await page.evaluate(() => W.enabled), true);
+    await page.locator("#newGameButton").click();
+    await helpers(page);
+    assert.strictEqual(await page.evaluate(() => W.shopProducts.length), 129);
+    assert.strictEqual(await page.locator("#shopScreen").isVisible(), false);
+    // Real key handlers drive the same production movement used by the RAF loop.
+    const z = await page.evaluate(() => camera.position.z);
+    await page.keyboard.down("w");
+    await page.evaluate(() => {
+      for (let i = 0; i < 5; i++) freeMovement(0.1);
+    });
+    await page.keyboard.up("w");
+    assert.ok(await page.evaluate((z) => camera.position.z < z - 0.4, z));
+    const yaw = await page.evaluate(() => lookYaw);
+    await page.mouse.move(900, 360);
+    await page.mouse.down();
+    await page.mouse.move(970, 375, { steps: 3 });
+    await page.mouse.up();
+    assert.ok(Math.abs((await page.evaluate(() => lookYaw)) - yaw) > 0.1);
+    await aim(page, "buy:rice");
+    await act(page);
+    assert.strictEqual(await page.evaluate(() => cart.rice), 1);
+    await page.keyboard.press("r");
+    assert.strictEqual(await page.evaluate(() => cart.rice || 0), 0);
+    await page.keyboard.press("Tab");
+    assert.strictEqual(await page.evaluate(() => W.glance), "receipt");
+    assert.strictEqual(
+      await page.evaluate(() => !!W.handModel.userData.canvas),
+      true,
+    );
+    await page.keyboard.press("Tab");
+    await aim(page, "kit:starter", { from: [-5.2, 1.62, 1.6] });
+    await page.keyboard.press("e");
+    assert.strictEqual(
+      await page.evaluate(() => cartSummary(cart).cost),
+      89.39,
+    );
+    assert.strictEqual(
+      await page.evaluate(() => worldCartChange("rice", 100)),
+      false,
+    );
+    await aim(page, "shopCheckout", { from: [-2.8, 1.62, 3.1] });
+    await act(page);
+    assert.strictEqual(await page.evaluate(() => phase), "playing");
+    assert.strictEqual(await page.evaluate(() => G.cash), 210.61);
+    assert.strictEqual(await page.evaluate(() => G.bags.length), 9);
+    console.log(
+      "PASS walkable shop / 129 products / real E-R / budget / 3D receipt / checkout / movement-look",
+    );
+    const front = await page.evaluate(() => env.d / 2),
+      mir = await page.evaluate(() => (env.mirror ? -1 : 1)),
+      width = await page.evaluate(() => env.w);
+    const firstBag = await page.evaluate(
+      () => G.bags.find((b) => !b.opened).id,
+    );
+    await aim(page, "bag:" + firstBag, { from: [0, 1.62, front - 1.6] });
+    await act(page);
+    assert.strictEqual(
+      await page.evaluate(() => G.bags.filter((b) => !b.opened).length),
+      8,
+    );
+    const nextBag = await page.evaluate(() => G.bags.find((b) => !b.opened).id);
+    await aim(page, "bag:" + nextBag, { from: [0, 1.62, front - 1.6] });
+    await act(page, "Shift+E");
+    assert.strictEqual(await page.evaluate(() => countPackages()), 0);
+    const crackerUID = await page.evaluate(
+      () => G.inv.find((b) => b.id === "crackers").uid,
+    );
+    await aim(page, "stock:" + crackerUID);
+    await page.keyboard.press("e");
+    assert.strictEqual(await page.evaluate(() => W.held.id), "crackers");
+    const placedUID = await page.evaluate(() => W.held.uid);
+    await aim(page, "table", {
+      localAt: [-0.7, 0.49, 0.75],
+      localFrom: [-0.7, 1.62, 1.65],
+    });
+    await page.keyboard.press("r");
+    assert.strictEqual(
+      await page.evaluate(
+        (uid) => G.inv.find((b) => b.uid === uid).location,
+        placedUID,
+      ),
+      "table",
+    );
+    assert.strictEqual(
+      await page.evaluate(
+        (uid) => G.inv.find((b) => b.uid === uid).pose.length,
+        placedUID,
+      ),
+      4,
+    );
+    await aim(page, "stock:" + placedUID, { localFrom: [-0.7, 1.62, 1.65] });
+    await page.keyboard.press("e");
+    const portions = await page.evaluate(
+      () => G.inv.find((b) => b.uid === W.held.uid).units,
+    );
+    await act(page, "Space");
+    assert.strictEqual(
+      await page.evaluate(() => G.inv.find((b) => b.uid === W.held.uid).units),
+      portions - 1,
+    );
+    assert.strictEqual(await page.evaluate(() => qte.active), false);
+    assert.strictEqual(
+      await page
+        .locator("#qteLayer")
+        .evaluate((e) => e.classList.contains("visible")),
+      false,
+    );
+    await page.evaluate(() => worldPutBack(false));
+    await aim(page, "sink");
+    await act(page);
+    await act(page, "r");
+    assert.strictEqual(await page.evaluate(() => G.tank), 5);
+    const riceUID = await page.evaluate(
+      () => G.inv.find((b) => b.id === "rice").uid,
+    );
+    await aim(page, "stock:" + riceUID);
+    await page.keyboard.press("e");
+    await page.keyboard.press("Space");
+    assert.strictEqual(await page.evaluate(() => W.busy === null), true);
+    await aim(page, "stove");
+    await act(page);
+    assert.strictEqual(await page.evaluate(() => W.held.prepared), true);
+    await act(page, "Space");
+    const coldUID = await page.evaluate(() => W.held.uid);
+    await aim(page, "fridge", {
+      localAt: [width / 2 - 0.53, 0.9, -0.27],
+      localFrom: [width / 2 - 0.53, 1.62, 0.9],
+    });
+    await page.keyboard.press("e");
+    await page.evaluate(() => qaDoors());
+    assert.strictEqual(await page.evaluate(() => W.doors.fridge.open), true);
+    await page.keyboard.press("r");
+    assert.strictEqual(
+      await page.evaluate(
+        (uid) => G.inv.find((b) => b.uid === uid).location,
+        coldUID,
+      ),
+      "fridge",
+    );
+    await aim(page, "stock:" + coldUID, {
+      localFrom: [width / 2 - 0.76, 1.62, 1.25],
+    });
+    await page.keyboard.press("e");
+    assert.strictEqual(await page.evaluate(() => W.held.uid), coldUID);
+    await page.evaluate(() => worldPutBack(false));
+    console.log(
+      "PASS individual bags / Shift+E unpack / physical take-place-retake / meal without modal / water / cooking / refrigerator door and storage",
+    );
+    const bookUID = await page.evaluate(
+      () => G.inv.find((b) => DB[b.id].kind === "book").uid,
+    );
+    await aim(page, "stock:" + bookUID, {
+      localFrom: [-0.68, 1.62, -front + 1.55],
+    });
+    await page.keyboard.press("e");
+    assert.strictEqual(await page.evaluate(() => W.held.type), "book");
+    await act(page, "Space");
+    assert.ok(await page.evaluate(() => G.books[W.held.id].pages > 0));
+    if (process.env.QA_SCREENSHOTS) {
+      // Read the canvas directly: SwiftShader's page compositor can stall after RAF is stopped.
+      const png = await Promise.race([
+        page.evaluate(() => {
+          renderer.render(scene, camera);
+          return renderer.domElement.toDataURL("image/png");
+        }),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(Error("CI canvas readback timeout")), 12000),
+        ),
+      ]);
+      fs.writeFileSync(
+        path.join(artifacts, "v0.4-handheld-book.png"),
+        Buffer.from(png.split(",")[1], "base64"),
+      );
+    }
+    await page.keyboard.press("r");
+    await aim(page, "wardrobe", {
+      localAt: [-width / 2 + 1.65, 0.9, front - 0.68],
+      localFrom: [-width / 2 + 1.65, 1.62, front - 1.95],
+    });
+    await page.keyboard.press("e");
+    await page.evaluate(() => qaDoors());
+    assert.strictEqual(await page.evaluate(() => W.doors.wardrobe.open), true);
+    await aim(page, "changeclothes", {
+      localFrom: [-width / 2 + 1.65, 1.62, front - 1.95],
+    });
+    await act(page);
+    assert.strictEqual(await page.evaluate(() => G.dirtyClothes), 1);
+    await aim(page, "laundry", {
+      localFrom: [width / 2 - 1.0, 1.62, front - 1.6],
+    });
+    await act(page);
+    assert.strictEqual(await page.evaluate(() => G.dirtyClothes), 0);
+    await aim(page, "toilet", {
+      localFrom: [width / 2 - 0.49, 1.62, front - 1.5],
+    });
+    await act(page);
+    await act(page, "Shift+E");
+    assert.ok(await page.evaluate(() => G.bladder < 2 && G.bowel < 2));
+    await aim(page, "shower", {
+      localAt: [width / 2 - 1.61, 1.91, front - 0.42],
+      localFrom: [width / 2 - 1.12, 1.62, front - 1.75],
+    });
+    await act(page);
+    await aim(page, "bed", {
+      localAt: [-width / 2 + 0.9, 0.59, -0.15],
+      localFrom: [-0.3, 1.62, -0.15],
+    });
+    await page.keyboard.press("ArrowUp");
+    assert.strictEqual(await page.evaluate(() => W.sleepHours), 9);
+    for (let i = 0; i < 5; i++) await page.keyboard.press("ArrowDown");
+    assert.strictEqual(await page.evaluate(() => W.sleepHours), 4);
+    const before = await page.evaluate(() => G.minute);
+    await act(page);
+    assert.ok(
+      await page.evaluate((before) => G.minute >= before + 239, before),
+    );
+    await page.keyboard.press("Tab");
+    assert.strictEqual(await page.evaluate(() => W.glance), "notebook");
+    await page.evaluate(() => worldWheel(1));
+    assert.strictEqual(await page.evaluate(() => W.page), 1);
+    await page.keyboard.press("Tab");
+    await page.keyboard.press("t");
+    assert.strictEqual(await page.evaluate(() => W.glance), "watch");
+    await page.keyboard.press("t");
+    console.log(
+      "PASS physical book progress / cabinet-clothes / laundry / toilet / shower / bed-side duration / notebook / wristwatch",
+    );
+    // Persist a deliberately placed real prop through both local save and JSON export/import.
+    const foodUID = await page.evaluate(
+      () => G.inv.find((b) => b.id === "crackers").uid,
+    );
+    await aim(page, "stock:" + foodUID);
+    await page.keyboard.press("e");
+    await aim(page, "table", {
+      localAt: [-0.7, 0.49, 0.75],
+      localFrom: [-0.7, 1.62, 1.65],
+    });
+    await page.keyboard.press("r");
+    const pose = await page.evaluate(
+      () => G.inv.find((b) => Array.isArray(b.pose)).pose,
+    );
+    assert.strictEqual(await page.evaluate(() => validateSave(G)), true);
+    assert.strictEqual(
+      await page.evaluate(() => {
+        const s = JSON.parse(JSON.stringify(G));
+        s.inv.find((b) => b.pose).pose[0] = 100000;
+        return validateSave(s);
+      }),
+      false,
+    );
+    assert.strictEqual(
+      await page.evaluate(() => {
+        const s = JSON.parse(JSON.stringify(G));
+        s.inv.find((b) => b.pose).pose[1] = NaN;
+        return validateSave(s);
+      }),
+      false,
+    );
+    await page.keyboard.press("Escape");
+    assert.strictEqual(await page.locator("#worldPause").isVisible(), true);
+    await page.locator("#worldSaveNow").click();
+    const download = page.waitForEvent("download");
+    await page.locator("#worldExport").click();
+    const dl = await download;
+    const savePath = path.join(artifacts, "physical-save.json");
+    await dl.saveAs(savePath);
+    assert.strictEqual(
+      JSON.parse(fs.readFileSync(savePath, "utf8")).format,
+      "closed365-v3",
+    );
+    await release(page);
+    page = await context.newPage();
+    await boot(page);
+    await page.locator("#continueButton").click();
+    await helpers(page);
+    assert.strictEqual(await page.evaluate(() => phase), "playing");
+    assert.deepStrictEqual(
+      await page.evaluate(() => G.inv.find((b) => Array.isArray(b.pose)).pose),
+      JSON.parse(JSON.stringify(pose)),
+    );
+    await page.keyboard.press("Escape");
+    await page.locator("#worldPause .import-input").setInputFiles(savePath);
+    // FileReader is asynchronous; wait for the actual import, not the pre-existing playing phase.
+    await page
+      .locator("#worldPause")
+      .waitFor({ state: "hidden", timeout: 15000 });
+    assert.strictEqual(await page.evaluate(() => phase), "playing");
+    assert.strictEqual(await page.locator("#worldPause").isVisible(), false);
+    // Existing v3 JSON does not need any new interaction fields.
+    assert.strictEqual(
+      await page.evaluate(() => {
+        const s = JSON.parse(JSON.stringify(G));
+        delete s.heldUID;
+        s.inv.forEach((b) => delete b.pose);
+        return validateSave(s);
+      }),
+      true,
+    );
+    console.log(
+      "PASS safe placements / reject invalid coordinates / local continue / JSON export-import / old v3 compatibility",
+    );
+    await helpers(page);
+    await aim(page, "door", {
+      localAt: [-0.35, 1.4, front - 0.16],
+      localFrom: [-0.35, 1.62, front - 1.45],
+    });
+    const supply = await page.evaluate(() => ({
+      minute: G.minute,
+      cash: G.cash,
+      pose: legacyUI.getPlayerPosition(),
+      suspicion: G.suspicion,
+    }));
+    await page.keyboard.press("Shift+E");
+    assert.strictEqual(
+      await page.evaluate(() => worldIsShopping() && restock),
+      true,
+    );
+    await aim(page, "buy:bread");
+    await act(page);
+    const cost = await page.evaluate(() => cartSummary(cart, restock).cost);
+    await aim(page, "shopCheckout", { from: [-2.8, 1.62, 3.1] });
+    await act(page);
+    assert.strictEqual(
+      await page.evaluate(() => G.cash),
+      Math.round((supply.cash - cost) * 100) / 100,
+    );
+    assert.ok(await page.evaluate((m) => G.minute >= m + 119, supply.minute));
+    assert.ok(
+      await page.evaluate((s) => G.suspicion >= s + 3.9, supply.suspicion),
+    );
+    assert.deepStrictEqual(
+      await page.evaluate(() => getPlayerPosition()),
+      supply.pose,
+    );
+    console.log(
+      "PASS physical underground supply abstraction / cash / 2h delivery / risk / original room pose",
+    );
+    await release(page);
+    page = null;
+    await context.close();
+    // Touch controls remain usable without hidden grid/panel interactions.
+    page = await browser.newPage({
       viewport: { width: 390, height: 844 },
       isMobile: true,
       hasTouch: true,
     });
-    p = phone;
-    p.setDefaultTimeout(15000);
-    p.on("pageerror", (e) => errors.push(e.message));
-    await p.goto("file://" + process.cwd() + "/index.html");
-    await p.waitForTimeout(400);
-    await p.evaluate(() => cancelAnimationFrame(animId));
-    console.log(
-      "Mobile title overflow",
-      await p.evaluate(() => document.documentElement.scrollWidth > innerWidth),
-    );
+    await boot(page);
+    await helpers(page);
     assert.strictEqual(
-      await p.evaluate(() => document.documentElement.scrollWidth > innerWidth),
+      await page.evaluate(
+        () => document.documentElement.scrollWidth > innerWidth,
+      ),
       false,
     );
-    await p.screenshot({
-      path: "tests/artifacts/mobile-title.png",
-      timeout: 15000,
+    await page.locator("#newGameButton").click();
+    await aim(page, "kit:starter", { from: [-5.2, 1.62, 1.6] });
+    await page.locator("#mobileInteract").tap();
+    await aim(page, "shopCheckout", { from: [-2.8, 1.62, 3.1] });
+    await page.locator("#mobileInteract").tap();
+    await page.evaluate(() => qaFinish());
+    await aim(page, "bag:0", { from: [0, 1.62, front - 1.6] });
+    await page.locator('[data-world="shift"]').tap();
+    await page.evaluate(() => qaFinish());
+    assert.strictEqual(await page.evaluate(() => countPackages()), 0);
+    await page.locator('[data-world="note"]').tap();
+    assert.strictEqual(await page.evaluate(() => W.glance), "notebook");
+    await page.locator('[data-world="up"]').tap();
+    assert.strictEqual(await page.evaluate(() => W.page), 299);
+    await page.locator('[data-world="note"]').tap();
+    await page.locator("#worldPauseButton").tap();
+    await page.locator("#worldResume").tap();
+    assert.strictEqual(await page.evaluate(() => paused), false);
+    assert.strictEqual(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth > innerWidth,
+      ),
+      false,
+    );
+    await release(page);
+    page = null;
+    console.log(
+      "PASS 390x844 touch shop / unpack / physical notebook / pause / no overflow",
+    );
+    // Explicitly disable WebGL: preserve the accessible legacy survival fallback.
+    page = await browser.newPage({ viewport: { width: 1000, height: 800 } });
+    await page.addInitScript(() => {
+      const original = HTMLCanvasElement.prototype.getContext;
+      HTMLCanvasElement.prototype.getContext = function (type, ...args) {
+        if (/webgl/i.test(type)) return null;
+        return original.call(this, type, ...args);
+      };
     });
-    await p.locator("#newGameButton").click();
-    await p.locator("#starterKit").click();
-    await p.screenshot({
-      path: "tests/artifacts/mobile-shop.png",
-      timeout: 15000,
-    });
-    await p.locator("#checkoutButton").click();
-    await p.evaluate(() => {
-      renderer.render(scene, camera);
-    });
-    await p.locator('[data-ui="room"]').click();
-    await p.locator('[data-station="bags"]').click();
-    await p.locator('[data-unpack="all"]').click();
-    await p.locator("#closePanel").click();
-    await p.evaluate(() => {
-      paused = true;
-      $("#pauseBanner").hidden = false;
-    });
-    await p.locator("#pauseBanner").click();
-    assert.strictEqual(await p.evaluate(() => paused), false);
-    console.log("Mobile checkout/unpack/tap-to-resume OK");
-    await p.evaluate(() => cancelAnimationFrame(animId));
-    await p.close();
-    p = null;
+    await boot(page);
+    assert.strictEqual(await page.evaluate(() => fallbackMode), true);
+    assert.strictEqual(await page.evaluate(() => W.enabled), false);
+    await page.locator("#newGameButton").click();
+    await page.locator("#starterKit").click();
+    await page.locator("#checkoutButton").click();
+    await page.locator('[data-ui="room"]').click();
+    await page.locator('[data-station="bags"]').click();
+    await page.locator('[data-unpack="all"]').click();
+    assert.strictEqual(await page.evaluate(() => countPackages()), 0);
+    await release(page);
+    page = null;
+    console.log("PASS forced no-WebGL fallback still playable");
+    assert.strictEqual(requests, 0);
     assert.deepStrictEqual(errors, []);
-    console.log("BROWSER TESTS PASSED; JS errors = 0");
+    console.log(
+      "ALL PHYSICAL BROWSER TESTS PASSED; external requests=0; JS errors=0",
+    );
   } finally {
-    if (p) {
-      await p.evaluate(() => cancelAnimationFrame(animId)).catch(() => {});
-      await p.close().catch(() => {});
-    }
+    if (page) await release(page).catch(() => {});
     await browser.close();
   }
-})()
-  .then(() => process.exit(0))
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  });
+})().catch((e) => {
+  console.error(e.stack);
+  process.exitCode = 1;
+});

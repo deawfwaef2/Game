@@ -822,7 +822,7 @@ function syncRoom() {
         blade.rotation.z = i * 2.094;
       }
     }
-    if (has("shelf")) {
+    if (has("shelf") && !(typeof W !== "undefined" && W.enabled)) {
       const g = groupAt(env.w / 2 - 0.25, 0, 0.55, decorRoot);
       for (const y of [0.15, 0.55, 0.95, 1.35])
         addBox(0.4, 0.04, 0.8, 0, y, 0, sceneMats.wood, g);
@@ -844,7 +844,7 @@ function syncRoom() {
         m.rotation.y = i;
       }
     }
-    const tableFood = state.inv
+    const tableFood = (typeof W !== "undefined" && W.enabled ? [] : state.inv)
       .filter((b) => !b.packed && b.location === "table" && b.units > 0)
       .slice(0, 4);
     tableFood.forEach((b, i) => {
@@ -891,7 +891,8 @@ function getPlayerPosition() {
     : null;
 }
 function canMove(x, z) {
-  const bw = typeof worldBounds === "function" ? worldBounds() : {w:env.w,d:env.d};
+  const bw =
+    typeof worldBounds === "function" ? worldBounds() : { w: env.w, d: env.d };
   if (
     x < -bw.w / 2 + 0.22 ||
     x > bw.w / 2 - 0.22 ||
@@ -911,8 +912,22 @@ function canMove(x, z) {
   );
 }
 function freeMovement(dt) {
+  // Head movement remains responsive while hands are busy. Only walking is locked.
   if (
-    !(phase === "playing" || (typeof worldIsShopping === "function" && worldIsShopping())) ||
+    typeof worldIsBusy === "function" &&
+    worldIsBusy() &&
+    !paused &&
+    !panelType
+  ) {
+    camera.rotation.set(lookPitch, lookYaw, 0);
+    camera.position.y = worldEyeHeight();
+    return;
+  }
+  if (
+    !(
+      phase === "playing" ||
+      (typeof worldIsShopping === "function" && worldIsShopping())
+    ) ||
     (typeof worldIsBusy === "function" && worldIsBusy()) ||
     paused ||
     panelType ||
@@ -942,7 +957,8 @@ function freeMovement(dt) {
   }
   camera.rotation.set(lookPitch, lookYaw, 0);
   camera.position.y =
-    (typeof worldEyeHeight === "function" ? worldEyeHeight() : 1.62) + (len > 0 ? Math.sin(performance.now() * 0.008) * 0.006 : 0);
+    (typeof worldEyeHeight === "function" ? worldEyeHeight() : 1.62) +
+    (len > 0 ? Math.sin(performance.now() * 0.008) * 0.006 : 0);
 }
 function updateTarget() {
   if (!renderer || phase !== "playing" || panelType || paused) {
@@ -1049,7 +1065,17 @@ function initScene() {
     buildRoom(env);
     setCinematic();
     canvas.addEventListener("pointerdown", (e) => {
-      if (e.target !== canvas || e.button !== 0 || !(phase === "playing" || (typeof worldIsShopping === "function" && worldIsShopping())) || panelType || paused) return;
+      if (
+        e.target !== canvas ||
+        e.button !== 0 ||
+        !(
+          phase === "playing" ||
+          (typeof worldIsShopping === "function" && worldIsShopping())
+        ) ||
+        panelType ||
+        paused
+      )
+        return;
       dragging = true;
       lastX = e.clientX;
       lastY = e.clientY;
@@ -1105,7 +1131,11 @@ function frameLoop(now) {
       });
     }
     const activeView =
-      (phase === "playing" || (typeof worldIsShopping === "function" && worldIsShopping())) && !panelType && !paused && !qte.active;
+      (phase === "playing" ||
+        (typeof worldIsShopping === "function" && worldIsShopping())) &&
+      !panelType &&
+      !paused &&
+      !qte.active;
     if (sceneDirty || (activeView && now - lastRender > 33)) {
       renderer.render(scene, camera);
       lastRender = now;

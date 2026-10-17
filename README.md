@@ -68,4 +68,24 @@ python tools/build.py
 
 构建先检查JS语法，再原子替换根目录HTML，随后更新ZIP。无生产运行依赖。Three.js r160.1使用MIT许可，见 `src/vendor/THREE-LICENSE.txt`。
 
-Playwright浏览器测试脚本位于 `tests/`，测试依赖与浏览器应安装到 `/tmp`，不要让工作区超过128MB。版本0.3.0。
+Playwright浏览器测试脚本位于 `tests/`，测试依赖与浏览器应安装到 `/tmp`，不要让工作区超过128MB。版本0.3.1。
+
+
+## 测试
+
+无需额外依赖的模拟测试：
+
+```bash
+node tests/simulation.cjs
+```
+
+浏览器开发测试（不会影响游戏的零依赖启动）：
+
+```bash
+npm --prefix /tmp/closed365-qa install playwright
+PLAYWRIGHT_BROWSERS_PATH=/tmp/closed365-browsers /tmp/closed365-qa/node_modules/.bin/playwright install chromium
+# Linux 缺少浏览器系统库时，再运行 playwright install-deps chromium
+NODE_PATH=/tmp/closed365-qa/node_modules PLAYWRIGHT_BROWSERS_PATH=/tmp/closed365-browsers node tests/browser.cjs
+```
+
+本轮已通过的项目和CI截图限制见 `tests/RESULTS.md`。不需要运行任何测试才能玩游戏。

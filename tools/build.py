@@ -20,7 +20,7 @@ assert len(html.encode())<4_000_000
 tmp=ROOT/'index.html.tmp';tmp.write_text(html);tmp.replace(ROOT/'index.html')
 zip_tmp=ROOT/'Game-playable.zip.tmp'
 with ZipFile(zip_tmp,'w',ZIP_DEFLATED,compresslevel=8) as z:
-    for name in ['index.html','README.md','DESIGN.md','HANDOFF.md','src/vendor/THREE-LICENSE.txt']:
+    for name in ['index.html','README.md','DESIGN.md','HANDOFF.md','tests/RESULTS.md','src/vendor/THREE-LICENSE.txt']:
         f=ROOT/name
         if f.exists():z.write(f,name)
 zip_tmp.replace(ROOT/'Game-playable.zip')

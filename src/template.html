@@ -1,22 +1,316 @@
 <!doctype html>
-<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"><meta name="theme-color" content="#19211c"><meta name="description" content="闭门365：异世界1980年代，第一人称公寓生存游戏。完全离线，存活365天。"><title>闭门365 — THE LAST TENANT</title><style>/* STYLE */</style></head>
-<body>
-<canvas id="world" aria-label="第一人称3D公寓。WASD移动，按住画面拖动视角，靠近家具按E交互。"></canvas><div id="fallback" hidden><div class="fallback-window"></div><span>3D 渲染不可用 · 仍可从「房间」面板进行完整生存操作</span></div><div class="vignette"></div><div class="film-grain"></div>
-<div id="loading"><span class="loading-line"></span><p>楼道里的灯，又闪了一下。</p><small>正在打开你的房间…</small></div>
-<section id="titleScreen" class="screen title-screen">
- <header class="title-top"><a class="wordmark" href="#" aria-label="闭门365"><span class="logo-window"><i></i><i></i><i></i><i></i></span>闭门工作室<span class="brand-divider"></span><span class="brand-en">CLOSED DOOR</span></a><span class="build-label">OFFLINE EDITION <i></i> BUILD <span data-version>0.3.0</span></span></header>
- <div class="title-shade"></div><main class="title-content"><div class="chapter-tag"><span class="tiny-dot"></span>安德士帝国，1986年。你的藏匿生活。</div><h1>闭门<span class="title-number">365<span class="title-period">.</span></span></h1><p class="title-english">THE LAST TENANT</p><div class="title-story"><span class="story-rule"></span><p>你招惹了不该招惹的人。<br>告别家人，关上门，成为这座城市里消失的人。<br><strong>用三百纸币，换一整年的明天。</strong></p></div>
- <div class="seed-card"><div class="seed-label"><span>你的房间，由命运决定</span><span>ROOM SEED</span></div><div class="seed-input-row"><input id="seedInput" maxlength="40" value="ANDERS-1986" aria-label="房间种子"><button id="rerollSeed" title="换一个房间" aria-label="随机新种子">↻</button></div><div class="seed-facts" id="seedFacts"></div></div>
- <button class="start-button" id="newGameButton"><span>准备我的隐匿生活<small>进入物资采购 · 初始 300 帝国纸币</small></span><span class="large-arrow">↗</span></button><div class="title-secondary"><button id="continueButton" disabled>继续上次的生活<span>↗</span></button><button data-ui="help">游玩指南<span>↗</span></button><label class="import-title">读取存档<input type="file" accept=".json,application/json" class="import-input" hidden></label></div></main>
- <aside class="room-caption"><span class="caption-cross">+</span><span id="roomCaption">北区旧公寓 / 18层</span><small>不要开门。<br>活过365天。</small></aside><footer class="title-footer"><span><kbd>W A S D</kbd> 移动 <i>·</i> 拖动鼠标观察 <i>·</i> <kbd>E</kbd> 交互</span><span>一间房，一个人，一整年。 <b>01 — 365</b></span></footer>
-</section>
-<section id="shopScreen" class="screen shop-screen" hidden><header class="shop-header"><div class="shop-logo"><span class="coop-mark">安</span><div><span class="section-overline">ANDERS PEOPLE'S COOPERATIVE · 1986</span><h2>最后一次，认真采购。</h2></div></div><div class="shop-budget"><span id="shopBudgetLabel">可用纸币</span><strong id="shopBudget">300<small>.00</small></strong><span>帝国纸币 / E$</span></div><button class="round-button" id="shopBack" aria-label="返回">×</button></header>
- <div class="shop-intro"><span id="shopIntroText">这些物资将在你藏匿前搬入公寓。价格按虚构1980年代平价配给设定，1纸币≈1美元面值。</span><button id="viewApartment">查看房况 ↗</button></div>
- <div class="shop-layout"><aside class="shop-categories"><span class="section-overline">物资目录 <span id="catalogCount"></span></span><div id="categoryList"></div><div class="shop-note"><span>采购建议</span><p>优先干粮与多种口味。<br>提前储水，别忘记清洁和消遣。<br>并不是买得越多，活得越久。</p></div></aside><main class="shop-main"><div class="shop-toolbar"><div class="shop-search"><span>⌕</span><input id="shopSearch" placeholder="搜索大米、书、指甲刀…" aria-label="搜索商品"></div><button class="text-button" id="starterKit">基础清单 ↗</button><button class="text-button" id="yearKit">全年紧缩计划 ↗</button></div><div class="catalog-grid" id="catalogGrid"></div><p class="shop-empty" id="shopEmpty" hidden>没有找到这件物资，试试别的名字。</p></main><aside class="receipt"><div class="receipt-heading"><span>采购登记单</span><small>NO. 0086 / PRIVATE</small></div><div class="receipt-list" id="receiptList"></div><div class="receipt-summary" id="receiptSummary"></div><div class="receipt-total"><span>应付总额</span><strong id="cartTotal">E$ 0.00</strong></div><button class="start-button checkout-button" id="checkoutButton"><span>把物资带回房间</span><span>→</span></button><button class="clear-cart" id="clearCart">清空采购单</button><p class="receipt-footnote">塑料袋单袋承重 8kg · 每袋0.06纸币<br>大件独立装箱，不塞进塑料袋。</p></aside></div></section>
-<div id="hud" hidden><header class="hud-header"><div class="day-block"><span class="hud-overline">你的隐匿生活</span><div><strong id="hudDay">001</strong><span>/ 365 DAYS</span></div></div><div class="hud-center"><span class="tiny-dot"></span><span id="hudMotto">门外的世界，还不属于你。</span><small id="hudClock">08:10 · 初春</small></div><div class="hud-topright"><div class="cash-label"><span>剩余纸币</span><strong id="hudCash">E$ 300.00</strong></div><button class="hud-icon" id="pauseButton" aria-label="暂停与设置">Ⅱ</button></div></header><div id="serviceBar" class="service-bar"></div><div id="buffs" class="buffs"></div><div id="crosshair"><i></i><i></i><i></i><i></i></div><div id="interaction" class="interaction"></div><div class="hud-bottom"><div class="needs-card"><div class="needs-heading"><span>照顾好自己</span><button data-ui="character" aria-label="个人详细状态">个人状态 ↗</button></div><div class="needs-grid" id="needsGrid"></div><div class="body-needs" id="bodyNeeds"></div></div><div class="hud-hint" id="hudHint"><span class="hint-line"></span>先拆开门边的采购袋，再开始生活。</div><div class="hud-room-label"><span id="hudRoomNumber">APT. 1806</span><small id="hudSeed">ANDERS-1986</small></div></div><nav class="quickbar" aria-label="游戏快捷操作"><button data-ui="inventory"><span class="quick-icon">▣</span>物资<kbd>I</kbd></button><button data-ui="room"><span class="quick-icon">⌂</span>房间<kbd>Tab</kbd></button><button data-ui="leisure"><span class="quick-icon">▤</span>消遣<kbd>B</kbd></button><button data-ui="time"><span class="quick-icon">◷</span>时间<kbd>T</kbd></button><button data-ui="journal"><span class="quick-icon">≡</span>手记<kbd>J</kbd></button><button data-ui="save"><span class="quick-icon">▧</span>存档<kbd>Esc</kbd></button></nav><div id="mobileControls"><div id="joystick"><span></span></div><button id="mobileInteract">E<small>交互</small></button></div><div id="pauseBanner" hidden>已暂停 <small>按 Esc 继续</small></div></div>
-<div id="panelLayer" class="panel-layer"><section id="panel" class="panel" role="dialog" aria-modal="true" aria-labelledby="panelTitle"><header class="panel-heading"><div><span class="section-overline" id="panelSubtitle"></span><h2 id="panelTitle"></h2></div><button class="round-button" id="closePanel" aria-label="关闭面板">×</button></header><div id="panelBody" class="panel-body"></div></section></div>
-<div id="qteLayer" class="qte-layer"><section class="qte-card"><span class="section-overline">SLOW DOWN. TAKE A BITE.</span><h2 id="qteTitle">好好吃一顿饭。</h2><p>在指针进入浅色区域时按 <kbd>空格</kbd> 或点击下方按钮。<br>没接住只会产生少量残渣，不会突然惩罚你。</p><div class="qte-track"><span class="qte-zone"></span><i id="qteNeedle"></i></div><button class="start-button" id="qteCatch">稳稳吃下这一口 <span>↵</span></button><button class="slow-eat" id="qteSlow">不赶时间，慢慢吃 · 多花10分钟</button><button class="qte-cancel" id="qteCancel">暂时不吃</button></section></div>
-<div id="endScreen" class="screen end-screen" hidden></div>
-<div id="toastContainer" class="toast-container" role="status" aria-live="polite"></div>
-<script>/* ENGINE */</script><script>/* DATA */</script><script>/* CORE */</script><script>/* SCENE */</script><script>/* UI */</script>
-</body></html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#19211c" />
+    <meta
+      name="description"
+      content="闭门365：异世界1980年代，第一人称公寓生存游戏。完全离线，存活365天。"
+    />
+    <title>闭门365 — THE LAST TENANT</title>
+    <style>
+      /* STYLE */
+    </style>
+  </head>
+  <body>
+    <canvas
+      id="world"
+      aria-label="第一人称3D公寓。WASD移动，按住画面拖动视角，靠近家具按E交互。"
+    ></canvas>
+    <div id="fallback" hidden>
+      <div class="fallback-window"></div>
+      <span>3D 渲染不可用 · 仍可从「房间」面板进行完整生存操作</span>
+    </div>
+    <div class="vignette"></div>
+    <div class="film-grain"></div>
+    <div id="loading">
+      <span class="loading-line"></span>
+      <p>楼道里的灯，又闪了一下。</p>
+      <small>正在打开你的房间…</small>
+    </div>
+    <section id="titleScreen" class="screen title-screen">
+      <header class="title-top">
+        <a class="wordmark" href="#" aria-label="闭门365"
+          ><span class="logo-window"><i></i><i></i><i></i><i></i></span
+          >闭门工作室<span class="brand-divider"></span
+          ><span class="brand-en">CLOSED DOOR</span></a
+        ><span class="build-label"
+          >OFFLINE EDITION <i></i> BUILD <span data-version>0.3.1</span></span
+        >
+      </header>
+      <div class="title-shade"></div>
+      <main class="title-content">
+        <div class="chapter-tag">
+          <span class="tiny-dot"></span>安德士帝国，1986年。你的藏匿生活。
+        </div>
+        <h1>
+          闭门<span class="title-number"
+            >365<span class="title-period">.</span></span
+          >
+        </h1>
+        <p class="title-english">THE LAST TENANT</p>
+        <div class="title-story">
+          <span class="story-rule"></span>
+          <p>
+            你招惹了不该招惹的人。<br />告别家人，关上门，成为这座城市里消失的人。<br /><strong
+              >用三百纸币，换一整年的明天。</strong
+            >
+          </p>
+        </div>
+        <div class="seed-card">
+          <div class="seed-label">
+            <span>你的房间，由命运决定</span><span>ROOM SEED</span>
+          </div>
+          <div class="seed-input-row">
+            <input
+              id="seedInput"
+              maxlength="40"
+              value="ANDERS-1986"
+              aria-label="房间种子"
+            /><button
+              id="rerollSeed"
+              title="换一个房间"
+              aria-label="随机新种子"
+            >
+              ↻
+            </button>
+          </div>
+          <div class="seed-facts" id="seedFacts"></div>
+        </div>
+        <button class="start-button" id="newGameButton">
+          <span
+            >准备我的隐匿生活<small
+              >进入物资采购 · 初始 300 帝国纸币</small
+            ></span
+          ><span class="large-arrow">↗</span>
+        </button>
+        <div class="title-secondary">
+          <button id="continueButton" disabled>
+            继续上次的生活<span>↗</span></button
+          ><button data-ui="help">游玩指南<span>↗</span></button
+          ><label class="import-title"
+            >读取存档<input
+              type="file"
+              accept=".json,application/json"
+              class="import-input"
+              hidden
+          /></label>
+        </div>
+      </main>
+      <aside class="room-caption">
+        <span class="caption-cross">+</span
+        ><span id="roomCaption">北区旧公寓 / 18层</span
+        ><small>不要开门。<br />活过365天。</small>
+      </aside>
+      <footer class="title-footer">
+        <span
+          ><kbd>W A S D</kbd> 移动 <i>·</i> 拖动鼠标观察 <i>·</i>
+          <kbd>E</kbd> 交互</span
+        ><span>一间房，一个人，一整年。 <b>01 — 365</b></span>
+      </footer>
+    </section>
+    <section id="shopScreen" class="screen shop-screen" hidden>
+      <header class="shop-header">
+        <div class="shop-logo">
+          <span class="coop-mark">安</span>
+          <div>
+            <span class="section-overline"
+              >ANDERS PEOPLE'S COOPERATIVE · 1986</span
+            >
+            <h2>最后一次，认真采购。</h2>
+          </div>
+        </div>
+        <div class="shop-budget">
+          <span id="shopBudgetLabel">可用纸币</span
+          ><strong id="shopBudget">300<small>.00</small></strong
+          ><span>帝国纸币 / E$</span>
+        </div>
+        <button class="round-button" id="shopBack" aria-label="返回">×</button>
+      </header>
+      <div class="shop-intro">
+        <span id="shopIntroText"
+          >这些物资将在你藏匿前搬入公寓。价格按虚构1980年代平价配给设定，1纸币≈1美元面值。</span
+        ><button id="viewApartment">查看房况 ↗</button>
+      </div>
+      <div class="shop-layout">
+        <aside class="shop-categories">
+          <span class="section-overline"
+            >物资目录 <span id="catalogCount"></span
+          ></span>
+          <div id="categoryList"></div>
+          <div class="shop-note">
+            <span>采购建议</span>
+            <p>
+              优先干粮与多种口味。<br />提前储水，别忘记清洁和消遣。<br />并不是买得越多，活得越久。
+            </p>
+          </div>
+        </aside>
+        <main class="shop-main">
+          <div class="shop-toolbar">
+            <div class="shop-search">
+              <span>⌕</span
+              ><input
+                id="shopSearch"
+                placeholder="搜索大米、书、指甲刀…"
+                aria-label="搜索商品"
+              />
+            </div>
+            <button class="text-button" id="starterKit">基础清单 ↗</button
+            ><button class="text-button" id="yearKit">全年紧缩计划 ↗</button>
+          </div>
+          <div class="catalog-grid" id="catalogGrid"></div>
+          <p class="shop-empty" id="shopEmpty" hidden>
+            没有找到这件物资，试试别的名字。
+          </p>
+        </main>
+        <aside class="receipt">
+          <div class="receipt-heading">
+            <span>采购登记单</span><small>NO. 0086 / PRIVATE</small>
+          </div>
+          <div class="receipt-list" id="receiptList"></div>
+          <div class="receipt-summary" id="receiptSummary"></div>
+          <div class="receipt-total">
+            <span>应付总额</span><strong id="cartTotal">E$ 0.00</strong>
+          </div>
+          <button class="start-button checkout-button" id="checkoutButton">
+            <span>把物资带回房间</span><span>→</span></button
+          ><button class="clear-cart" id="clearCart">清空采购单</button>
+          <p class="receipt-footnote">
+            塑料袋单袋承重 8kg · 每袋0.06纸币<br />大件独立装箱，不塞进塑料袋。
+          </p>
+        </aside>
+      </div>
+    </section>
+    <div id="hud" hidden>
+      <header class="hud-header">
+        <div class="day-block">
+          <span class="hud-overline">你的隐匿生活</span>
+          <div><strong id="hudDay">001</strong><span>/ 365 DAYS</span></div>
+        </div>
+        <div class="hud-center">
+          <span class="tiny-dot"></span
+          ><span id="hudMotto">门外的世界，还不属于你。</span
+          ><small id="hudClock">08:10 · 初春</small>
+        </div>
+        <div class="hud-topright">
+          <div class="cash-label">
+            <span>剩余纸币</span><strong id="hudCash">E$ 300.00</strong>
+          </div>
+          <button class="hud-icon" id="pauseButton" aria-label="暂停与设置">
+            Ⅱ
+          </button>
+        </div>
+      </header>
+      <div id="serviceBar" class="service-bar"></div>
+      <div id="buffs" class="buffs"></div>
+      <div id="crosshair"><i></i><i></i><i></i><i></i></div>
+      <div id="interaction" class="interaction"></div>
+      <div class="hud-bottom">
+        <div class="needs-card">
+          <div class="needs-heading">
+            <span>照顾好自己</span
+            ><button data-ui="character" aria-label="个人详细状态">
+              个人状态 ↗
+            </button>
+          </div>
+          <div class="needs-grid" id="needsGrid"></div>
+          <div class="body-needs" id="bodyNeeds"></div>
+        </div>
+        <div class="hud-hint" id="hudHint">
+          <span class="hint-line"></span>先拆开门边的采购袋，再开始生活。
+        </div>
+        <div class="hud-room-label">
+          <span id="hudRoomNumber">APT. 1806</span
+          ><small id="hudSeed">ANDERS-1986</small>
+        </div>
+      </div>
+      <nav class="quickbar" aria-label="游戏快捷操作">
+        <button data-ui="inventory">
+          <span class="quick-icon">▣</span>物资<kbd>I</kbd></button
+        ><button data-ui="room">
+          <span class="quick-icon">⌂</span>房间<kbd>Tab</kbd></button
+        ><button data-ui="leisure">
+          <span class="quick-icon">▤</span>消遣<kbd>B</kbd></button
+        ><button data-ui="time">
+          <span class="quick-icon">◷</span>时间<kbd>T</kbd></button
+        ><button data-ui="journal">
+          <span class="quick-icon">≡</span>手记<kbd>J</kbd></button
+        ><button data-ui="save">
+          <span class="quick-icon">▧</span>存档<kbd>Esc</kbd>
+        </button>
+      </nav>
+      <div id="mobileControls">
+        <div id="joystick"><span></span></div>
+        <button id="mobileInteract">E<small>交互</small></button>
+      </div>
+      <div id="pauseBanner" hidden>
+        已暂停 <small>点击这里 / 按 Esc 继续</small>
+      </div>
+    </div>
+    <div id="panelLayer" class="panel-layer">
+      <section
+        id="panel"
+        class="panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="panelTitle"
+      >
+        <header class="panel-heading">
+          <div>
+            <span class="section-overline" id="panelSubtitle"></span>
+            <h2 id="panelTitle"></h2>
+          </div>
+          <button class="round-button" id="closePanel" aria-label="关闭面板">
+            ×
+          </button>
+        </header>
+        <div id="panelBody" class="panel-body"></div>
+      </section>
+    </div>
+    <div id="qteLayer" class="qte-layer">
+      <section class="qte-card">
+        <span class="section-overline">SLOW DOWN. TAKE A BITE.</span>
+        <h2 id="qteTitle">好好吃一顿饭。</h2>
+        <p>
+          在指针进入浅色区域时按
+          <kbd>空格</kbd>
+          或点击下方按钮。<br />没接住只会产生少量残渣，不会突然惩罚你。
+        </p>
+        <div class="qte-track">
+          <span class="qte-zone"></span><i id="qteNeedle"></i>
+        </div>
+        <button class="start-button" id="qteCatch">
+          稳稳吃下这一口 <span>↵</span></button
+        ><button class="slow-eat" id="qteSlow">
+          不赶时间，慢慢吃 · 多花10分钟</button
+        ><button class="qte-cancel" id="qteCancel">暂时不吃</button>
+      </section>
+    </div>
+    <div id="endScreen" class="screen end-screen" hidden></div>
+    <div
+      id="toastContainer"
+      class="toast-container"
+      role="status"
+      aria-live="polite"
+    ></div>
+    <script>
+      /* ENGINE */
+    </script>
+    <script>
+      /* DATA */
+    </script>
+    <script>
+      /* CORE */
+    </script>
+    <script>
+      /* SCENE */
+    </script>
+    <script>
+      /* UI */
+    </script>
+  </body>
+</html>

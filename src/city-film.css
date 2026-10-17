@@ -1,0 +1,72 @@
+/* A subtle colour-negative feel. No low-resolution filter and no blur hiding the view. */
+body.film-mode #world {
+  filter: sepia(0.11) saturate(0.77) contrast(1.035) brightness(1.018);
+}
+#filmNoise,
+#filmGate {
+  position: fixed;
+  inset: 0;
+  z-index: 7;
+  pointer-events: none;
+  display: none;
+}
+body.film-mode #filmNoise {
+  display: block;
+  opacity: 0.075;
+  mix-blend-mode: soft-light;
+  background-repeat: repeat;
+  background-size: 128px 128px;
+  animation: film-grain-shift 0.65s steps(3, end) infinite;
+}
+body.film-mode #filmGate {
+  display: block;
+  box-shadow: inset 0 0 90px 14px #2b1e103d;
+  background: linear-gradient(
+    100deg,
+    #c1a26505,
+    transparent 24%,
+    transparent 76%,
+    #91a7bb04
+  );
+}
+body.film-mode .film-grain {
+  opacity: 0.01 !important;
+}
+body.film-mode .vignette {
+  opacity: 0.2;
+}
+#filmToggle {
+  min-height: 34px;
+  min-width: 96px;
+}
+@keyframes film-grain-shift {
+  0% {
+    background-position: 0 0;
+  }
+  33% {
+    background-position: 39px -17px;
+  }
+  66% {
+    background-position: -13px 27px;
+  }
+  100% {
+    background-position: 0 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  body.film-mode #filmNoise {
+    animation: none;
+  }
+}
+@media (max-width: 700px) {
+  body.film-mode #filmGate {
+    box-shadow: inset 0 0 55px 8px #2b1e1033;
+  }
+}
+
+.film-mode .world-corner,
+.film-mode #worldTopRight,
+.film-mode #roomSampleNotice {
+  color: #f3e8d2;
+  text-shadow: 0 1px 5px #171b16df;
+}

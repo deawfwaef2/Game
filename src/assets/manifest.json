@@ -106,5 +106,11 @@
     "source": "AI-generated for this game",
     "license": "generated asset",
     "processing": "framed landscape painting texture; not a room background"
+  },
+  {
+    "name": "city-bay_diff",
+    "source": "AI-generated for this game",
+    "license": "generated asset",
+    "processing": "single aged facade bay normalised to align with physical window frames/sills; layered onto 3D city geometry"
   }
 ]

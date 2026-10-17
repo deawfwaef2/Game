@@ -17,7 +17,7 @@ for p in sorted((SRC/'assets'/'textures').glob('*')):
     if p.suffix.lower() not in ['.jpg','.jpeg','.png']:continue
     mime='image/png' if p.suffix.lower()=='.png' else 'image/jpeg'
     assets['textures'][p.stem]='data:'+mime+';base64,'+base64.b64encode(p.read_bytes()).decode()
-credits='/* Offline hand assets, MIT license:\n'+(SRC/'assets'/'WEBXR-HANDS-LICENSE.txt').read_text()+'\nPoly Haven furniture and materials: CC0-1.0. See assets/manifest.json. */\n'
+credits='/* Offline hand assets, MIT license:\n'+(SRC/'assets'/'WEBXR-HANDS-LICENSE.txt').read_text()+'\nThree.js and addons (MIT):\n'+(SRC/'vendor'/'THREE-LICENSE.txt').read_text()+'\nPoly Haven furniture and materials: CC0-1.0. See assets/manifest.json. */\n'
 html=html.replace('/* ROOM_ASSETS */',credits+'const OFFLINE_ROOM='+json.dumps(assets,separators=(',',':'))+';')
 for marker,file in [('STYLE','style.css'),('WORLD_STYLE','world.css'),('REALISM_STYLE','realism.css'),('ROOM_TOOLS','vendor/room-tools.min.js'),('ENGINE','vendor/three.min.js'),('DATA','data.js'),('CORE','core.js'),('SCENE','scene.js'),('UI','ui.js'),('WORLD','world.js'),('STORE','store.js'),('REALISM','realism.js')]:
     text=(SRC/file).read_text()
@@ -33,7 +33,7 @@ sample=html.replace('</body>',"<script>ROOM_READY.then(function(){if(R.ready)roo
 sample_tmp=ROOT/'写实房间样片.html.tmp';sample_tmp.write_text(sample);sample_tmp.replace(ROOT/'写实房间样片.html')
 zip_tmp=ROOT/'Game-playable.zip.tmp'
 with ZipFile(zip_tmp,'w',ZIP_DEFLATED,compresslevel=8) as z:
-    names=['index.html','写实房间样片.html','README.md','DESIGN.md','HANDOFF.md','tests/RESULTS.md','tools/build.py']
+    names=['index.html','README.md','DESIGN.md','HANDOFF.md','tests/RESULTS.md','tools/build.py','tools/bundle-vendor.cjs']
     names += [str(p.relative_to(ROOT)) for p in sorted(SRC.rglob('*')) if p.is_file()]
     names += [str(p.relative_to(ROOT)) for p in sorted((ROOT/'tests').glob('*.cjs'))]
     for name in dict.fromkeys(names):

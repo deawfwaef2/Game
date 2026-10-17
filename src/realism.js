@@ -57,8 +57,8 @@ function roomProxy(parent, size, center = [0, size[1] / 2, 0]) {
   const m = new THREE.Mesh(
     new THREE.BoxGeometry(...size),
     new THREE.MeshBasicMaterial({
-      transparent: true,
-      opacity: 0,
+      transparent: false,
+      opacity: 1,
       depthWrite: false,
       colorWrite: false,
     }),
@@ -140,7 +140,11 @@ function roomDecorate() {
   mats.paint.normalMap = R.textures["painted_plaster_wall_nor_gl"];
   mats.paint.normalScale = new THREE.Vector2(0.08, 0.08);
   mats.paint.needsUpdate = true;
-  mats.paint.roughness = 0.66;
+  mats.paint.roughness = 0.62 + env.wear * 0.1;
+  mats.paint.color.set(["#ffffff", "#d8ddcf", "#b9b6a5"][env.wear]);
+  mats.floor.color.multiplyScalar([1, 0.93, 0.84][env.wear]);
+  mats.wood.color.multiplyScalar([1, 0.91, 0.8][env.wear]);
+  mats.wall.color.set(["#eee9dc", "#e0e4da", "#d4d8d6"][env.wall]);
   mats.cream.color.set("#e0ded0");
   mats.cream.roughness = 0.46;
   mats.metal.color.set("#bbc1bd");
@@ -653,6 +657,7 @@ const roomOldArm = worldArm,
   roomOldBuild = buildRoom,
   roomOldProduct = worldProduct,
   roomOldEquip = worldEquip,
+  roomOldPutBack = worldPutBack,
   roomOldMeal = worldMeal;
 worldArm = function (parent, side = 1, reach = false) {
   return R.ready ? roomHand(parent, side) : roomOldArm(parent, side, reach);
@@ -662,6 +667,14 @@ worldSetHand = function (preview = "") {
   R.grip = null;
   R.gripBase = null;
   roomOldSetHand(preview);
+  if (R.ready && W.glance === "watch" && W.handModel) {
+    for (const part of W.handModel.children) {
+      if (!part.userData.handData) {
+        part.position.x -= 0.045;
+        part.position.y += 0.02;
+      }
+    }
+  }
   if (!R.ready || !W.rig || W.glance || W.held?.type === "book") return;
   if (W.handModel) {
     W.handModel.position.y += 0.07;
@@ -696,6 +709,37 @@ worldSetHand = function (preview = "") {
       R.spoon = spoon;
     } else R.spoon = null;
   }
+};
+// Furniture trigger volumes make E forgiving, but R must land on the actual mesh surface.
+worldPutBack = function (place = true) {
+  if (
+    R.ready &&
+    place &&
+    W.held &&
+    !W.busy &&
+    !W.glance &&
+    W.hit?.object.userData.interactionProxy
+  ) {
+    camera.updateMatrixWorld(true);
+    roomRoot.updateMatrixWorld(true);
+    raycaster.setFromCamera(new THREE.Vector2(), camera);
+    const hit = raycaster
+      .intersectObjects(roomRoot.children, true)
+      .find((h) => {
+        if (
+          h.distance > 2.65 ||
+          h.object.userData.interactionProxy ||
+          h.object.userData.noPick
+        )
+          return false;
+        for (let p = h.object; p; p = p.parent) if (!p.visible) return false;
+        if (h.object.material?.transparent && h.object.material.opacity < 0.4)
+          return false;
+        return true;
+      });
+    W.hit = hit || null;
+  }
+  return roomOldPutBack(place);
 };
 worldEquip = function (uidValue, split = true) {
   roomOldEquip(uidValue, split);

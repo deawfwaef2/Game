@@ -1,20 +1,32 @@
 # 闭门365 / THE LAST TENANT
 
-**v0.4.1 规则修正版：开局只采购一次，此后只靠存量。当前美术仍未达到用户要求，视觉重做待确认参考。**
+**v0.5.0-preview：写实房间可操作样片 + 一次性采购规则。不是全量美术完成版，质量仍待用户验收。**
 
 离线、中文、第一人称3D生存原型。安德士帝国，1986年：你招惹了黑帮，告别家人，带着300帝国纸币藏进高层旧公寓。不开门，活过365天。
 
 ## 直接游玩
 
-下载根目录 **`index.html`**，用现代浏览器双击打开；或者下载 **`Game-playable.zip`**，解压后打开其中的HTML。不需要安装、联网、服务器、CDN或密钥。3D引擎、程序化材质与所有资源均已内嵌。
+下载根目录 **`index.html`**，用现代浏览器双击打开；或者下载 **`Game-playable.zip`**，解压后打开其中的HTML。不需要安装、联网、服务器、CDN或密钥。3D引擎、模型、贴图与所有资源均已内嵌。
+
+想先验房间质感，打开根目录 **`写实房间样片.html`**，会直接进入可操作房间，不必经过旧商店；或在主入口标题页点击“先看写实房间样片”。样片按300预算合法购入全年单后拆好现有物资，入室后同样不能再买。**样片不写入/覆盖正式存档**，返回标题恢复之前的游戏对象；手动导入存档会退出样片模式。
+
+ZIP为避免重复收录两份约11MB的自包含HTML，只放主入口`index.html`（标题页同样有样片按钮），并附完整源码与加工后的离线资源；构建脚本会同时生成两个独立HTML。
 
 GitHub文件页面显示的是源码，请点击下载文件，不要把源码页当成运行页。
 
 ## 规则底线与目前边界
 
-采购会话不存档恢复；核心结账与入库函数也会拦截重复交易，不是只隐藏门口按钮。此前地下补给由agent自行加入，已按用户纠正删除。**本次没有声称提升美术：现有方块模型与简陋手部仍待重做。**
+采购会话不存档恢复；核心结账与入库函数也会拦截重复交易，不是只隐藏门口按钮。此前地下补给由agent自行加入，已按用户纠正删除。**当前是房间样片，不代表商店、129商品包装和所有生活动作都已经达到相同美术质量。**
 
-## v0.4已有交互（不代表视觉达标）
+## 写实房间样片具体范围
+
+- 旧床、皮沙发、木桌、柜架、随身听与代表性罐头是带PBR材质的真实网格；墙、地板、布料有图像/法线/粗糙信息，不再全靠单色盒子。
+- 人手为25关节蒙皮模型，程序化屈指握持；搪瓷杯有中空杯壁，喝水有抬杯与倾转，读物双手持握。不是完整人物骨骼/动捕系统。
+- 窗边日光、接触阴影、起伏布帘、金属水槽/中空瓷器与旧公寓细节已接入。窗外城市与画框是生成的装饰纹理，房间自身是真正可走动的实时3D，不是效果图。
+- 家具交互体积和实际摆放表面分开：E对家具更宽容，R仍需落在实际网格水平表面，不能把物品悬浮在隐形交互框上。
+- **仍待改造**：商店整体、部分简化包装、若干家务动作与人物全身。没有声称所有物件一比一建模、完整刚体物理或高端设备画质/FPS保证。
+
+## 保留的场景交互
 
 - 采购从商品卡片改成了**可走动的3D供销社**：逛十类实体货架，把样品拿入篮中，到机械收银台付款。
 - 正常WebGL游玩移除了底部管理菜单、成排状态卡与日常操作弹窗。
@@ -87,10 +99,12 @@ npm --prefix /tmp/closed365-qa install playwright
 PLAYWRIGHT_BROWSERS_PATH=/tmp/closed365-browsers /tmp/closed365-qa/node_modules/.bin/playwright install chromium
 # Linux缺库时另运行 playwright install-deps chromium
 NODE_PATH=/tmp/closed365-qa/node_modules PLAYWRIGHT_BROWSERS_PATH=/tmp/closed365-browsers node tests/browser.cjs
+# 写实样片/原存档隔离/抬杯动作/无网络opaque iframe
+NODE_PATH=/tmp/closed365-qa/node_modules PLAYWRIGHT_BROWSERS_PATH=/tmp/closed365-browsers node tests/realism.cjs
 # 可选：单独验证实际活动RAF循环（CI降低分辨率/关闭阴影，不重设生存数值）
 NODE_PATH=/tmp/closed365-qa/node_modules PLAYWRIGHT_BROWSERS_PATH=/tmp/closed365-browsers node tests/live.cjs
 ```
 
 0.4浏览器回归已改成实物射线/按键流程，不再依赖旧面板按钮。测试方法、已通过项目与软件GPU截图限制见 `tests/RESULTS.md`。离线ZIP同时附带模块化源码，方便在无法推送GitHub时仍保存完整开发成果。
 
-Three.js r160.1采用MIT许可，见 `src/vendor/THREE-LICENSE.txt`。工作区请保持128MB以内，浏览器、依赖和测试产物不要提交。
+家具/材质来自[Poly Haven](https://polyhaven.com/license)，CC0；手部来自WebXR Input Profiles，MIT。具体来源/加工说明见`src/assets/manifest.json`与`WEBXR-HANDS-LICENSE.txt`。Three.js r160.1及同版addons采用MIT许可，见 `src/vendor/THREE-LICENSE.txt`。工作区请保持128MB以内，浏览器、依赖和测试产物不要提交。

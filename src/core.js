@@ -220,7 +220,7 @@ function beginGame() {
     G.suspicion = clamp(G.suspicion + 4);
     logEvent("地下补给从无人楼梯间送达。联系他人增加了少量暴露风险。", "warn");
     advanceTime(120, "delivery");
-    phase = "playing";
+    if (!G.ended) phase = "playing";
   }
   restock = false;
   cart = {};

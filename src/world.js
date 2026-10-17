@@ -86,7 +86,7 @@ function worldProductMaterial(it) {
   const [bg, fg] = colors[it.category] || colors.tool;
   const name = it.name.replace(/ · .*$/, "").replace(/《|》/g, "");
   const lines = ["安德士 · 供销合作社", name, `${it.weight} kg   /   E$ ${it.price.toFixed(2)}`];
-  const tex = worldTextTexture(lines,{bg,fg,size:25, width:512,height:256});
+  const tex = worldTextTexture(lines,{bg,fg,size:15, width:256,height:128});
   W.textures.set(it.id, tex);
   const mat = new THREE.MeshStandardMaterial({map:tex, roughness:.85, side:THREE.DoubleSide});
   W.productMaterials.set(it.id,mat); return mat;
@@ -444,7 +444,7 @@ function worldGlance(kind="notebook") {
   W.glance=W.glance===kind?"":kind;W.page=0;worldSetHand();worldRenderHUD();
 }
 function worldStart(label,seconds,commit,kind="use",preview="") {
-  if(!worldVisible()||paused||W.busy||G?.ended)return false;
+  if(!worldVisible()||paused||W.busy||(phase==="playing"&&G?.ended))return false;
   W.busy={label,seconds,start:performance.now(),commit,kind,good:false,missed:false};
   keys={};W.focus=null;$("#worldFocus").classList.remove("on");
   $("#worldAction").hidden=false;$("#worldAction span").textContent=label;
@@ -558,6 +558,7 @@ function worldUpdateTarget() {
     W.hit=hit;
     let o=hit.object;
     while(o&&o!==roomRoot&&!o.userData.interact)o=o.parent;
+    if(hit.object.userData.instanceTargets) o=hit.object.userData.instanceTargets[hit.instanceId];
     if(o&&o!==roomRoot&&o.userData.interact){W.focus=o;targetObject=o;targetId=o.userData.interact;}
     // A solid surface always occludes objects behind it. No through-wall interaction.
     break;
@@ -655,6 +656,7 @@ function worldRenderHUD() {
 }
 function worldFrame(now,dt) {
   if(!W.enabled)return;
+  if(typeof worldShopFrame==="function")worldShopFrame(now,dt);
   if(W.rig){
     W.rig.visible=worldVisible();
     const a=W.busy;const t=a?(now-a.start)/1000:0;
@@ -687,7 +689,7 @@ function worldFrame(now,dt) {
 function worldPause(open=!W.pauseOpen) {
   if(!W.enabled)return legacyUI.openSave();
   if(!worldVisible()&&!W.pauseOpen)return;
-  if(open){worldCancelAction();releasePointer();paused=true;W.pauseOpen=true;$("#worldPause").hidden=false;$("#worldResume").focus({preventScroll:true});if(G)saveGame(false);}
+  if(open){worldCancelAction();releasePointer();$("#worldResume").textContent=worldIsShopping()?"回到货架　→":"回到房间　→";paused=true;W.pauseOpen=true;$("#worldPause").hidden=false;$("#worldResume").focus({preventScroll:true});if(G)saveGame(false);}
   else {paused=false;W.pauseOpen=false;$("#worldPause").hidden=true;keys={};clockAccumulator=0;$("#worldResume").blur();}
   sceneDirty=true;
 }
@@ -796,6 +798,12 @@ if(W.enabled) {
   openLeisure=()=>{if(W.committing)return;const b=G?.inv.find(b=>!b.packed&&DB[b.id].kind==="book");if(b)worldEquip(b.uid);else showToast("先拆出一本书，再从书桌上拿起。");};
   openStation=id=>{if(!W.committing){targetId=id;worldInteract();}};
   openSave=()=>worldPause(true);
+  openHelp=()=>showPanel("help","让房间成为操作界面。","PHYSICAL PLAY / OFFLINE EDITION",
+    `<p class="help-paragraph">WASD走动，按住画面拖动视角。走到货架前对准商品按E拿入篮中，R放回一件；门边的配给箱可快速登记整套物资。到机械收银台按E付款。商品价格、重量、份数和保质期会在你看向它时显示。</p>
+    <p class="help-paragraph">回房后，E拆开门边的袋子，Shift+E连续整理。到储物架前拿食物；需要烹煮的主食先拿到炉边。左键使用手中物品，R对准桌面放置，或放回架子。书拿在手里读，不弹消遣菜单。</p>
+    <p class="help-paragraph">床边滚轮或↑↓调整睡眠小时，E躺下。卫生间E小便、Shift+E大便；花洒E洗澡；柜门打开后E取换洗衣物，洗衣盆E洗衣。扫帚、指甲刀、理发剪、牙刷都是可直接使用的实物。Shift+E是看向物体时提示的辅助动作。</p>
+    <p class="help-paragraph">Tab翻开实体手记，滚轮翻页，查看完整身体状态、物资、水电和日志。T抬腕看表。Esc只打开必要的暂停/存档。手机使用摇杆和右侧交互、辅助、使用、放回按钮。</p>
+    <p class="help-paragraph">目标365天，初始300纸币。重复口味/读物、疾病、脏乱、长期独处仍影响精神；危险和敲门会中断跳时。没有真实虫鼠或恶心画面，只有干净的几何干扰物。真实外出与追捕未实现，地下补给仅是抽象货架场景。</p>`);
   updatePhase=()=>{legacyUI.updatePhase();document.body.classList.toggle("world-shopping",worldIsShopping());worldRenderHUD();};
   getPlayerPosition=()=>worldIsShopping()&&W.savedRoomPosition?W.savedRoomPosition:legacyUI.getPlayerPosition();
   toTitle=()=>{worldCancelAction();W.pauseOpen=false;$("#worldPause").hidden=true;W.store=false;W.glance="";W.held=null;paused=false;legacyUI.toTitle();};

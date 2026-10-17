@@ -197,3 +197,11 @@
 - fixtures 识别旧部件：`fxHide` 按网格真实尺寸+位置隐藏旧窗框条/窗台；暖气按“含≥8个 CapsuleGeometry 的 Group”隐藏；水槽下的整块柜体按射线命中后拆成带空腔的 5 个盒子。浴盆、门扇往 `colliders` 推了世界坐标 AABB；导航 257 路线复测通过。
 - 洗衣盆（laundry）的位置被移进浴盆里（y=0.16）；shower 交互组保留，旧子网格隐藏，浴盆挂在它下面，所以 E 洗澡/洗衣的交互不变。
 - 未做：袋子网格合并（性能），马桶盖造型仍是 v0.7 的简单圆片。
+
+### 2026-10-18 / v0.9.0-preview 时间与天气 + 马桶
+- **用户最新指示：“家里蹲，不要出门，继续完成我的目的”。** 游戏方向是全程待在屋里；外出/追捕/监狱不是待办，不要再列为“未实现的计划”，也不要加入任何外出玩法。
+- v0.8 已推送并发布（main 9f8320e，tag v0.8.0-preview，Release 415915240 带 Game-playable.zip）。
+- `lighting.js` 新增 `lightingSky()`：日出6.4/日落18.6，按钟点算太阳高度/方位（roomRoot 局部空间，窗在 -z），平滑的 light 系数驱动面光源、太阳、窗外远景、背景和雾的颜色。天气用 `fxRand(seed+"-sky-"+day)`：<0.32 阴天，<0.5 薄雾；第1天强制晴。realism 原来的二元昼夜（hour<6||>18）仍控制吊灯/台灯；夜里不覆盖太阳强度。syncRoom 每10游戏分钟调用一次 roomLight，所以太阳随之移动。
+- `fixtures.js` 新增 `fxToilet`（隐藏 toilet 组里除交互代理外的旧网格，用 fxLoft/fxEllipse 重建），以及 `fxEllipse`/`fxShift` 两个辅助函数。
+- QA 环境（/var/tmp）会被清空：重装命令 `cd /var/tmp/closed365-qa && npm i playwright esbuild three@0.160.1`，`PLAYWRIGHT_BROWSERS_PATH=/var/tmp/closed365-browsers npx playwright install --only-shell chromium`，`sudo -n node node_modules/playwright/cli.js install-deps chromium`。
+- safe_checkpoint 会把整个 /home/user 算进 127MB 限额（包括 .npm 和 dist），提交前先删 /home/user/.npm 和 dist。`.gitattributes` 已对 src/vendor 和 index.html 关闭空白检查。

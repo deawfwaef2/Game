@@ -988,6 +988,95 @@ function fxSink() {
   hole.position.set(0, y + 0.0015, 0);
   bowl.add(hole);
 }
+
+// Same vertex count as fxContour(…, seg = 6): 28 points, so ellipses and rounded rects loft together.
+function fxEllipse(w, d, cz = 0, n = 28) {
+  const pts = [];
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * Math.PI * 2;
+    pts.push([Math.cos(a) * w / 2, cz + Math.sin(a) * d / 2]);
+  }
+  return pts;
+}
+const fxShift = (c, dz) => c.map(([x, z]) => [x, z + dz]);
+// Floor-standing "compact" WC of the period: one-piece pedestal and bowl, cistern on the rear shelf,
+// thermoplastic seat with the lid leaning back, supply pipe and stop valve to the wall.
+function fxToilet() {
+  const toilet = worldFindBase("toilet");
+  if (!toilet) return;
+  toilet.children.forEach((c) => {
+    if (c.material?.colorWrite !== false) c.visible = false;
+  });
+  const porcelain = new THREE.MeshPhysicalMaterial({
+    color: ["#f1f1ec", "#ecebe3", "#e4e1d4"][env.wear],
+    roughness: 0.14,
+    clearcoat: 0.7,
+    clearcoatRoughness: 0.12,
+    envMapIntensity: 0.8,
+  });
+  const g = new THREE.Group();
+  toilet.add(g);
+  const add = (geo, mat, shadow = true) => {
+    const m = new THREE.Mesh(geo, mat);
+    m.castShadow = shadow;
+    m.receiveShadow = true;
+    g.add(m);
+    return m;
+  };
+  // Rear of the WC is +z (against the wall). Bowl reaches forward to z ≈ -0.33.
+  const foot = fxShift(fxContour(0.24, 0.3, 0.1), 0.06),
+    neck = fxShift(fxContour(0.21, 0.28, 0.09), 0.05),
+    belly = fxEllipse(0.33, 0.44, -0.06),
+    rimOut = fxEllipse(0.36, 0.48, -0.075),
+    rimTop = fxEllipse(0.355, 0.475, -0.075),
+    rimIn = fxEllipse(0.27, 0.35, -0.085),
+    throat = fxEllipse(0.15, 0.17, -0.03),
+    trap = fxEllipse(0.1, 0.11, 0.0);
+  add(fxLoft([[rimTop, 0.4], [rimOut, 0.385], [belly, 0.29], [neck, 0.15], [foot, 0.0]], false), porcelain);
+  add(fxLoft([[rimTop, 0.4], [rimIn, 0.4]], true), porcelain);
+  add(fxLoft([[rimIn, 0.4], [fxScale(rimIn, 0.9), 0.36], [throat, 0.25], [trap, 0.18]], true), porcelain);
+  // Standing water in the trap.
+  const water = add(fxCap(fxEllipse(0.16, 0.19, -0.035), 0.235, true), new THREE.MeshPhysicalMaterial({ color: "#b9cbc8", roughness: 0.03, transparent: true, opacity: 0.55, depthWrite: false }), false);
+  water.userData.noAO = true;
+  // Rear shelf the cistern sits on, joining the bowl.
+  add(new ROOM_TOOLS.RoundedBoxGeometry(0.34, 0.07, 0.2, 2, 0.02).translate(0, 0.37, 0.2), porcelain);
+  add(new ROOM_TOOLS.RoundedBoxGeometry(0.2, 0.33, 0.18, 2, 0.04).translate(0, 0.19, 0.2), porcelain);
+  // Close-coupled cistern, lid and chrome push button.
+  add(new ROOM_TOOLS.RoundedBoxGeometry(0.4, 0.36, 0.17, 3, 0.03).translate(0, 0.585, 0.25), porcelain);
+  add(new ROOM_TOOLS.RoundedBoxGeometry(0.42, 0.035, 0.19, 3, 0.012).translate(0, 0.78, 0.25), porcelain);
+  const chrome = new THREE.MeshStandardMaterial({ color: "#d3d6d4", metalness: 0.95, roughness: 0.22 });
+  add(new THREE.CylinderGeometry(0.02, 0.022, 0.02, 20).translate(0, 0.805, 0.25), chrome);
+  add(new THREE.CylinderGeometry(0.014, 0.014, 0.012, 16).translate(0, 0.817, 0.25), chrome);
+  // Floor bolt caps.
+  for (const sx of [-1, 1]) add(new THREE.SphereGeometry(0.016, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2).translate(sx * 0.11, 0.0, 0.1), porcelain, false);
+  // Thermoplastic seat ring (hinged at the back) and the lid leaning against the cistern.
+  const seatMat = new THREE.MeshPhysicalMaterial({ color: ["#efece2", "#e8e2d2", "#ddd4bf"][env.wear], roughness: 0.32, clearcoat: 0.3 });
+  const ringShape = new THREE.Shape(),
+    hole = new THREE.Path();
+  ringShape.absellipse(0, 0, 0.18, 0.225, 0, Math.PI * 2, false);
+  hole.absellipse(0, 0.012, 0.11, 0.14, 0, Math.PI * 2, true);
+  ringShape.holes.push(hole);
+  const ext = { depth: 0.016, bevelEnabled: true, bevelSize: 0.006, bevelThickness: 0.006, bevelSegments: 3, curveSegments: 40 };
+  const ring = add(new THREE.ExtrudeGeometry(ringShape, ext), seatMat);
+  ring.rotation.x = Math.PI / 2;
+  ring.position.set(0, 0.425, -0.075);
+  const lidShape = new THREE.Shape();
+  lidShape.absellipse(0, 0, 0.185, 0.23, 0, Math.PI * 2, false);
+  const lid = add(new THREE.ExtrudeGeometry(lidShape, ext), seatMat);
+  // Hinge line at the back of the seat; the lid swings up past vertical and rests on the cistern.
+  const hingeZ = 0.135,
+    open = 1.72;
+  lid.rotation.x = Math.PI / 2 - open;
+  const r = 0.21;
+  lid.position.set(0, 0.43 + Math.sin(open) * r, hingeZ + 0.01 - Math.cos(open) * r + 0.0);
+  for (const sx of [-0.1, 0.1]) add(new THREE.CylinderGeometry(0.012, 0.012, 0.04, 12).rotateZ(Math.PI / 2).translate(sx, 0.43, hingeZ), chrome);
+  // Supply: flexible chrome pipe from the cistern's left side down to an angle valve on the wall.
+  const wallZ = env.d / 2 - 0.07 - toilet.position.z - 0.014;
+  roomTube(g, [[-0.17, 0.5, 0.27], [-0.2, 0.42, 0.3], [-0.215, 0.3, wallZ - 0.05], [-0.215, 0.26, wallZ - 0.03]], 0.006, chrome, 20);
+  add(new THREE.CylinderGeometry(0.016, 0.016, 0.06, 14).rotateX(Math.PI / 2).translate(-0.215, 0.24, wallZ - 0.03), chrome);
+  add(new THREE.BoxGeometry(0.04, 0.012, 0.012).translate(-0.215, 0.27, wallZ - 0.04), new THREE.MeshStandardMaterial({ color: "#b02c26", roughness: 0.4 }));
+  add(new THREE.CylinderGeometry(0.03, 0.03, 0.006, 18).rotateX(Math.PI / 2).translate(-0.215, 0.24, wallZ - 0.002), chrome);
+}
 function fxApply() {
   if (!R.ready || !roomRoot || W.store || !roomRoot.userData.interior || roomRoot.userData.fixtures) return;
   roomRoot.userData.fixtures = true;
@@ -1003,6 +1092,7 @@ function fxApply() {
     ["bath door", fxBathDoor],
     ["blanket", fxBlanket],
     ["sink", fxSink],
+    ["toilet", fxToilet],
   ])
     try {
       fn();

@@ -162,6 +162,28 @@ function lightingGuard(now) {
     LQ.frames = LQ.slow = 0;
   }
 }
+// Time of day and weather, seen from a flat you never leave: the sun climbs from the left of the
+// window to the right, its patch crawls across floor and walls, colour warms at the ends of the day,
+// and some days are simply overcast. Deterministic per seed + day, so a reload shows the same sky.
+function lightingSky() {
+  const state = G && phase !== "title" ? G : null,
+    h = state ? hour() : 10.5,
+    smooth = (a, b, x) => {
+      const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
+      return t * t * (3 - 2 * t);
+    };
+  const rise = 6.4,
+    set = 18.6,
+    light = smooth(rise - 0.9, rise + 0.7, h) * (1 - smooth(set - 0.7, set + 0.9, h)),
+    arc = Math.min(1, Math.max(0, (h - rise) / (set - rise))),
+    elev = Math.sin(arc * Math.PI) * 0.72,
+    az = (arc - 0.5) * 2.2;
+  const r = typeof fxRand === "function" ? fxRand(env.seed + "-sky-" + (state ? day() : 0))() : 0.5,
+    overcast = state && day() > 1 ? r < 0.32 : false,
+    hazy = !overcast && r < 0.5;
+  const low = 1 - Math.min(1, elev / 0.5);
+  return { h, light, elev, az, overcast, hazy, low };
+}
 // Daylight enters through the window as a soft area source: bright floor and reveals near the glass,
 // falling off into the room, with the ceiling lit only by bounce. Replaces the old point-light "bounce".
 function lightingWindow() {
@@ -188,19 +210,45 @@ function lightingWindow() {
     area.lookAt(roomRoot.localToWorld(new THREE.Vector3(0, 1.72, back + 3)));
   }
   area.visible = true;
-  const dawn = state ? Math.max(0, 1 - Math.abs(hour() - 12) / 7) : 0.85;
-  area.color.set(night ? "#7e93b0" : closed ? "#f2dcc0" : "#e6edf9");
-  area.intensity = night ? 0.25 : closed ? 1.6 : 4 + 5 * dawn;
+  const S = (LQ.sky = lightingSky()),
+    L = S.light;
+  // Sky through the glass: blue-grey at night, warm at the ends of the day, flat white when overcast.
+  const skyCol = new THREE.Color("#7e93b0").lerp(
+    new THREE.Color(S.overcast ? "#e4e8ea" : "#e6edf9").lerp(new THREE.Color("#f6d2a8"), S.overcast ? 0 : S.low * 0.55),
+    L,
+  );
+  area.color.copy(closed ? skyCol.clone().lerp(new THREE.Color("#f2dcc0"), 0.7) : skyCol);
+  const skyLum = S.overcast ? 6.2 : 4 + 5 * Math.sin(Math.min(1, S.elev / 0.72) * Math.PI / 2);
+  area.intensity = (0.25 + (skyLum - 0.25) * L) * (closed ? 0.3 : 1);
+  // Direct sun: follows the arc, long low beams early and late, none on grey days.
+  const mirror = env.mirror ? -1 : 1,
+    dist = 7,
+    sunScale = S.overcast ? 0.04 : S.hazy ? 0.6 : 1;
+  sunLight.position.copy(
+    roomRoot.localToWorld(
+      new THREE.Vector3(Math.sin(S.az) * Math.cos(S.elev) * dist, 0.6 + Math.sin(Math.max(0.09, S.elev)) * dist, back - Math.cos(S.az) * Math.cos(S.elev) * dist),
+    ),
+  );
+  sunLight.target.position.copy(roomRoot.localToWorld(new THREE.Vector3(0, 0.4, 0.6)));
+  sunLight.target.updateMatrixWorld();
+  sunLight.color.copy(new THREE.Color("#fff0da").lerp(new THREE.Color("#ffad66"), S.low * 0.85));
+  if (!night) sunLight.intensity = (closed ? 0.18 : 3.3) * sunScale * L * (0.55 + 0.45 * (1 - S.low * 0.6));
+  if (R.city?.material) R.city.material.color.copy(new THREE.Color("#34445c").lerp(new THREE.Color(S.overcast ? "#dde0e2" : "#f3f5f9").lerp(new THREE.Color("#f2c9a0"), S.overcast ? 0 : S.low * 0.4), L));
+  if (scene.background?.isColor) {
+    scene.background.copy(new THREE.Color("#222c37").lerp(new THREE.Color(S.overcast ? "#c9cdcf" : "#c5ccd0"), L));
+    scene.fog?.color.copy(scene.background);
+  }
+  void mirror;
   // The old bounce point sat right in front of the glass and showed as a hot spot in it; it now
   // stands in for light bounced off the floor onto the ceiling, a metre into the room.
   if (R.windowBounce) {
     R.windowBounce.position.set(0, 2.35, back + 1.5);
     R.windowBounce.distance = 7;
-    R.windowBounce.intensity = night ? 0.3 : closed ? 0.6 : 1.6;
+    R.windowBounce.intensity = (0.3 + 1.3 * L) * (closed ? 0.4 : 1);
   }
-  LQ.envScale = night ? 0.1 : closed ? 0.16 : 0.3;
+  LQ.envScale = (0.1 + 0.2 * L) * (closed ? 0.55 : 1);
   lightingApplyEnv(true);
-  skyLight.intensity = night ? 0.1 : 0.2;
+  skyLight.intensity = 0.1 + 0.1 * L;
 }
 // three r160 ignores scene.environmentIntensity (added in r163), so the PMREM room environment was lighting
 // every surface at full strength and flattening the room. Scale each material's envMapIntensity instead.

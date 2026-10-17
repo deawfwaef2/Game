@@ -7,11 +7,55 @@ let G = null,
   cart = {},
   shopCategory = "all",
   shopQuery = "",
-  restock = false,
   paused = false,
   panelType = "",
   selectedInv = "all",
   soundOn = false;
+// A preparation session exists only before a new run. It is never restored from saves.
+let preparationOpen = false,
+  purchasingNow = false;
+function canPurchase() {
+  return phase === "shop" && preparationOpen && !purchasingNow;
+}
+function blockPurchase() {
+  notify("开局采购已经结束。本局不能购买或补货，只能使用现有存量。", "warn");
+  return false;
+}
+function startPreparation() {
+  if (phase !== "title") return blockPurchase();
+  preparationOpen = true;
+  cart = {};
+  phase = "shop";
+  return true;
+}
+function closePreparation() {
+  preparationOpen = false;
+  purchasingNow = false;
+  cart = {};
+}
+function stockSummary() {
+  const items = new Map();
+  let kcal = 0;
+  for (const b of G?.inv || []) {
+    if (b.units <= 0) continue;
+    const it = DB[b.id];
+    if (!it) continue;
+    const row = items.get(b.id) || { id: b.id, total: 0, usable: 0, packed: 0 };
+    row.total += b.units;
+    if (b.packed) row.packed += b.units;
+    if (!isSpoiled(b) && !b.contaminated) {
+      row.usable += b.units;
+      if (it.kind === "food") kcal += (it.kcal || 0) * b.units;
+    }
+    items.set(b.id, row);
+  }
+  return {
+    items: [...items.values()],
+    kcal,
+    theoreticalDays: Math.floor(kcal / 2000),
+    remainingDays: Math.max(0, 366 - day()),
+  };
+}
 const gameLog = [];
 function uid() {
   return "i" + Math.random().toString(36).slice(2, 10);
@@ -112,6 +156,7 @@ function freshState(seed) {
   const e = environment(seed);
   return {
     version: 3,
+    tradeLocked: true,
     seed,
     env: e,
     rng: hashSeed(seed + "events"),
@@ -171,6 +216,7 @@ function freshState(seed) {
   };
 }
 function putCartIntoState(summary) {
+  if (!purchasingNow || phase !== "shop") return blockPurchase();
   const offset = G.bags.length;
   summary.total.forEach((bag, i) => {
     G.bags.push({
@@ -196,41 +242,49 @@ function putCartIntoState(summary) {
   });
 }
 function beginGame() {
-  const s = cartSummary(cart, restock);
-  const budget = restock ? G.cash : 300;
-  if (s.cost > budget + 0.001) return notify("纸币不够。请调整清单。", "warn");
-  if (!s.count) return notify("至少选择一件物资，或使用基础采购建议。", "warn");
-  if (!restock) {
+  if (!canPurchase()) return blockPurchase();
+  const s = cartSummary(cart);
+  if (s.cost > 300.001) {
+    notify("纸币不够。请调整开局清单。", "warn");
+    return false;
+  }
+  if (!s.count) {
+    notify("请先选择开局物资。进入公寓后无法补货。", "warn");
+    return false;
+  }
+  preparationOpen = false;
+  purchasingNow = true;
+  try {
     G = freshState(currentSeed);
     env = G.env;
     G.cash = Math.round((300 - s.cost) * 100) / 100;
     putCartIntoState(s);
-    logEvent("1986年，你与家人告别。门锁落下，没有人知道你住在这里。", "story");
-    logEvent(
-      `${s.bags.length}只塑料袋、${s.crates.length}件独立箱已搬入。每袋不超过8kg。先拆袋，再收纳。`,
-      "good",
-    );
-    phase = "playing";
-    if (typeof roomRoot === "undefined" || roomRoot?.userData.seed !== env.seed)
-      buildRoom(env);
-    setFirstPerson();
-  } else {
-    G.cash = Math.round((G.cash - s.cost) * 100) / 100;
-    putCartIntoState(s);
-    G.suspicion = clamp(G.suspicion + 4);
-    logEvent("地下补给从无人楼梯间送达。联系他人增加了少量暴露风险。", "warn");
-    advanceTime(120, "delivery");
-    if (!G.ended) phase = "playing";
+  } finally {
+    purchasingNow = false;
   }
-  restock = false;
+  logEvent("1986年，你与家人告别。门锁落下，没有人知道你住在这里。", "story");
+  logEvent(
+    "这是本局唯一一次采购。此后不能购买、补货或送货，只能依靠现有物资。",
+    "story",
+  );
+  logEvent(
+    `${s.bags.length}只塑料袋、${s.crates.length}件独立箱已搬入。理论热量约${s.days}天，目标365天；保质期与烹煮资源仍需规划。`,
+    s.days < 365 ? "warn" : "good",
+  );
+  phase = "playing";
+  if (typeof roomRoot === "undefined" || roomRoot?.userData.seed !== env.seed)
+    buildRoom(env);
+  setFirstPerson();
   cart = {};
   closePanel();
   updatePhase();
   saveGame(false);
   renderHUD();
   if (typeof syncRoom === "function") syncRoom();
-  notify("物资就在门边。靠近袋子按 E 拆开。");
+  notify("门已锁上，采购永久结束。先拆开门边的物资，清点存量。");
+  return true;
 }
+
 function unpackBag(index, all = false) {
   const targets = G.bags.filter((b) => !b.opened && (all || b.id === index));
   if (!targets.length) return notify("这些袋子已经拆开了。");
@@ -1024,6 +1078,7 @@ function validateSave(s) {
       !num(s.cash, 0, 10000)
     )
       return false;
+    if (s.tradeLocked !== undefined && s.tradeLocked !== true) return false;
     if (!obj(s.stats) || !NEEDS.every(([k]) => num(s.stats[k], 0, 100)))
       return false;
     for (const k of ["bladder", "bowel", "dirt", "clothes", "suspicion"])
@@ -1202,7 +1257,9 @@ function continueGame() {
 }
 function loadState(s) {
   if (!validateSave(s)) return notify("存档格式不兼容或已损坏。", "warn");
+  closePreparation();
   G = s;
+  G.tradeLocked = true;
   paused = false;
   G.cooldowns ??= {};
   env = G.env;

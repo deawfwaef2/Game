@@ -1004,7 +1004,7 @@ function worldUpdatePaper(force = false) {
     title = "供销合作社 · 购物清单";
     sub = "E$ 预算 / 单袋承重8kg";
     const entries = Object.entries(cart).filter(([, q]) => q > 0),
-      sum = cartSummary(cart, restock),
+      sum = cartSummary(cart),
       start = W.receiptPage * 14;
     const lines = entries
       .slice(start, start + 14)
@@ -1017,8 +1017,10 @@ function worldUpdatePaper(force = false) {
       `应付 E$ ${sum.cost.toFixed(2)}`,
     );
   } else if (W.page % 3 === 1) {
-    title = "物资与房间";
+    title = "存量与房间";
+    const stock = stockSummary();
     left = [
+      `热量约${stock.theoreticalDays}天 / 尚需${stock.remainingDays}天`,
       `食物 ${availableFood()
         .reduce((a, b) => a + b.units, 0)
         .toFixed(0)} 份`,
@@ -1343,10 +1345,11 @@ function worldTargetInfo(o) {
   if (!id) return ["", ""];
   if (id.startsWith("stock:")) {
     const b = G?.inv.find((x) => x.uid === o.userData.uid),
-      it = b && DB[b.id];
+      it = b && DB[b.id],
+      total = b && stockSummary().items.find((row) => row.id === b.id);
     return [
       it?.name || "物资",
-      `E 拿起${b && (isSpoiled(b) || b.contaminated) ? " · 不宜食用" : ""}  ·  ${b ? Math.ceil(b.units) : 0}份/次`,
+      `E 拿起${b && (isSpoiled(b) || b.contaminated) ? " · 不宜食用" : ""}  ·  本包${b ? Math.ceil(b.units) : 0} · 总存量${Math.ceil(total?.total || 0)}份/次${total?.packed ? " · 含未拆" + Math.ceil(total.packed) : ""}`,
     ];
   }
   if (id.startsWith("bag:"))
@@ -1417,7 +1420,7 @@ function worldTargetInfo(o) {
       "入户门",
       G?.pendingKnock
         ? "E 保持安静，等脚步远去  ·  Shift+E 看猫眼"
-        : "E 看一眼猫眼  ·  Shift+E 联系地下补给",
+        : "E 看一眼猫眼  ·  门已锁闭，本局不能补货",
     ],
     pantry: [
       "储物架",
@@ -1605,7 +1608,7 @@ function worldInteract(shift = false) {
           shift ? "悄悄看一眼猫眼" : "保持安静，等脚步声远去",
           2.5,
         );
-      if (shift) return openShop(true);
+      if (shift) return blockPurchase();
       return worldAction("peek", "看一眼空荡的楼道", 1.3);
     case "plant":
       return worldAction("waterplant", "给绿植浇一点水", 1.7);
@@ -1675,21 +1678,18 @@ function worldRenderHUD() {
   if (!visible) return;
   const shopping = worldIsShopping();
   $("#worldDay").textContent = shopping
-    ? restock
-      ? "地下补给"
-      : "最后一次采购"
+    ? "唯一一次开局采购"
     : `第 ${String(Math.min(day(), 365)).padStart(3, "0")} 天`;
   $("#worldPlace").textContent = shopping
     ? "安德士 · 街角供销社"
     : `北区旧公寓 / ${env.number}`;
   if (shopping) {
-    const s = cartSummary(cart, restock),
-      budget = restock ? G.cash : 300;
+    const s = cartSummary(cart),
+      budget = 300;
     $("#worldTopRight").textContent =
       `余 E$ ${(budget - s.cost).toFixed(2)}  ·  篮中 ${s.count} 件`;
-    $("#worldCondition").textContent = restock
-      ? "地下补给 · 加价15% / 运费2 / 暴露风险+4"
-      : "纸币不会变多，明天还会继续。";
+    $("#worldCondition").textContent =
+      `只此一次 · 理论热量${s.days}/365天 · 进房后不能补货`;
   } else if (G) {
     $("#worldTopRight").textContent =
       `${String(Math.floor(hour())).padStart(2, "0")}:${String(Math.floor(G.minute % 60)).padStart(2, "0")}`;
@@ -2061,7 +2061,7 @@ if (W.enabled) {
     <p class="help-paragraph">回房后，E拆开门边的袋子，Shift+E连续整理。到储物架前拿食物；需要烹煮的主食先拿到炉边。左键使用手中物品，R对准桌面放置，或放回架子。书拿在手里读，不弹消遣菜单。</p>
     <p class="help-paragraph">床边滚轮或↑↓调整睡眠小时，E躺下。卫生间E小便、Shift+E大便；花洒E洗澡；柜门打开后E取换洗衣物，洗衣盆E洗衣。扫帚、指甲刀、理发剪、牙刷都是可直接使用的实物。Shift+E是看向物体时提示的辅助动作。</p>
     <p class="help-paragraph">Tab翻开实体手记，滚轮翻页，查看完整身体状态、物资、水电和日志。T抬腕看表。Esc只打开必要的暂停/存档。手机使用摇杆和右侧交互、辅助、使用、放回按钮。</p>
-    <p class="help-paragraph">目标365天，初始300纸币。重复口味/读物、疾病、脏乱、长期独处仍影响精神；危险和敲门会中断跳时。没有真实虫鼠或恶心画面，只有干净的几何干扰物。真实外出与追捕未实现，地下补给仅是抽象货架场景。</p>`,
+    <p class="help-paragraph">目标365天，初始300纸币。重复口味/读物、疾病、脏乱、长期独处仍影响精神；危险和敲门会中断跳时。没有真实虫鼠或恶心画面，只有干净的几何干扰物。真实外出与追捕未实现，开局确认进房后永久禁止购买或补货，只能依靠已有存量。</p>`,
     );
   updatePhase = () => {
     legacyUI.updatePhase();
@@ -2094,5 +2094,6 @@ if (W.enabled) {
   };
   installWorldRoom();
   worldRenderHUD();
-  $("#newGameButton small").textContent = "走进供销社 · 初始 300 帝国纸币";
+  $("#newGameButton small").textContent =
+    "唯一一次采购 · 300纸币 · 入室后不补货";
 }

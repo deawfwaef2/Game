@@ -1,5 +1,5 @@
 /* 闭门365 — original game data, fictional 1980s subsidized prices. */
-const VERSION = "0.4.0";
+const VERSION = "0.4.1";
 const CATEGORIES = [
   ["all", "全部物资"],
   ["staple", "主食与干粮"],
@@ -652,7 +652,7 @@ function packCart(cart) {
   }
   return { bags, crates, total: [...bags, ...crates] };
 }
-function cartSummary(cart, restock = false) {
+function cartSummary(cart) {
   const p = packCart(cart),
     cost = Object.entries(cart).reduce(
       (a, [id, q]) => a + (DB[id]?.price || 0) * q,
@@ -665,10 +665,7 @@ function cartSummary(cart, restock = false) {
   );
   return {
     ...p,
-    cost:
-      Math.round(
-        (cost * (restock ? 1.15 : 1) + packaging + (restock ? 2 : 0)) * 100,
-      ) / 100,
+    cost: Math.round((cost + packaging) * 100) / 100,
     kcal,
     days: Math.floor(kcal / 2000),
     weight: p.total.reduce((s, b) => s + b.weight, 0),

@@ -419,6 +419,7 @@ fs.mkdirSync(artifacts, { recursive: true });
       await page.evaluate(() => {
         const s = JSON.parse(JSON.stringify(G));
         delete s.heldUID;
+        delete s.tradeLocked;
         s.inv.forEach((b) => delete b.pose);
         return validateSave(s);
       }),
@@ -432,36 +433,32 @@ fs.mkdirSync(artifacts, { recursive: true });
       localAt: [-0.35, 1.4, front - 0.16],
       localFrom: [-0.35, 1.62, front - 1.45],
     });
-    const supply = await page.evaluate(() => ({
-      minute: G.minute,
-      cash: G.cash,
-      pose: legacyUI.getPlayerPosition(),
-      suspicion: G.suspicion,
-    }));
+    const lockedSnapshot = await page.evaluate(() => JSON.stringify(G));
     await page.keyboard.press("Shift+E");
+    assert.strictEqual(await page.evaluate(() => phase), "playing");
+    assert.strictEqual(await page.evaluate(() => worldIsShopping()), false);
+    assert.strictEqual(await page.evaluate(() => G.tradeLocked), true);
+    await page.evaluate(() => {
+      openShop(true);
+      openShop(false);
+      legacyUI.openShop(true);
+      legacyUI.openShop(false);
+      worldKit("year");
+      worldCartChange("rice", 1);
+      worldShopInteract("buy:rice");
+      worldCheckout();
+      storeLegacyBegin();
+      putCartIntoState(cartSummary({ rice: 1 }));
+      uiAction("resupply");
+    });
     assert.strictEqual(
-      await page.evaluate(() => worldIsShopping() && restock),
-      true,
+      await page.evaluate(() => JSON.stringify(G)),
+      lockedSnapshot,
     );
-    await aim(page, "buy:bread");
-    await act(page);
-    const cost = await page.evaluate(() => cartSummary(cart, restock).cost);
-    await aim(page, "shopCheckout", { from: [-2.8, 1.62, 3.1] });
-    await act(page);
-    assert.strictEqual(
-      await page.evaluate(() => G.cash),
-      Math.round((supply.cash - cost) * 100) / 100,
-    );
-    assert.ok(await page.evaluate((m) => G.minute >= m + 119, supply.minute));
-    assert.ok(
-      await page.evaluate((s) => G.suspicion >= s + 3.9, supply.suspicion),
-    );
-    assert.deepStrictEqual(
-      await page.evaluate(() => getPlayerPosition()),
-      supply.pose,
-    );
+    assert.strictEqual(await page.evaluate(() => phase), "playing");
+    assert.strictEqual(await page.locator('[data-ui="resupply"]').count(), 0);
     console.log(
-      "PASS physical underground supply abstraction / cash / 2h delivery / risk / original room pose",
+      "PASS post-start purchase forbidden: door / normal+legacy shop / checkout / direct insertion / kits / old resupply action; stock cash clock unchanged",
     );
     await release(page);
     page = null;

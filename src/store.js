@@ -172,7 +172,7 @@ function worldBuildStore() {
       body.rotation.y = 0.035 * (col % 2 ? 1 : -1);
       const price = worldLabel(
         g,
-        `E$ ${(it.price * (restock ? 1.15 : 1)).toFixed(2)}`,
+        `E$ ${(it.price * 1).toFixed(2)}`,
         0.3,
         0.075,
         0,
@@ -234,7 +234,7 @@ function worldBuildStore() {
   paper.rotation.y = Math.PI;
   W.receiptBoard = paper;
   const kitCrates = [
-    ["starter", -5.2, 2.9, "基础生活配给箱", STARTER],
+    ["starter", -5.2, 2.9, "短期物资样例", STARTER],
     ["year", -3.72, 2.9, "全年紧缩配给单", YEAR_KIT],
   ];
   for (const [which, x, z, name, kit] of kitCrates) {
@@ -244,11 +244,7 @@ function worldBuildStore() {
       worldBox(crate, 0.88, 0.065, 0.68, 0, y, 0, worldMat("#c1ad83"));
     worldLabel(
       crate,
-      [
-        name,
-        `E$ ${cartSummary(kit, restock).cost.toFixed(2)}`,
-        "E 加入这一份配给",
-      ],
+      [name, `E$ ${cartSummary(kit).cost.toFixed(2)}`, "E 加入这一份配给"],
       0.74,
       0.35,
       0,
@@ -469,8 +465,8 @@ function worldMakeBasket() {
 }
 function worldRefreshShop() {
   if (!worldIsShopping()) return;
-  const sum = cartSummary(cart, restock),
-    budget = restock ? G.cash : 300;
+  const sum = cartSummary(cart),
+    budget = 300;
   if (W.receiptBoard) {
     const lines = [
       "安德士 · 供销合作社",
@@ -478,11 +474,11 @@ function worldRefreshShop() {
       `登记 ${sum.count} 件 / ${sum.weight.toFixed(1)} kg`,
       `${sum.bags.length} 袋 / ${sum.crates.length} 独立箱`,
       `袋装费 E$ ${(sum.bags.length * 0.06).toFixed(2)}`,
-      restock ? "地下补给：加价15% / 运费2" : "塑料袋最大承重 8 kg",
+      `热量约${sum.days}天 / 目标365天`,
       "——————————",
       `应付 E$ ${sum.cost.toFixed(2)}`,
       `结余 E$ ${(budget - sum.cost).toFixed(2)}`,
-      "E 收银台付款",
+      "付款入室后永不补货",
     ];
     W.receiptBoard.material.map.dispose();
     W.receiptBoard.material.map = worldTextTexture(lines, {
@@ -518,20 +514,13 @@ function worldRefreshShop() {
 }
 function worldOpenShop(isRestock = false) {
   if (!W.enabled) return legacyUI.openShop(isRestock);
-  if (isRestock && (!G || G.ended)) return;
-  if (G && isRestock) {
-    worldPutBack(false);
-    saveGame(false);
-    W.savedRoomPosition = legacyUI.getPlayerPosition();
-  } else W.savedRoomPosition = G?.position || null;
+  if (isRestock || !startPreparation()) return blockPurchase();
+  W.savedRoomPosition = G?.position || null;
   worldCancelAction();
   worldPause(false);
   W.held = null;
   W.glance = "";
   W.receiptPage = 0;
-  restock = isRestock;
-  cart = {};
-  phase = "shop";
   W.store = true;
   paused = false;
   W.kitConfirm = null;
@@ -542,20 +531,20 @@ function worldOpenShop(isRestock = false) {
   worldBuildStore();
   updatePhase();
   showToast(
-    isRestock
-      ? "这不是安全的外出：地下供货点被抽象成货架。商品加价15%，送达两小时，暴露风险+4。"
-      : "走到货架前，把样品放进篮子。货物由合作社按清单分袋送到公寓。结账在门边。",
-    isRestock ? "warn" : "info",
+    "仅此一次开局采购：确认入室后不能再买、不能补货。请先检查能否支撑365天，短期样例不足一年。",
+    "warn",
   );
+  return true;
 }
+
 function worldCartChange(id, delta = 1) {
-  if (!DB[id] || !worldIsShopping()) return false;
+  if (!canPurchase() || !DB[id] || !worldIsShopping()) return false;
   const next = Math.max(0, Math.min(100, (cart[id] || 0) + delta));
   if (next === (cart[id] || 0)) return false;
   const draft = { ...cart, [id]: next };
   if (!next) delete draft[id];
-  const budget = restock ? G.cash : 300;
-  if (delta > 0 && cartSummary(draft, restock).cost > budget + 0.001) {
+  const budget = 300;
+  if (delta > 0 && cartSummary(draft).cost > budget + 0.001) {
     showToast("纸币不够，先把篮子里的一些物资放回去。", "warn");
     return false;
   }
@@ -566,9 +555,10 @@ function worldCartChange(id, delta = 1) {
   return true;
 }
 function worldKit(which) {
+  if (!canPurchase()) return blockPurchase();
   const kit = which === "year" ? YEAR_KIT : STARTER,
-    sum = cartSummary(kit, restock),
-    budget = restock ? G.cash : 300;
+    sum = cartSummary(kit),
+    budget = 300;
   if (sum.cost > budget + 0.001)
     return showToast("这份整套配给超过了当前预算。可以按件挑选。", "warn");
   if (
@@ -588,12 +578,11 @@ function worldKit(which) {
   showToast(
     which === "year"
       ? "全年紧缩配给已登记。只是热量估计，不保证健康、保质期和精神需求。"
-      : "基础生活物资已登记。仍可到货架前自由增减。",
+      : "短期样例只有约79天理论热量，不足一年。进房后不能补货，请在货架补足再结账。",
   );
 }
 function worldCommitCheckout() {
-  const wasRestock = restock,
-    pose = W.savedRoomPosition;
+  if (!canPurchase() || !worldIsShopping()) return blockPurchase();
   if (W.basketRig) {
     camera.remove(W.basketRig);
     worldClear(W.basketRig);
@@ -608,30 +597,32 @@ function worldCommitCheckout() {
   targetId = "";
   scene.fog.near = 10;
   scene.fog.far = 40;
-  if (wasRestock) {
-    buildRoom(env);
-    setFirstPerson(pose);
-  }
   storeLegacyBegin();
   if (phase === "playing") {
-    setFirstPerson(wasRestock ? pose : null);
+    setFirstPerson();
     saveGame(false);
     syncRoom();
   }
   worldSetHand();
   updatePhase();
 }
+
 function worldCheckout() {
-  if (!worldIsShopping()) return storeLegacyBegin();
-  const s = cartSummary(cart, restock),
-    budget = restock ? G.cash : 300;
+  if (!canPurchase() || !worldIsShopping()) return blockPurchase();
+  const s = cartSummary(cart),
+    budget = 300;
   if (!s.count)
     return showToast(
       "篮子里还没有东西，先去货架前挑选，或者看看门边的配给箱。",
     );
   if (s.cost > budget + 0.001)
     return showToast("纸币不够，请先放回一部分商品。", "warn");
-  worldStart("把纸币放在收银台上", 1.6, worldCommitCheckout, "checkout");
+  worldStart(
+    "交清纸币，锁定本局开局物资",
+    1.6,
+    worldCommitCheckout,
+    "checkout",
+  );
 }
 function worldLeaveShop() {
   if (Object.keys(cart).length && performance.now() > W.exitConfirm) {
@@ -641,27 +632,17 @@ function worldLeaveShop() {
       "warn",
     );
   }
-  const wasRestock = restock,
-    pose = W.savedRoomPosition;
-  cart = {};
-  restock = false;
+  closePreparation();
   W.store = false;
   if (W.basketRig) {
     camera.remove(W.basketRig);
     worldClear(W.basketRig);
     W.basketRig = null;
   }
-  if (wasRestock) {
-    phase = "playing";
-    paused = false;
-    buildRoom(env);
-    setFirstPerson(pose);
-    updatePhase();
-    worldSetHand();
-    saveGame(false);
-  } else toTitle();
+  toTitle();
 }
 function worldShopInteract(id, shift = false) {
+  if (!canPurchase()) return blockPurchase();
   if (id.startsWith("buy:")) {
     const pid = id.slice(4),
       delta = shift ? 5 : 1;
@@ -713,22 +694,22 @@ if (W.enabled) {
       const life = it.life < 9999 ? ` · 常温${it.life}天` : " · 长期保存";
       return [
         it.name,
-        `E 入篮  ·  Shift+E 拿5件  ·  R 放回  |  E$ ${(it.price * (restock ? 1.15 : 1)).toFixed(2)} · ${it.weight}kg · ${detail}${life}  |  篮中×${cart[it.id] || 0}`,
+        `E 入篮  ·  Shift+E 拿5件  ·  R 放回  |  E$ ${(it.price * 1).toFixed(2)} · ${it.weight}kg · ${detail}${life}  |  篮中×${cart[it.id] || 0}`,
       ];
     }
     if (id === "kit:starter" || id === "kit:year") {
       const which = id.slice(4),
-        s = cartSummary(which === "year" ? YEAR_KIT : STARTER, restock);
+        s = cartSummary(which === "year" ? YEAR_KIT : STARTER);
       return [
-        which === "year" ? "全年紧缩配给单" : "基础生活配给箱",
+        which === "year" ? "全年紧缩配给单" : "短期物资样例",
         `E 登记整套 · E$ ${s.cost.toFixed(2)} · ${s.count}件 · ${s.bags.length}袋 · ${s.days}理论热量天（非生存保证）`,
       ];
     }
     if (id === "shopCheckout") {
-      const s = cartSummary(cart, restock);
+      const s = cartSummary(cart);
       return [
         "机械收银台",
-        `E 付款离店 · E$ ${s.cost.toFixed(2)} · ${s.bags.length}袋 / ${s.crates.length}箱 · 每袋不超过8kg`,
+        `E 确认本局唯一采购 · E$ ${s.cost.toFixed(2)} · 热量约${s.days}/365天 · 入室后不能补货`,
       ];
     }
     if (id === "shopReceipt" || id === "shopBasket")

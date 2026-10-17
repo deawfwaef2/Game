@@ -4590,7 +4590,7 @@ kbd {
           >闭门工作室<span class="brand-divider"></span
           ><span class="brand-en">CLOSED DOOR</span></a
         ><span class="build-label"
-          >OFFLINE EDITION <i></i> BUILD <span data-version>0.4.0</span></span
+          >OFFLINE EDITION <i></i> BUILD <span data-version>0.4.1</span></span
         >
       </header>
       <div class="title-shade"></div>
@@ -4710,7 +4710,8 @@ kbd {
                 aria-label="搜索商品"
               />
             </div>
-            <button class="text-button" id="starterKit">基础清单 ↗</button
+            <button class="text-button" id="starterKit">
+              短期样例（不足一年） ↗</button
             ><button class="text-button" id="yearKit">全年紧缩计划 ↗</button>
           </div>
           <div class="catalog-grid" id="catalogGrid"></div>
@@ -4860,7 +4861,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     </script>
     <script>
       /* 闭门365 — original game data, fictional 1980s subsidized prices. */
-const VERSION = "0.4.0";
+const VERSION = "0.4.1";
 const CATEGORIES = [
   ["all", "全部物资"],
   ["staple", "主食与干粮"],
@@ -5513,7 +5514,7 @@ function packCart(cart) {
   }
   return { bags, crates, total: [...bags, ...crates] };
 }
-function cartSummary(cart, restock = false) {
+function cartSummary(cart) {
   const p = packCart(cart),
     cost = Object.entries(cart).reduce(
       (a, [id, q]) => a + (DB[id]?.price || 0) * q,
@@ -5526,10 +5527,7 @@ function cartSummary(cart, restock = false) {
   );
   return {
     ...p,
-    cost:
-      Math.round(
-        (cost * (restock ? 1.15 : 1) + packaging + (restock ? 2 : 0)) * 100,
-      ) / 100,
+    cost: Math.round((cost + packaging) * 100) / 100,
     kcal,
     days: Math.floor(kcal / 2000),
     weight: p.total.reduce((s, b) => s + b.weight, 0),
@@ -5556,11 +5554,55 @@ let G = null,
   cart = {},
   shopCategory = "all",
   shopQuery = "",
-  restock = false,
   paused = false,
   panelType = "",
   selectedInv = "all",
   soundOn = false;
+// A preparation session exists only before a new run. It is never restored from saves.
+let preparationOpen = false,
+  purchasingNow = false;
+function canPurchase() {
+  return phase === "shop" && preparationOpen && !purchasingNow;
+}
+function blockPurchase() {
+  notify("开局采购已经结束。本局不能购买或补货，只能使用现有存量。", "warn");
+  return false;
+}
+function startPreparation() {
+  if (phase !== "title") return blockPurchase();
+  preparationOpen = true;
+  cart = {};
+  phase = "shop";
+  return true;
+}
+function closePreparation() {
+  preparationOpen = false;
+  purchasingNow = false;
+  cart = {};
+}
+function stockSummary() {
+  const items = new Map();
+  let kcal = 0;
+  for (const b of G?.inv || []) {
+    if (b.units <= 0) continue;
+    const it = DB[b.id];
+    if (!it) continue;
+    const row = items.get(b.id) || { id: b.id, total: 0, usable: 0, packed: 0 };
+    row.total += b.units;
+    if (b.packed) row.packed += b.units;
+    if (!isSpoiled(b) && !b.contaminated) {
+      row.usable += b.units;
+      if (it.kind === "food") kcal += (it.kcal || 0) * b.units;
+    }
+    items.set(b.id, row);
+  }
+  return {
+    items: [...items.values()],
+    kcal,
+    theoreticalDays: Math.floor(kcal / 2000),
+    remainingDays: Math.max(0, 366 - day()),
+  };
+}
 const gameLog = [];
 function uid() {
   return "i" + Math.random().toString(36).slice(2, 10);
@@ -5661,6 +5703,7 @@ function freshState(seed) {
   const e = environment(seed);
   return {
     version: 3,
+    tradeLocked: true,
     seed,
     env: e,
     rng: hashSeed(seed + "events"),
@@ -5720,6 +5763,7 @@ function freshState(seed) {
   };
 }
 function putCartIntoState(summary) {
+  if (!purchasingNow || phase !== "shop") return blockPurchase();
   const offset = G.bags.length;
   summary.total.forEach((bag, i) => {
     G.bags.push({
@@ -5745,41 +5789,49 @@ function putCartIntoState(summary) {
   });
 }
 function beginGame() {
-  const s = cartSummary(cart, restock);
-  const budget = restock ? G.cash : 300;
-  if (s.cost > budget + 0.001) return notify("纸币不够。请调整清单。", "warn");
-  if (!s.count) return notify("至少选择一件物资，或使用基础采购建议。", "warn");
-  if (!restock) {
+  if (!canPurchase()) return blockPurchase();
+  const s = cartSummary(cart);
+  if (s.cost > 300.001) {
+    notify("纸币不够。请调整开局清单。", "warn");
+    return false;
+  }
+  if (!s.count) {
+    notify("请先选择开局物资。进入公寓后无法补货。", "warn");
+    return false;
+  }
+  preparationOpen = false;
+  purchasingNow = true;
+  try {
     G = freshState(currentSeed);
     env = G.env;
     G.cash = Math.round((300 - s.cost) * 100) / 100;
     putCartIntoState(s);
-    logEvent("1986年，你与家人告别。门锁落下，没有人知道你住在这里。", "story");
-    logEvent(
-      `${s.bags.length}只塑料袋、${s.crates.length}件独立箱已搬入。每袋不超过8kg。先拆袋，再收纳。`,
-      "good",
-    );
-    phase = "playing";
-    if (typeof roomRoot === "undefined" || roomRoot?.userData.seed !== env.seed)
-      buildRoom(env);
-    setFirstPerson();
-  } else {
-    G.cash = Math.round((G.cash - s.cost) * 100) / 100;
-    putCartIntoState(s);
-    G.suspicion = clamp(G.suspicion + 4);
-    logEvent("地下补给从无人楼梯间送达。联系他人增加了少量暴露风险。", "warn");
-    advanceTime(120, "delivery");
-    if (!G.ended) phase = "playing";
+  } finally {
+    purchasingNow = false;
   }
-  restock = false;
+  logEvent("1986年，你与家人告别。门锁落下，没有人知道你住在这里。", "story");
+  logEvent(
+    "这是本局唯一一次采购。此后不能购买、补货或送货，只能依靠现有物资。",
+    "story",
+  );
+  logEvent(
+    `${s.bags.length}只塑料袋、${s.crates.length}件独立箱已搬入。理论热量约${s.days}天，目标365天；保质期与烹煮资源仍需规划。`,
+    s.days < 365 ? "warn" : "good",
+  );
+  phase = "playing";
+  if (typeof roomRoot === "undefined" || roomRoot?.userData.seed !== env.seed)
+    buildRoom(env);
+  setFirstPerson();
   cart = {};
   closePanel();
   updatePhase();
   saveGame(false);
   renderHUD();
   if (typeof syncRoom === "function") syncRoom();
-  notify("物资就在门边。靠近袋子按 E 拆开。");
+  notify("门已锁上，采购永久结束。先拆开门边的物资，清点存量。");
+  return true;
 }
+
 function unpackBag(index, all = false) {
   const targets = G.bags.filter((b) => !b.opened && (all || b.id === index));
   if (!targets.length) return notify("这些袋子已经拆开了。");
@@ -6573,6 +6625,7 @@ function validateSave(s) {
       !num(s.cash, 0, 10000)
     )
       return false;
+    if (s.tradeLocked !== undefined && s.tradeLocked !== true) return false;
     if (!obj(s.stats) || !NEEDS.every(([k]) => num(s.stats[k], 0, 100)))
       return false;
     for (const k of ["bladder", "bowel", "dirt", "clothes", "suspicion"])
@@ -6751,7 +6804,9 @@ function continueGame() {
 }
 function loadState(s) {
   if (!validateSave(s)) return notify("存档格式不兼容或已损坏。", "warn");
+  closePreparation();
   G = s;
+  G.tradeLocked = true;
   paused = false;
   G.cooldowns ??= {};
   env = G.env;
@@ -8086,26 +8141,25 @@ function updatePhase() {
   if (phase === "playing") $("#pauseBanner").hidden = !paused;
 }
 function openShop(isRestock = false) {
-  restock = isRestock;
+  if (isRestock || !startPreparation()) return blockPurchase();
   shopCategory = "all";
   shopQuery = "";
-  cart = {};
   $("#shopSearch").value = "";
-  phase = "shop";
   closePanel();
   releasePointer();
-  $("#shopBudgetLabel").textContent = restock ? "剩余纸币" : "可用纸币";
-  $("#shopIntroText").textContent = restock
-    ? "地下投递：商品加价15%，每单配送费2纸币，抵达需2小时，暴露风险+4。不要把联络当成绝对安全。"
-    : "这些物资将在你藏匿前搬入公寓。价格按虚构1980年代平价配给设定，1纸币≈1美元面值。";
+  $("#shopBudgetLabel").textContent = "开局预算";
+  $("#shopIntroText").textContent =
+    "这是本局唯一一次采购。确认入室后无法购买或补货；请用300纸币规划365天的存量、保质期和生活资源。";
   $("#checkoutButton").innerHTML =
-    `<span>${restock ? "确认地下补给" : "把物资带回房间"}</span><span>→</span>`;
+    "<span>确认开局物资 · 此后不再购买</span><span>→</span>";
   $("#catalogCount").textContent = CATALOG.length + "件";
   renderCategories();
   renderCatalog();
   renderReceipt();
   updatePhase();
+  return true;
 }
+
 function showProduct(id) {
   const it = DB[id];
   if (!it) return;
@@ -8124,7 +8178,7 @@ function showProduct(id) {
     "product",
     it.name,
     "COOPERATIVE / PRODUCT DETAILS",
-    `<div class="product-detail-art">${productArt(it)}</div><div class="stat-grid"><div class="stat-tile"><span>单件价格</span><strong>${it.price.toFixed(2)}<small>纸币</small></strong><p>地下投递另外加价</p></div><div class="stat-tile"><span>单件重量</span><strong>${it.weight}<small>kg</small></strong><p>${it.bulky ? "大件独立包装" : "按8kg承重分袋"}</p></div><div class="stat-tile"><span>${it.kind === "book" ? "总页数" : "份数 / 次数"}</span><strong>${it.kind === "book" ? it.pages : it.servings}</strong><p>${it.life < 9999 ? "常温标示保质期" + it.life + "天" : "可长期保存"}</p></div></div><p class="panel-intro">${description}${it.kcal ? "<br>每份约" + it.kcal + "kcal，包装合计约" + it.kcal * it.servings + "kcal。" : ""}${it.capacity ? "<br>容器容量" + it.capacity + "L，需先在水槽装水。" : ""}</p>${phase === "shop" ? `<button class="full-button gold" data-cart="${it.id}" data-delta="1">加入一件采购单 · ${money(it.price * (restock ? 1.15 : 1))}</button>` : ""}<p class="panel-note">保质期按游戏时间结算；现实中关掉页面不会消耗物资。页面中的药品与健康效果均为虚构游戏机制。</p>`,
+    `<div class="product-detail-art">${productArt(it)}</div><div class="stat-grid"><div class="stat-tile"><span>单件价格</span><strong>${it.price.toFixed(2)}<small>纸币</small></strong><p>仅开局可购买，入室后不能补货</p></div><div class="stat-tile"><span>单件重量</span><strong>${it.weight}<small>kg</small></strong><p>${it.bulky ? "大件独立包装" : "按8kg承重分袋"}</p></div><div class="stat-tile"><span>${it.kind === "book" ? "总页数" : "份数 / 次数"}</span><strong>${it.kind === "book" ? it.pages : it.servings}</strong><p>${it.life < 9999 ? "常温标示保质期" + it.life + "天" : "可长期保存"}</p></div></div><p class="panel-intro">${description}${it.kcal ? "<br>每份约" + it.kcal + "kcal，包装合计约" + it.kcal * it.servings + "kcal。" : ""}${it.capacity ? "<br>容器容量" + it.capacity + "L，需先在水槽装水。" : ""}</p>${phase === "shop" ? `<button class="full-button gold" data-cart="${it.id}" data-delta="1">加入一件采购单 · ${money(it.price * 1)}</button>` : ""}<p class="panel-note">保质期按游戏时间结算；现实中关掉页面不会消耗物资。页面中的药品与健康效果均为虚构游戏机制。</p>`,
   );
 }
 function renderCategories() {
@@ -8153,13 +8207,13 @@ function renderCatalog() {
             : it.servings > 1
               ? `${it.servings}次用量`
               : "耐用物品";
-      return `<article class="product-card ${q ? "in-cart" : ""}" title="${esc(it.desc || it.name)}"><button class="product-art" data-product="${it.id}" aria-label="查看${esc(it.name)}详情">${productArt(it)}</button><h3>${it.name}</h3><div class="product-meta"><span>${it.weight.toFixed(it.weight < 1 ? 2 : 1)}kg</span><span>${meta}</span>${it.life < 9999 ? `<span>${it.life}天${it.cook ? " · 需烹煮" : ""}</span>` : ""}</div><div class="product-footer"><span class="product-price"><small>E$</small>${(it.price * (restock ? 1.15 : 1)).toFixed(2)}</span><div class="qty-control"><button data-cart="${it.id}" data-delta="-1" aria-label="减少${it.name}">−</button><span>${q}</span><button data-cart="${it.id}" data-delta="1" aria-label="添加${it.name}">＋</button></div></div></article>`;
+      return `<article class="product-card ${q ? "in-cart" : ""}" title="${esc(it.desc || it.name)}"><button class="product-art" data-product="${it.id}" aria-label="查看${esc(it.name)}详情">${productArt(it)}</button><h3>${it.name}</h3><div class="product-meta"><span>${it.weight.toFixed(it.weight < 1 ? 2 : 1)}kg</span><span>${meta}</span>${it.life < 9999 ? `<span>${it.life}天${it.cook ? " · 需烹煮" : ""}</span>` : ""}</div><div class="product-footer"><span class="product-price"><small>E$</small>${(it.price * 1).toFixed(2)}</span><div class="qty-control"><button data-cart="${it.id}" data-delta="-1" aria-label="减少${it.name}">−</button><span>${q}</span><button data-cart="${it.id}" data-delta="1" aria-label="添加${it.name}">＋</button></div></div></article>`;
     })
     .join("");
 }
 function renderReceipt() {
-  const s = cartSummary(cart, restock),
-    budget = restock ? G.cash : 300;
+  const s = cartSummary(cart),
+    budget = 300;
   $("#shopBudget").innerHTML =
     Math.floor(budget - s.cost) +
     `<small>.${Math.round((budget - s.cost - Math.floor(budget - s.cost)) * 100)
@@ -8170,7 +8224,7 @@ function renderReceipt() {
         .filter(([id, q]) => q > 0)
         .map(
           ([id, q]) =>
-            `<div class="receipt-row"><span>${DB[id].name}</span><small>×${q}</small><strong>${(DB[id].price * q * (restock ? 1.15 : 1)).toFixed(2)}</strong><button data-cart="${id}" data-delta="-1" aria-label="减少${DB[id].name}">−</button></div>`,
+            `<div class="receipt-row"><span>${DB[id].name}</span><small>×${q}</small><strong>${(DB[id].price * q * 1).toFixed(2)}</strong><button data-cart="${id}" data-delta="-1" aria-label="减少${DB[id].name}">−</button></div>`,
         )
         .join("")
     : '<p class="receipt-empty">空空的采购单。<br>先想想，明天需要什么。</p>';
@@ -8181,24 +8235,26 @@ function renderReceipt() {
   if (s.days < 12 && s.count) warning.push("热量储备偏少");
   if (s.cost > budget) warning.push("超过可用纸币");
   $("#receiptSummary").innerHTML =
-    `<p><span>商品件数 / 总重量</span><b>${s.count}件 / ${s.weight.toFixed(1)}kg</b></p><p><span>袋装 / 大件独立箱</span><b>${s.bags.length}袋 / ${s.crates.length}箱</b></p><p><span>理论热量储备</span><b>约${s.days}天</b></p><p><span>包装费${restock ? "与配送费" : ""}</span><b>${money(s.bags.length * 0.06 + (restock ? 2 : 0))}</b></p>${warning.length ? `<span class="purchase-warning">△ ${warning.join(" · ")}</span>` : ""}`;
+    `<p><span>商品件数 / 总重量</span><b>${s.count}件 / ${s.weight.toFixed(1)}kg</b></p><p><span>袋装 / 大件独立箱</span><b>${s.bags.length}袋 / ${s.crates.length}箱</b></p><p><span>理论热量储备</span><b>约${s.days}天</b></p><p><span>包装费</span><b>${money(s.bags.length * 0.06 + 0)}</b></p>${warning.length ? `<span class="purchase-warning">△ ${warning.join(" · ")}</span>` : ""}`;
   $("#cartTotal").textContent = money(s.cost);
   $(".receipt-total").classList.toggle("over", s.cost > budget);
   $("#checkoutButton").disabled = s.cost > budget || s.count === 0;
 }
 function changeCart(id, delta) {
+  if (!canPurchase()) return blockPurchase();
   cart[id] = Math.max(0, Math.min(100, (cart[id] || 0) + delta));
   if (!cart[id]) delete cart[id];
   renderCatalog();
   renderReceipt();
 }
 function applyKit(which) {
+  if (!canPurchase()) return blockPurchase();
   if (Object.keys(cart).length && !confirmInline("replace-kit", which)) return;
   cart = { ...(which === "year" ? YEAR_KIT : STARTER) };
-  const budget = restock ? G.cash : 300;
+  const budget = 300;
   // Never create an unpayable automatic recommendation. Trim bulk first, not essential tools.
   let safety = 0;
-  while (cartSummary(cart, restock).cost > budget && safety++ < 1500) {
+  while (cartSummary(cart).cost > budget && safety++ < 1500) {
     const candidate = Object.keys(cart)
       .filter((id) => cart[id] > 1)
       .sort((a, b) => cart[b] * DB[b].price - cart[a] * DB[a].price)[0];
@@ -8346,7 +8402,7 @@ function openStation(id) {
   } else if (id === "door") {
     title = G.pendingKnock ? "有人在门外。" : "门外不安全。";
     subtitle = "ENTRY / KEEP A LOW PROFILE";
-    html = `<p class="panel-intro">${G.pendingKnock ? "三声敲门之后，是一小段沉默。你不需要回应。" : "锁扣仍然牢靠。楼道偶尔传来别人的脚步。"}<br>这里没有目击者。最重要的事，是别主动成为一个。</p><div class="action-grid">${action("保持安静，不回应", "15分钟 · 不开门 · 轻微降低风险", "silence", "", "…")}${action("透过猫眼观察", "3分钟 · 不离开房间", "peek", "", "◉")}<button class="action-card" data-ui="resupply"><span class="action-symbol">▣</span><div><strong>地下渠道补给</strong><small>加价15% + 运费2 · 风险+4 · 仅花剩余现金</small></div><span>↗</span></button>${stationButton("bags", "查看门边物资", "拆袋、收纳、检查重量", "▧")}</div><p class="panel-note warn">你的目标是藏满365天，不是赌一次外出。当前版本不允许出门；地下投递同样会留下风险记录，但不会突然宣判死亡。</p>`;
+    html = `<p class="panel-intro">${G.pendingKnock ? "三声敲门之后，是一小段沉默。你不需要回应。" : "锁扣仍然牢靠。楼道偶尔传来别人的脚步。"}<br>这里没有目击者。最重要的事，是别主动成为一个。</p><div class="action-grid">${action("保持安静，不回应", "15分钟 · 不开门 · 轻微降低风险", "silence", "", "…")}${action("透过猫眼观察", "3分钟 · 不离开房间", "peek", "", "◉")}${stationButton("bags", "查看门边物资", "拆袋、收纳、检查重量", "▧")}</div><p class="panel-note warn">你的目标是藏满365天，不是赌一次外出。进入公寓后不能再次购买或补货。只能清点、分配、保存开局物资。</p>`;
   }
   if (!title) {
     openRoom();
@@ -8462,7 +8518,7 @@ function openRoom() {
     "room",
     "门内，是你全部的世界。",
     "APARTMENT / EVERYDAY ROUTINES",
-    `<div class="stat-grid"><div class="stat-tile"><span>房况 / 户型</span><strong>${(env.w * env.d).toFixed(0)}<small>㎡</small></strong><p>${env.mirror ? "反向" : "标准"}布局 · ${env.floor}层</p></div><div class="stat-tile"><span>床垫质量</span><strong>${["", "Ⅰ", "Ⅱ", "Ⅲ"][env.bed]}<small>级</small></strong><p>${env.fridge ? "有旧冰箱" : "没有冰箱"} · 家具${["较完整", "有些陈旧", "明显磨损"][env.wear]}</p></div><div class="stat-tile"><span>室内温度</span><strong>${temperature()}<small>°C</small></strong><p>${G.power ? "供电正常" : "临时停电"} / ${G.waterOn ? "供水正常" : "临时停水"}</p></div></div><div class="action-grid">${stationButton("bags", "门边的采购袋", "解包、收纳与逐袋重量", "▧")}${stationButton("sink", "水槽与料理台", "饮水、储水、洗碗与用餐", "◌")}${stationButton("toilet", "卫生间", "别把身体需要拖到极限", "◉")}${stationButton("bed", "床与睡眠", "选择休息时长，危险会自动中断", "☾")}${stationButton("shower", "淋浴与洗衣", "洗澡、牙齿与换洗衣物", "⌁")}${stationButton("wardrobe", "镜子与衣柜", "头发、指甲、干净的衣服", "♧")}${stationButton("trash", "整理与检查", "打扫、垃圾、几何干扰物", "⌕")}${stationButton("desk", "书桌与消遣", "阅读、日记、纸牌、收音机", "▤")}${stationButton("window", "窗户与天空", "窗帘、温度与安静伸展", "▥")}${stationButton("door", "锁上的入户门", "保持安静、查看与地下补给", "▯")}</div><p class="panel-note">你可以在3D房间里步行靠近家具按 E，也可以在这里直接安排日常。方便操作不会额外惩罚你。</p>`,
+    `<div class="stat-grid"><div class="stat-tile"><span>房况 / 户型</span><strong>${(env.w * env.d).toFixed(0)}<small>㎡</small></strong><p>${env.mirror ? "反向" : "标准"}布局 · ${env.floor}层</p></div><div class="stat-tile"><span>床垫质量</span><strong>${["", "Ⅰ", "Ⅱ", "Ⅲ"][env.bed]}<small>级</small></strong><p>${env.fridge ? "有旧冰箱" : "没有冰箱"} · 家具${["较完整", "有些陈旧", "明显磨损"][env.wear]}</p></div><div class="stat-tile"><span>室内温度</span><strong>${temperature()}<small>°C</small></strong><p>${G.power ? "供电正常" : "临时停电"} / ${G.waterOn ? "供水正常" : "临时停水"}</p></div></div><div class="action-grid">${stationButton("bags", "门边的采购袋", "解包、收纳与逐袋重量", "▧")}${stationButton("sink", "水槽与料理台", "饮水、储水、洗碗与用餐", "◌")}${stationButton("toilet", "卫生间", "别把身体需要拖到极限", "◉")}${stationButton("bed", "床与睡眠", "选择休息时长，危险会自动中断", "☾")}${stationButton("shower", "淋浴与洗衣", "洗澡、牙齿与换洗衣物", "⌁")}${stationButton("wardrobe", "镜子与衣柜", "头发、指甲、干净的衣服", "♧")}${stationButton("trash", "整理与检查", "打扫、垃圾、几何干扰物", "⌕")}${stationButton("desk", "书桌与消遣", "阅读、日记、纸牌、收音机", "▤")}${stationButton("window", "窗户与天空", "窗帘、温度与安静伸展", "▥")}${stationButton("door", "锁上的入户门", "保持安静、查看猫眼；不能采购", "▯")}</div><p class="panel-note">你可以在3D房间里步行靠近家具按 E，也可以在这里直接安排日常。方便操作不会额外惩罚你。</p>`,
     true,
   );
 }
@@ -8631,6 +8687,7 @@ function toggleAudio() {
 }
 function toTitle() {
   if (G) saveGame(false);
+  closePreparation();
   phase = "title";
   paused = false;
   closePanel();
@@ -8705,7 +8762,7 @@ function uiAction(name) {
       exportSave();
       break;
     case "resupply":
-      openShop(true);
+      blockPurchase();
       break;
   }
 }
@@ -8738,19 +8795,17 @@ function setupEvents() {
   });
   $("#checkoutButton").addEventListener("click", beginGame);
   $("#shopBack").addEventListener("click", () => {
-    phase = restock ? "playing" : "title";
-    restock = false;
+    closePreparation();
+    phase = "title";
     updatePhase();
   });
   $("#viewApartment").addEventListener("click", () => {
-    if (G && restock) openRoom();
-    else
-      showPanel(
-        "apartment",
-        "你即将住进的地方。",
-        "ROOM SURVEY / SEED " + currentSeed,
-        `<div class="stat-grid"><div class="stat-tile"><span>面积</span><strong>${(env.w * env.d).toFixed(0)}<small>㎡</small></strong><p>高层偏僻公寓</p></div><div class="stat-tile"><span>起始室温</span><strong>${env.temp}<small>°C</small></strong><p>会受天气影响</p></div><div class="stat-tile"><span>床垫质量</span><strong>${env.bed}<small>/3级</small></strong><p>影响睡眠恢复</p></div></div><p class="panel-intro">${env.fridge ? "有一台仍能运作的旧冰箱。" : "没有冰箱，请少买短保质食物，多准备干粮。"}<br>公寓自带旧锅、基础碗杯、单眼电炉、水槽、卫生间和旧家具，不会因为没买锅就软锁。<br>临时停电停水是可能发生、也可能不发生的随机事件。长储主食、免煮食物、储水壶与清洁用品都值得考虑。</p>`,
-      );
+    showPanel(
+      "apartment",
+      "你即将住进的地方。",
+      "ROOM SURVEY / SEED " + currentSeed,
+      `<div class="stat-grid"><div class="stat-tile"><span>面积</span><strong>${(env.w * env.d).toFixed(0)}<small>㎡</small></strong><p>高层偏僻公寓</p></div><div class="stat-tile"><span>起始室温</span><strong>${env.temp}<small>°C</small></strong><p>会受天气影响</p></div><div class="stat-tile"><span>床垫质量</span><strong>${env.bed}<small>/3级</small></strong><p>影响睡眠恢复</p></div></div><p class="panel-intro">${env.fridge ? "有一台仍能运作的旧冰箱。" : "没有冰箱，请少买短保质食物，多准备干粮。"}<br>公寓自带旧锅、基础碗杯、单眼电炉、水槽、卫生间和旧家具，不会因为没买锅就软锁。<br>临时停电停水是可能发生、也可能不发生的随机事件。长储主食、免煮食物、储水壶与清洁用品都值得考虑。</p>`,
+    );
   });
   $("#closePanel").addEventListener("click", closePanel);
   $("#panelLayer").addEventListener("click", (e) => {
@@ -10004,7 +10059,7 @@ function worldUpdatePaper(force = false) {
     title = "供销合作社 · 购物清单";
     sub = "E$ 预算 / 单袋承重8kg";
     const entries = Object.entries(cart).filter(([, q]) => q > 0),
-      sum = cartSummary(cart, restock),
+      sum = cartSummary(cart),
       start = W.receiptPage * 14;
     const lines = entries
       .slice(start, start + 14)
@@ -10017,8 +10072,10 @@ function worldUpdatePaper(force = false) {
       `应付 E$ ${sum.cost.toFixed(2)}`,
     );
   } else if (W.page % 3 === 1) {
-    title = "物资与房间";
+    title = "存量与房间";
+    const stock = stockSummary();
     left = [
+      `热量约${stock.theoreticalDays}天 / 尚需${stock.remainingDays}天`,
       `食物 ${availableFood()
         .reduce((a, b) => a + b.units, 0)
         .toFixed(0)} 份`,
@@ -10343,10 +10400,11 @@ function worldTargetInfo(o) {
   if (!id) return ["", ""];
   if (id.startsWith("stock:")) {
     const b = G?.inv.find((x) => x.uid === o.userData.uid),
-      it = b && DB[b.id];
+      it = b && DB[b.id],
+      total = b && stockSummary().items.find((row) => row.id === b.id);
     return [
       it?.name || "物资",
-      `E 拿起${b && (isSpoiled(b) || b.contaminated) ? " · 不宜食用" : ""}  ·  ${b ? Math.ceil(b.units) : 0}份/次`,
+      `E 拿起${b && (isSpoiled(b) || b.contaminated) ? " · 不宜食用" : ""}  ·  本包${b ? Math.ceil(b.units) : 0} · 总存量${Math.ceil(total?.total || 0)}份/次${total?.packed ? " · 含未拆" + Math.ceil(total.packed) : ""}`,
     ];
   }
   if (id.startsWith("bag:"))
@@ -10417,7 +10475,7 @@ function worldTargetInfo(o) {
       "入户门",
       G?.pendingKnock
         ? "E 保持安静，等脚步远去  ·  Shift+E 看猫眼"
-        : "E 看一眼猫眼  ·  Shift+E 联系地下补给",
+        : "E 看一眼猫眼  ·  门已锁闭，本局不能补货",
     ],
     pantry: [
       "储物架",
@@ -10605,7 +10663,7 @@ function worldInteract(shift = false) {
           shift ? "悄悄看一眼猫眼" : "保持安静，等脚步声远去",
           2.5,
         );
-      if (shift) return openShop(true);
+      if (shift) return blockPurchase();
       return worldAction("peek", "看一眼空荡的楼道", 1.3);
     case "plant":
       return worldAction("waterplant", "给绿植浇一点水", 1.7);
@@ -10675,21 +10733,18 @@ function worldRenderHUD() {
   if (!visible) return;
   const shopping = worldIsShopping();
   $("#worldDay").textContent = shopping
-    ? restock
-      ? "地下补给"
-      : "最后一次采购"
+    ? "唯一一次开局采购"
     : `第 ${String(Math.min(day(), 365)).padStart(3, "0")} 天`;
   $("#worldPlace").textContent = shopping
     ? "安德士 · 街角供销社"
     : `北区旧公寓 / ${env.number}`;
   if (shopping) {
-    const s = cartSummary(cart, restock),
-      budget = restock ? G.cash : 300;
+    const s = cartSummary(cart),
+      budget = 300;
     $("#worldTopRight").textContent =
       `余 E$ ${(budget - s.cost).toFixed(2)}  ·  篮中 ${s.count} 件`;
-    $("#worldCondition").textContent = restock
-      ? "地下补给 · 加价15% / 运费2 / 暴露风险+4"
-      : "纸币不会变多，明天还会继续。";
+    $("#worldCondition").textContent =
+      `只此一次 · 理论热量${s.days}/365天 · 进房后不能补货`;
   } else if (G) {
     $("#worldTopRight").textContent =
       `${String(Math.floor(hour())).padStart(2, "0")}:${String(Math.floor(G.minute % 60)).padStart(2, "0")}`;
@@ -11061,7 +11116,7 @@ if (W.enabled) {
     <p class="help-paragraph">回房后，E拆开门边的袋子，Shift+E连续整理。到储物架前拿食物；需要烹煮的主食先拿到炉边。左键使用手中物品，R对准桌面放置，或放回架子。书拿在手里读，不弹消遣菜单。</p>
     <p class="help-paragraph">床边滚轮或↑↓调整睡眠小时，E躺下。卫生间E小便、Shift+E大便；花洒E洗澡；柜门打开后E取换洗衣物，洗衣盆E洗衣。扫帚、指甲刀、理发剪、牙刷都是可直接使用的实物。Shift+E是看向物体时提示的辅助动作。</p>
     <p class="help-paragraph">Tab翻开实体手记，滚轮翻页，查看完整身体状态、物资、水电和日志。T抬腕看表。Esc只打开必要的暂停/存档。手机使用摇杆和右侧交互、辅助、使用、放回按钮。</p>
-    <p class="help-paragraph">目标365天，初始300纸币。重复口味/读物、疾病、脏乱、长期独处仍影响精神；危险和敲门会中断跳时。没有真实虫鼠或恶心画面，只有干净的几何干扰物。真实外出与追捕未实现，地下补给仅是抽象货架场景。</p>`,
+    <p class="help-paragraph">目标365天，初始300纸币。重复口味/读物、疾病、脏乱、长期独处仍影响精神；危险和敲门会中断跳时。没有真实虫鼠或恶心画面，只有干净的几何干扰物。真实外出与追捕未实现，开局确认进房后永久禁止购买或补货，只能依靠已有存量。</p>`,
     );
   updatePhase = () => {
     legacyUI.updatePhase();
@@ -11094,7 +11149,8 @@ if (W.enabled) {
   };
   installWorldRoom();
   worldRenderHUD();
-  $("#newGameButton small").textContent = "走进供销社 · 初始 300 帝国纸币";
+  $("#newGameButton small").textContent =
+    "唯一一次采购 · 300纸币 · 入室后不补货";
 }
 
     </script>
@@ -11273,7 +11329,7 @@ function worldBuildStore() {
       body.rotation.y = 0.035 * (col % 2 ? 1 : -1);
       const price = worldLabel(
         g,
-        `E$ ${(it.price * (restock ? 1.15 : 1)).toFixed(2)}`,
+        `E$ ${(it.price * 1).toFixed(2)}`,
         0.3,
         0.075,
         0,
@@ -11335,7 +11391,7 @@ function worldBuildStore() {
   paper.rotation.y = Math.PI;
   W.receiptBoard = paper;
   const kitCrates = [
-    ["starter", -5.2, 2.9, "基础生活配给箱", STARTER],
+    ["starter", -5.2, 2.9, "短期物资样例", STARTER],
     ["year", -3.72, 2.9, "全年紧缩配给单", YEAR_KIT],
   ];
   for (const [which, x, z, name, kit] of kitCrates) {
@@ -11345,11 +11401,7 @@ function worldBuildStore() {
       worldBox(crate, 0.88, 0.065, 0.68, 0, y, 0, worldMat("#c1ad83"));
     worldLabel(
       crate,
-      [
-        name,
-        `E$ ${cartSummary(kit, restock).cost.toFixed(2)}`,
-        "E 加入这一份配给",
-      ],
+      [name, `E$ ${cartSummary(kit).cost.toFixed(2)}`, "E 加入这一份配给"],
       0.74,
       0.35,
       0,
@@ -11570,8 +11622,8 @@ function worldMakeBasket() {
 }
 function worldRefreshShop() {
   if (!worldIsShopping()) return;
-  const sum = cartSummary(cart, restock),
-    budget = restock ? G.cash : 300;
+  const sum = cartSummary(cart),
+    budget = 300;
   if (W.receiptBoard) {
     const lines = [
       "安德士 · 供销合作社",
@@ -11579,11 +11631,11 @@ function worldRefreshShop() {
       `登记 ${sum.count} 件 / ${sum.weight.toFixed(1)} kg`,
       `${sum.bags.length} 袋 / ${sum.crates.length} 独立箱`,
       `袋装费 E$ ${(sum.bags.length * 0.06).toFixed(2)}`,
-      restock ? "地下补给：加价15% / 运费2" : "塑料袋最大承重 8 kg",
+      `热量约${sum.days}天 / 目标365天`,
       "——————————",
       `应付 E$ ${sum.cost.toFixed(2)}`,
       `结余 E$ ${(budget - sum.cost).toFixed(2)}`,
-      "E 收银台付款",
+      "付款入室后永不补货",
     ];
     W.receiptBoard.material.map.dispose();
     W.receiptBoard.material.map = worldTextTexture(lines, {
@@ -11619,20 +11671,13 @@ function worldRefreshShop() {
 }
 function worldOpenShop(isRestock = false) {
   if (!W.enabled) return legacyUI.openShop(isRestock);
-  if (isRestock && (!G || G.ended)) return;
-  if (G && isRestock) {
-    worldPutBack(false);
-    saveGame(false);
-    W.savedRoomPosition = legacyUI.getPlayerPosition();
-  } else W.savedRoomPosition = G?.position || null;
+  if (isRestock || !startPreparation()) return blockPurchase();
+  W.savedRoomPosition = G?.position || null;
   worldCancelAction();
   worldPause(false);
   W.held = null;
   W.glance = "";
   W.receiptPage = 0;
-  restock = isRestock;
-  cart = {};
-  phase = "shop";
   W.store = true;
   paused = false;
   W.kitConfirm = null;
@@ -11643,20 +11688,20 @@ function worldOpenShop(isRestock = false) {
   worldBuildStore();
   updatePhase();
   showToast(
-    isRestock
-      ? "这不是安全的外出：地下供货点被抽象成货架。商品加价15%，送达两小时，暴露风险+4。"
-      : "走到货架前，把样品放进篮子。货物由合作社按清单分袋送到公寓。结账在门边。",
-    isRestock ? "warn" : "info",
+    "仅此一次开局采购：确认入室后不能再买、不能补货。请先检查能否支撑365天，短期样例不足一年。",
+    "warn",
   );
+  return true;
 }
+
 function worldCartChange(id, delta = 1) {
-  if (!DB[id] || !worldIsShopping()) return false;
+  if (!canPurchase() || !DB[id] || !worldIsShopping()) return false;
   const next = Math.max(0, Math.min(100, (cart[id] || 0) + delta));
   if (next === (cart[id] || 0)) return false;
   const draft = { ...cart, [id]: next };
   if (!next) delete draft[id];
-  const budget = restock ? G.cash : 300;
-  if (delta > 0 && cartSummary(draft, restock).cost > budget + 0.001) {
+  const budget = 300;
+  if (delta > 0 && cartSummary(draft).cost > budget + 0.001) {
     showToast("纸币不够，先把篮子里的一些物资放回去。", "warn");
     return false;
   }
@@ -11667,9 +11712,10 @@ function worldCartChange(id, delta = 1) {
   return true;
 }
 function worldKit(which) {
+  if (!canPurchase()) return blockPurchase();
   const kit = which === "year" ? YEAR_KIT : STARTER,
-    sum = cartSummary(kit, restock),
-    budget = restock ? G.cash : 300;
+    sum = cartSummary(kit),
+    budget = 300;
   if (sum.cost > budget + 0.001)
     return showToast("这份整套配给超过了当前预算。可以按件挑选。", "warn");
   if (
@@ -11689,12 +11735,11 @@ function worldKit(which) {
   showToast(
     which === "year"
       ? "全年紧缩配给已登记。只是热量估计，不保证健康、保质期和精神需求。"
-      : "基础生活物资已登记。仍可到货架前自由增减。",
+      : "短期样例只有约79天理论热量，不足一年。进房后不能补货，请在货架补足再结账。",
   );
 }
 function worldCommitCheckout() {
-  const wasRestock = restock,
-    pose = W.savedRoomPosition;
+  if (!canPurchase() || !worldIsShopping()) return blockPurchase();
   if (W.basketRig) {
     camera.remove(W.basketRig);
     worldClear(W.basketRig);
@@ -11709,30 +11754,32 @@ function worldCommitCheckout() {
   targetId = "";
   scene.fog.near = 10;
   scene.fog.far = 40;
-  if (wasRestock) {
-    buildRoom(env);
-    setFirstPerson(pose);
-  }
   storeLegacyBegin();
   if (phase === "playing") {
-    setFirstPerson(wasRestock ? pose : null);
+    setFirstPerson();
     saveGame(false);
     syncRoom();
   }
   worldSetHand();
   updatePhase();
 }
+
 function worldCheckout() {
-  if (!worldIsShopping()) return storeLegacyBegin();
-  const s = cartSummary(cart, restock),
-    budget = restock ? G.cash : 300;
+  if (!canPurchase() || !worldIsShopping()) return blockPurchase();
+  const s = cartSummary(cart),
+    budget = 300;
   if (!s.count)
     return showToast(
       "篮子里还没有东西，先去货架前挑选，或者看看门边的配给箱。",
     );
   if (s.cost > budget + 0.001)
     return showToast("纸币不够，请先放回一部分商品。", "warn");
-  worldStart("把纸币放在收银台上", 1.6, worldCommitCheckout, "checkout");
+  worldStart(
+    "交清纸币，锁定本局开局物资",
+    1.6,
+    worldCommitCheckout,
+    "checkout",
+  );
 }
 function worldLeaveShop() {
   if (Object.keys(cart).length && performance.now() > W.exitConfirm) {
@@ -11742,27 +11789,17 @@ function worldLeaveShop() {
       "warn",
     );
   }
-  const wasRestock = restock,
-    pose = W.savedRoomPosition;
-  cart = {};
-  restock = false;
+  closePreparation();
   W.store = false;
   if (W.basketRig) {
     camera.remove(W.basketRig);
     worldClear(W.basketRig);
     W.basketRig = null;
   }
-  if (wasRestock) {
-    phase = "playing";
-    paused = false;
-    buildRoom(env);
-    setFirstPerson(pose);
-    updatePhase();
-    worldSetHand();
-    saveGame(false);
-  } else toTitle();
+  toTitle();
 }
 function worldShopInteract(id, shift = false) {
+  if (!canPurchase()) return blockPurchase();
   if (id.startsWith("buy:")) {
     const pid = id.slice(4),
       delta = shift ? 5 : 1;
@@ -11814,22 +11851,22 @@ if (W.enabled) {
       const life = it.life < 9999 ? ` · 常温${it.life}天` : " · 长期保存";
       return [
         it.name,
-        `E 入篮  ·  Shift+E 拿5件  ·  R 放回  |  E$ ${(it.price * (restock ? 1.15 : 1)).toFixed(2)} · ${it.weight}kg · ${detail}${life}  |  篮中×${cart[it.id] || 0}`,
+        `E 入篮  ·  Shift+E 拿5件  ·  R 放回  |  E$ ${(it.price * 1).toFixed(2)} · ${it.weight}kg · ${detail}${life}  |  篮中×${cart[it.id] || 0}`,
       ];
     }
     if (id === "kit:starter" || id === "kit:year") {
       const which = id.slice(4),
-        s = cartSummary(which === "year" ? YEAR_KIT : STARTER, restock);
+        s = cartSummary(which === "year" ? YEAR_KIT : STARTER);
       return [
-        which === "year" ? "全年紧缩配给单" : "基础生活配给箱",
+        which === "year" ? "全年紧缩配给单" : "短期物资样例",
         `E 登记整套 · E$ ${s.cost.toFixed(2)} · ${s.count}件 · ${s.bags.length}袋 · ${s.days}理论热量天（非生存保证）`,
       ];
     }
     if (id === "shopCheckout") {
-      const s = cartSummary(cart, restock);
+      const s = cartSummary(cart);
       return [
         "机械收银台",
-        `E 付款离店 · E$ ${s.cost.toFixed(2)} · ${s.bags.length}袋 / ${s.crates.length}箱 · 每袋不超过8kg`,
+        `E 确认本局唯一采购 · E$ ${s.cost.toFixed(2)} · 热量约${s.days}/365天 · 入室后不能补货`,
       ];
     }
     if (id === "shopReceipt" || id === "shopBasket")

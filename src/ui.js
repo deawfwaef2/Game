@@ -856,6 +856,7 @@ function setupEvents() {
     }
   });
   document.addEventListener("keydown", (e) => {
+    if (typeof handleWorldKey === "function" && handleWorldKey(e)) return;
     if (["INPUT", "TEXTAREA", "SELECT"].includes(e.target.tagName)) {
       if (e.code === "Escape") e.target.blur();
       return;

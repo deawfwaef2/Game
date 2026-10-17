@@ -1,0 +1,131 @@
+/* 0.4: the apartment is the interface. No daily management panels in WebGL mode. */
+.world-interactions { --world-ink: #f2e8d6; --world-muted: #c5b9a7; --world-accent: #e7bf82; }
+.world-interactions #hud > .hud-header,
+.world-interactions #serviceBar,
+.world-interactions #buffs,
+.world-interactions #crosshair,
+.world-interactions #interaction,
+.world-interactions .hud-bottom,
+.world-interactions .quickbar,
+.world-interactions #pauseBanner { display: none !important; }
+.world-interactions #hud { pointer-events: none; }
+.world-interactions .film-grain { opacity: .022; }
+.world-interactions .vignette { background: radial-gradient(ellipse at 50% 45%, transparent 45%, #110b0633 100%); }
+.world-interactions .title-shade { background: linear-gradient(90deg, #171813ed, #171813bc 37%, #17181317 72%, transparent); }
+.world-interactions .title-top { padding: 28px 4.2vw; }
+.world-interactions .wordmark { font-weight: 400; letter-spacing: .18em; }
+.world-interactions .wordmark .brand-divider, .world-interactions .brand-en { display: none; }
+.world-interactions .logo-window { border-color: #d6c3a1; transform: none; opacity: .6; }
+.world-interactions .title-content { margin-left: 6.8vw; width: min(480px, 86vw); }
+.world-interactions .chapter-tag { color: #c4af92; letter-spacing: .16em; font-size: 11px; }
+.world-interactions .title-content h1 { font-family: 'Noto Serif CJK SC', 'Songti SC', 'SimSun', serif; font-weight: 400; font-size: clamp(70px, 8.2vw, 126px); letter-spacing: -.07em; line-height: 1.02; color: #efe6d5; margin-top: 28px; }
+.world-interactions .title-number { font-size: .75em; font-weight: 300; letter-spacing: -.07em; color: #e2c398; }
+.world-interactions .title-period { display: none; }
+.world-interactions .title-english { letter-spacing: .45em; color: #a99c87; font-size: 10px; margin-top: 18px; }
+.world-interactions .title-story { margin: 32px 0 30px; }
+.world-interactions .title-story p { color: #bfb6a4; font-size: 13px; line-height: 2.15; }
+.world-interactions .title-story strong { color: #d8cbb5; font-weight: 400; }
+.world-interactions .story-rule { background: #c1a578; width: 20px; }
+.world-interactions .seed-card { padding: 14px 0; background: none; border: 0; border-top: 1px solid #d7c19c27; width: 320px; max-width: 100%; box-shadow: none; border-radius: 0; }
+.world-interactions .seed-label { color: #aa9c86; font-size: 10px; }
+.world-interactions .seed-label span:last-child { display: none; }
+.world-interactions .seed-input-row { background: transparent; border: 0; border-bottom: 1px solid #d7c19c28; margin: 5px 0 10px; }
+.world-interactions #seedInput { color: #e0d2bc; font-size: 13px; letter-spacing: .13em; padding-left: 0; }
+.world-interactions .seed-facts { gap: 12px; font-size: 10px; opacity: .7; }
+.world-interactions #newGameButton { background: none; color: #f0e1c7; border: 0; border-radius: 0; border-bottom: 1px solid #d4b07a7d; padding: 17px 0; width: 320px; max-width: 100%; box-shadow: none; font-weight: 400; font-size: 18px; margin-top: 15px; transition: padding .2s, color .2s; }
+.world-interactions #newGameButton:hover { padding-left: 7px; color: #fff2d9; transform: none; }
+.world-interactions #newGameButton small { color: #a99c87; font-size: 10px; font-weight: 400; letter-spacing: .08em; margin-top: 9px; }
+.world-interactions .title-secondary { width: 320px; max-width: 100%; margin-top: 21px; gap: 18px; }
+.world-interactions .title-secondary button, .world-interactions .import-title { border: 0; color: #b7a88f; font-size: 11px; padding: 5px 0; background: transparent; }
+.world-interactions .room-caption { color: #e4d5b9; bottom: 100px; right: 5%; text-shadow: 0 1px 12px #151713; }
+.world-interactions .room-caption small { color: #d7c6a4; font-size: 11px; }
+.world-interactions .title-footer { padding: 20px 4.2vw; font-size: 10px; color: #bfb19a; border-top-color: #e1cda31a; }
+.world-interactions .title-top .build-label { color: #bfb19a; font-size: 9px; letter-spacing: .12em; }
+#worldHUD { position: fixed; inset: 0; color: var(--world-ink); z-index: 12; pointer-events: none; font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif; text-shadow: 0 2px 8px #120e0b8c; }
+#worldHUD[hidden] { display: none; }
+.world-corner { position: absolute; top: 30px; left: 34px; display: flex; flex-direction: column; gap: 7px; font-size: 10px; letter-spacing: .14em; font-weight: 400; color: #d2c5ae; opacity: .7; }
+.world-corner strong { font-family: Georgia, 'Songti SC', serif; font-size: 19px; letter-spacing: .06em; font-weight: 400; color: #f0e5d0; }
+.world-corner small { font-size: 9px; letter-spacing: .22em; }
+#worldTopRight { position: absolute; top: 31px; right: 34px; font-size: 11px; letter-spacing: .07em; opacity: .72; }
+#worldDot { position: absolute; left: 50%; top: 50%; width: 3px; height: 3px; transform: translate(-50%, -50%); border-radius: 50%; background: #fff9e4; opacity: .5; box-shadow: 0 0 3px #17151377; transition: opacity .2s, width .15s; }
+#worldDot.focused { width: 5px; height: 5px; opacity: .95; }
+#worldFocus { position: absolute; bottom: 15%; left: 50%; transform: translateX(-50%); text-align: center; width: min(650px, 88vw); opacity: 0; transition: opacity .16s; }
+#worldFocus.on { opacity: 1; }
+#worldFocus strong { display: block; font-size: 14px; font-weight: 400; letter-spacing: .08em; color: #f3e9d5; }
+#worldFocus span { display: block; font-size: 11px; color: #cfbfa4; margin-top: 9px; line-height: 1.8; letter-spacing: .06em; }
+#worldFocus kbd, .world-bottom kbd { font-family: inherit; background: transparent; border: 1px solid #e4cfaa50; border-radius: 2px; padding: 1px 4px; margin-right: 5px; color: #f0dfc0; box-shadow: none; font-size: 10px; }
+.world-bottom { position: absolute; left: 34px; right: 34px; bottom: 25px; display: flex; align-items: flex-end; justify-content: space-between; gap: 22px; font-size: 10px; line-height: 1.7; color: #beb29e; opacity: .68; }
+#worldHint { text-align: right; }
+#worldCondition { color: #dfc9a6; letter-spacing: .04em; max-width: 48%; }
+#worldCondition.urgent { color: #ecc09c; opacity: 1; }
+#worldSubtitle { position: absolute; left: 50%; bottom: 9%; transform: translateX(-50%); max-width: min(790px, 89vw); width: max-content; font-size: 12px; line-height: 1.8; text-align: center; color: #ebdfc8; opacity: 0; transition: opacity .35s; }
+#worldSubtitle.on { opacity: 1; }
+#worldSubtitle.warn { color: #efc2a3; }
+#worldAction { position: absolute; left: 50%; bottom: 19%; transform: translateX(-50%); text-align: center; width: 240px; color: #eadcc3; }
+#worldAction[hidden] { display: none; }
+#worldAction span { font-size: 11px; letter-spacing: .12em; }
+#worldAction small { display: block; font-size: 9px; opacity: .6; margin-top: 9px; }
+#worldActionLine { position: relative; height: 1px; background: #f1dcbf30; margin: 12px auto 0; width: 180px; overflow: visible; }
+#worldActionLine i { height: 1px; background: #ead4ad; display: block; width: 0; box-shadow: 0 0 5px #efd2a148; }
+#worldBite { position: absolute; width: 22px; height: 22px; border: 1px solid #d3bd9655; border-radius: 50%; left: 50%; top: 50%; transform: translate(-50%, -50%); opacity: 0; }
+#worldBite.on { opacity: .7; }
+#worldBite.ready { border-color: #fff0c5; box-shadow: 0 0 8px #fff0b833; }
+#worldFade { position: fixed; inset: 0; z-index: 11; background: #080b0c; pointer-events: none; opacity: 0; transition: opacity .45s; }
+#worldFade.sleeping { opacity: .99; }
+#worldPause { position: fixed; inset: 0; z-index: 110; display: flex; align-items: center; background: linear-gradient(90deg, #14150fe8, #14150fa1 44%, #14150f33); color: #f0e4cf; backdrop-filter: blur(3px); padding-left: 12vw; }
+#worldPause[hidden] { display: none; }
+.world-pause-content { display: flex; flex-direction: column; width: min(390px, 80vw); align-items: flex-start; }
+.world-pause-content > small { letter-spacing: .28em; color: #9e937f; font-size: 10px; }
+.world-pause-content h2 { font-family: 'Songti SC', 'SimSun', serif; font-size: 37px; font-weight: 400; letter-spacing: .12em; margin: 16px 0 36px; }
+.world-pause-content button, .world-pause-content label { background: transparent; color: #c8baa2; font-family: inherit; font-weight: 400; border: 0; border-radius: 0; text-align: left; font-size: 14px; padding: 10px 0; cursor: pointer; transition: color .15s, transform .15s; box-shadow: none; }
+.world-pause-content button:hover, .world-pause-content button:focus-visible, .world-pause-content label:hover { color: #fff0d1; transform: translateX(5px); outline: none; }
+.world-pause-content button:focus-visible { text-decoration: underline; text-underline-offset: 7px; }
+.world-pause-content button:first-of-type { color: #eddbb9; font-size: 20px; margin-bottom: 14px; }
+.world-pause-small { display: flex; flex-wrap: wrap; gap: 18px; margin: 15px 0; border-top: 1px solid #d5b78729; padding-top: 14px; width: 100%; }
+.world-pause-small button, .world-pause-small label { font-size: 11px; }
+.world-pause-content p { font-size: 10px; color: #928775; line-height: 1.9; margin-top: 25px; letter-spacing: .04em; }
+.world-interactions #mobileControls { z-index: 21; }
+.world-interactions #joystick { width: 98px; height: 98px; border-color: #e3cda929; background: #14151020; left: 22px; bottom: 68px; }
+.world-interactions #joystick > span { background: #cfbda52c; border: 1px solid #e1cba333; box-shadow: none; }
+.world-interactions #mobileInteract { width: 60px; height: 60px; right: 24px; bottom: 95px; background: #181a1333; border: 1px solid #d8c8ac42; color: #eadac1; border-radius: 50%; box-shadow: none; }
+.world-interactions #mobileInteract small { color: #c6b89d; }
+#worldMobile { position: absolute; right: 22px; bottom: 165px; display: none; gap: 10px; flex-direction: column; pointer-events: auto; }
+#worldMobile button { width: 45px; min-height: 36px; border: 1px solid #d8c8ac33; background: #181a1338; color: #ddcfb7; border-radius: 3px; font-size: 10px; font-weight: 400; box-shadow: none; padding: 6px 3px; }
+#worldMobile .mobile-pair { display: flex; gap: 7px; }
+#worldPauseButton { position: absolute; top: 20px; right: 15px; background: none; border: 0; box-shadow: none; color: #e9d9bd; padding: 10px; font-weight: 400; font-size: 16px; pointer-events: auto; display: none; }
+.world-interactions.world-shopping #shopScreen { display: none !important; }
+.world-interactions.world-shopping #hud { display: block !important; }
+.world-interactions .panel-layer { background: #15170f88; }
+.world-interactions .panel { border-radius: 0; border: 1px solid #c3a77c38; background: #20231b; box-shadow: none; }
+@media (pointer: coarse), (max-width: 700px) {
+  #worldMobile { display: flex; }
+  #worldPauseButton { display: block; }
+  .world-corner { left: 20px; top: 22px; font-size: 9px; }
+  .world-corner strong { font-size: 16px; }
+  #worldTopRight { right: 60px; top: 28px; font-size: 10px; }
+  .world-bottom { left: 20px; right: 20px; bottom: 18px; font-size: 9px; }
+  #worldHint { max-width: 43%; }
+  #worldFocus { bottom: 23%; max-width: 75vw; }
+  #worldFocus strong { font-size: 12px; }
+  #worldFocus span { font-size: 10px; }
+  #worldSubtitle { bottom: 18%; font-size: 10px; max-width: 80vw; }
+  #worldAction { bottom: 32%; }
+  .world-interactions .title-content { margin-left: 7vw; padding-top: 0; }
+  .world-interactions .title-top { padding: 20px 7vw; }
+  .world-interactions .title-top .build-label { display: none; }
+  .world-interactions .title-content h1 { font-size: 76px; margin-top: 22px; }
+  .world-interactions .title-story { margin: 24px 0 20px; }
+  .world-interactions .title-story p { font-size: 11px; }
+  .world-interactions .room-caption { display: none; }
+  .world-interactions .title-footer { padding: 15px 7vw; }
+  .world-interactions .title-footer > span:last-child { display: none; }
+  .world-interactions .seed-card { width: 280px; }
+  .world-interactions #newGameButton, .world-interactions .title-secondary { width: 280px; }
+  #worldPause { padding-left: 10vw; }
+}
+@media (max-height: 700px) and (min-width: 701px) {
+  .world-interactions .title-content { transform: scale(.83); transform-origin: left center; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #worldHUD *, #worldPause *, #worldFade { transition: none !important; }
+}

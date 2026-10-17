@@ -72,7 +72,7 @@ function texture(type, seed) {
         x.fillRect(i * 64 + 2, j * 64 + 2, 61, 61);
       }
   } else if (type === "fabric") {
-    x.fillStyle = "#929782";
+    x.fillStyle = "#84908c";
     x.fillRect(0, 0, 256, 256);
     for (let i = 0; i < 256; i += 3) {
       x.fillStyle = "#303f2810";
@@ -91,7 +91,7 @@ function texture(type, seed) {
       x.stroke();
     }
   } else {
-    x.fillStyle = ["#b2ae94", "#b3ad95", "#a5ae9f"][env.wall] || "#b2ae94";
+    x.fillStyle = ["#bfb9a9", "#b9b4a5", "#b4bbae"][env.wall] || "#bfb9a9";
     x.fillRect(0, 0, 256, 256);
     for (let i = 0; i < 22000; i++) {
       const v = rngNext(r);
@@ -189,12 +189,12 @@ function buildRoom(e) {
     }),
     wood = material("#fff", { map: texture("wood", e.seed) }),
     darkwood = material("#493e30"),
-    paint = material("#69715b"),
+    paint = material("#6d827c"),
     cream = material("#b9b49b"),
     metal = material("#454d46", { metalness: 0.45, roughness: 0.5 }),
     tile = material("#fff", { map: texture("tile", e.seed) }),
     fabric = material("#fff", { map: texture("fabric", e.seed) }),
-    linen = material("#b8bba1"),
+    linen = material("#d0c6ad"),
     white = material("#d6d8c8", { roughness: 0.38 }),
     black = material("#242d27");
   Object.assign(sceneMats, {
@@ -293,7 +293,7 @@ function buildRoom(e) {
         (i - 3.5) * 0.07,
         1.65,
         Math.sin(i) * 0.025,
-        material("#777962"),
+        material("#a09275"),
         g,
       );
       curtainMeshes.push({ mesh: m, side, offset: (i - 3.5) * 0.07 });
@@ -473,11 +473,11 @@ function buildRoom(e) {
   // Sofa, side table, carpet.
   const sofa = mark(groupAt(-w / 2 + 0.6, 0, front - 1.14), "sofa");
   addBox(0.88, 0.28, 1.7, 0, 0.34, 0, darkwood, sofa, true);
-  addBox(0.82, 0.18, 1.43, 0.03, 0.53, 0, material("#71775e"), sofa);
+  addBox(0.82, 0.18, 1.43, 0.03, 0.53, 0, material("#728780"), sofa);
   addBox(0.22, 0.66, 1.67, -0.39, 0.59, 0, fabric, sofa);
   for (const z of [-0.77, 0.77])
     addBox(0.87, 0.47, 0.14, 0, 0.55, z, fabric, sofa);
-  const rug = addBox(1.9, 0.012, 1.25, -0.8, 0.009, 0.65, material("#6c7059"));
+  const rug = addBox(1.9, 0.012, 1.25, -0.8, 0.009, 0.65, material("#8f7965"));
   rug.rotation.y = 0.08;
   const table = mark(groupAt(-0.6, 0, 0.8), "table");
   addBox(1.08, 0.06, 0.62, 0, 0.46, 0, wood, table, true);
@@ -601,6 +601,7 @@ function buildRoom(e) {
     };
   });
   if (phase === "title" || phase === "shop") setCinematic();
+  if (typeof installWorldRoom === "function") installWorldRoom();
 }
 function buildCity(e) {
   cityRoot = new THREE.Group();
@@ -851,6 +852,7 @@ function syncRoom() {
       addBox(0.13, 0.18, 0.09, 0, 0.09, 0, material("#a29168"), g);
     });
   }
+  if (typeof syncWorldRoom === "function") syncWorldRoom();
 }
 function setCinematic() {
   if (!camera) return;
@@ -889,11 +891,12 @@ function getPlayerPosition() {
     : null;
 }
 function canMove(x, z) {
+  const bw = typeof worldBounds === "function" ? worldBounds() : {w:env.w,d:env.d};
   if (
-    x < -env.w / 2 + 0.22 ||
-    x > env.w / 2 - 0.22 ||
-    z < -env.d / 2 + 0.22 ||
-    z > env.d / 2 - 0.22
+    x < -bw.w / 2 + 0.22 ||
+    x > bw.w / 2 - 0.22 ||
+    z < -bw.d / 2 + 0.22 ||
+    z > bw.d / 2 - 0.22
   )
     return false;
   const rad = 0.19;
@@ -909,7 +912,8 @@ function canMove(x, z) {
 }
 function freeMovement(dt) {
   if (
-    phase !== "playing" ||
+    !(phase === "playing" || (typeof worldIsShopping === "function" && worldIsShopping())) ||
+    (typeof worldIsBusy === "function" && worldIsBusy()) ||
     paused ||
     panelType ||
     $("#qteLayer").classList.contains("visible")
@@ -938,7 +942,7 @@ function freeMovement(dt) {
   }
   camera.rotation.set(lookPitch, lookYaw, 0);
   camera.position.y =
-    1.62 + (len > 0 ? Math.sin(performance.now() * 0.008) * 0.008 : 0);
+    (typeof worldEyeHeight === "function" ? worldEyeHeight() : 1.62) + (len > 0 ? Math.sin(performance.now() * 0.008) * 0.006 : 0);
 }
 function updateTarget() {
   if (!renderer || phase !== "playing" || panelType || paused) {
@@ -1045,7 +1049,7 @@ function initScene() {
     buildRoom(env);
     setCinematic();
     canvas.addEventListener("pointerdown", (e) => {
-      if (e.target !== canvas || phase !== "playing" || panelType) return;
+      if (e.target !== canvas || e.button !== 0 || !(phase === "playing" || (typeof worldIsShopping === "function" && worldIsShopping())) || panelType || paused) return;
       dragging = true;
       lastX = e.clientX;
       lastY = e.clientY;
@@ -1089,6 +1093,7 @@ function frameLoop(now) {
   lastFrame = now;
   if (renderer) {
     freeMovement(dt);
+    if (typeof worldFrame === "function") worldFrame(now, dt);
     if (now - lastTarget > 90) {
       updateTarget();
       lastTarget = now;
@@ -1100,7 +1105,7 @@ function frameLoop(now) {
       });
     }
     const activeView =
-      phase === "playing" && !panelType && !paused && !qte.active;
+      (phase === "playing" || (typeof worldIsShopping === "function" && worldIsShopping())) && !panelType && !paused && !qte.active;
     if (sceneDirty || (activeView && now - lastRender > 33)) {
       renderer.render(scene, camera);
       lastRender = now;
@@ -1109,6 +1114,7 @@ function frameLoop(now) {
   }
   if (
     phase === "playing" &&
+    !(typeof worldIsBusy === "function" && worldIsBusy()) &&
     !paused &&
     !panelType &&
     !$("#qteLayer").classList.contains("visible") &&

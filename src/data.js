@@ -1,5 +1,5 @@
 /* 闭门365 — original game data, fictional 1980s subsidized prices. */
-const VERSION = "0.3.1";
+const VERSION = "0.4.0";
 const CATEGORIES = [
   ["all", "全部物资"],
   ["staple", "主食与干粮"],

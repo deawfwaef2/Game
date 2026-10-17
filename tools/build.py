@@ -6,10 +6,10 @@ import subprocess
 import json
 ROOT=Path(__file__).resolve().parents[1]
 SRC=ROOT/'src'
-for name in ['data.js','core.js','scene.js','ui.js']:
+for name in ['data.js','core.js','scene.js','ui.js','world.js']:
     subprocess.run(['node','--check',str(SRC/name)],check=True,capture_output=True)
 html=(SRC/'template.html').read_text()
-for marker,file in [('STYLE','style.css'),('ENGINE','vendor/three.min.js'),('DATA','data.js'),('CORE','core.js'),('SCENE','scene.js'),('UI','ui.js')]:
+for marker,file in [('STYLE','style.css'),('WORLD_STYLE','world.css'),('ENGINE','vendor/three.min.js'),('DATA','data.js'),('CORE','core.js'),('SCENE','scene.js'),('UI','ui.js'),('WORLD','world.js')]:
     text=(SRC/file).read_text()
     if marker!='STYLE': text=text.replace('</script','<\\/script')
     html=html.replace('/* '+marker+' */',text)

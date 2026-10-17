@@ -99,6 +99,7 @@ function worldClear(g) {
     c.parent = null;
     c.traverse((o) => {
       o.geometry?.dispose();
+      if (o.isSkinnedMesh) o.skeleton?.dispose();
       const mats = Array.isArray(o.material) ? o.material : [o.material];
       for (const m of mats) {
         if (

@@ -1,0 +1,110 @@
+/* The scene carries the visual weight. Necessary UI stays typographic and quiet. */
+.room-assets-loading #world {
+  opacity: 0;
+  transition: opacity 0.5s;
+}
+.realistic-room #world {
+  opacity: 1;
+}
+.realistic-room .film-grain {
+  opacity: 0.025;
+}
+.realistic-room .vignette {
+  opacity: 0.3;
+}
+.realistic-room .title-screen {
+  background: transparent;
+  color: #eeede7;
+}
+.realistic-room .title-shade {
+  background: linear-gradient(
+    90deg,
+    rgba(15, 19, 20, 0.92) 0%,
+    rgba(15, 19, 20, 0.72) 33%,
+    rgba(15, 19, 20, 0.08) 72%
+  );
+}
+.realistic-room .title-story strong {
+  color: #d1bf91;
+}
+.realistic-room .seed-card {
+  background: rgba(255, 255, 255, 0.025);
+  border-color: rgba(235, 232, 221, 0.14);
+  box-shadow: none;
+  backdrop-filter: none;
+}
+.realistic-room .title-content {
+  max-width: 480px;
+}
+.realistic-room #newGameButton {
+  background: #d9c8a1;
+  color: #1e2424;
+  border: 1px solid #dfd0af;
+  box-shadow: none;
+  border-radius: 2px;
+}
+.realistic-room #newGameButton small {
+  color: #444b47;
+}
+.realistic-room .room-caption {
+  color: #efede4;
+  text-shadow: 0 1px 8px #152025;
+}
+.realistic-room #worldFocus strong {
+  text-shadow: 0 2px 9px #000a;
+  font-size: 21px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+}
+.realistic-room #worldFocus span {
+  color: #e5e4dd;
+  text-shadow: 0 1px 7px #000;
+  font-size: 12px;
+  line-height: 1.8;
+  max-width: 600px;
+}
+.realistic-room #worldActionLine {
+  height: 1px;
+}
+.realistic-room #worldDot {
+  width: 3px;
+  height: 3px;
+  opacity: 0.6;
+}
+#roomSampleButton {
+  margin-top: 13px;
+  padding: 9px 0;
+  border: 0;
+  border-bottom: 1px solid #d3cfbf66;
+  background: none;
+  color: #ddd9ce;
+  font: inherit;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+#roomSampleNotice {
+  position: fixed;
+  top: 74px;
+  left: 28px;
+  color: #ece9dfb3;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  pointer-events: none;
+  z-index: 11;
+  text-shadow: 0 1px 6px #000;
+}
+@media (max-width: 680px) {
+  .realistic-room .title-content {
+    max-width: 90%;
+  }
+  .realistic-room .title-shade {
+    background: linear-gradient(90deg, #11191be0, #11191b77);
+  }
+  #roomSampleNotice {
+    top: 100px;
+    left: 18px;
+    max-width: 210px;
+    line-height: 1.6;
+  }
+}

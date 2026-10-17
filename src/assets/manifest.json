@@ -1,0 +1,110 @@
+[
+  {
+    "name": "vintage_day_bed",
+    "author": {
+      "Aron Łyczek": "All"
+    },
+    "license": "CC0-1.0",
+    "source": "https://polyhaven.com/a/vintage_day_bed",
+    "processing": "embedded glTF binary; textures resampled to maximum 1024px"
+  },
+  {
+    "name": "sofa_02",
+    "author": {
+      "Kirill Sannikov": "All"
+    },
+    "license": "CC0-1.0",
+    "source": "https://polyhaven.com/a/sofa_02",
+    "processing": "embedded glTF binary; textures resampled to maximum 1024px"
+  },
+  {
+    "name": "wooden_table_02",
+    "author": {
+      "Serhii Khromov": "All"
+    },
+    "license": "CC0-1.0",
+    "source": "https://polyhaven.com/a/wooden_table_02",
+    "processing": "embedded glTF binary; textures resampled to maximum 1024px"
+  },
+  {
+    "name": "drawer_cabinet",
+    "author": {
+      "Ulan Cabanilla": "All"
+    },
+    "license": "CC0-1.0",
+    "source": "https://polyhaven.com/a/drawer_cabinet",
+    "processing": "embedded glTF binary; textures resampled to maximum 768px"
+  },
+  {
+    "name": "portable_cassette_player",
+    "author": {
+      "Mateusz Sadek": "All"
+    },
+    "license": "CC0-1.0",
+    "source": "https://polyhaven.com/a/portable_cassette_player",
+    "processing": "embedded glTF binary; textures resampled to maximum 768px"
+  },
+  {
+    "name": "russian_food_cans_01",
+    "author": {
+      "Kosan Aziz": "All"
+    },
+    "license": "CC0-1.0",
+    "source": "https://polyhaven.com/a/russian_food_cans_01",
+    "processing": "embedded glTF binary; textures resampled to maximum 768px"
+  },
+  {
+    "name": "old_wood_floor",
+    "license": "CC0-1.0",
+    "source": "https://polyhaven.com/a/old_wood_floor",
+    "processing": "resized JPEG; original PBR diffuse/normal/ARM maps"
+  },
+  {
+    "name": "painted_plaster_wall",
+    "license": "CC0-1.0",
+    "source": "https://polyhaven.com/a/painted_plaster_wall",
+    "processing": "resized JPEG; original PBR diffuse/normal/ARM maps"
+  },
+  {
+    "name": "denim_fabric",
+    "license": "CC0-1.0",
+    "source": "https://polyhaven.com/a/denim_fabric",
+    "processing": "resized JPEG; original PBR diffuse/normal/ARM maps"
+  },
+  {
+    "name": "generic-hand-left",
+    "source": "https://cdn.jsdelivr.net/npm/@webxr-input-profiles/assets@1.0.20/dist/profiles/generic-hand/left.glb",
+    "license": "MIT",
+    "author": "Amazon / WebXR Input Profiles contributors"
+  },
+  {
+    "name": "generic-hand-right",
+    "source": "https://cdn.jsdelivr.net/npm/@webxr-input-profiles/assets@1.0.20/dist/profiles/generic-hand/right.glb",
+    "license": "MIT",
+    "author": "Amazon / WebXR Input Profiles contributors"
+  },
+  {
+    "name": "linen-diff",
+    "source": "https://polyhaven.com/a/denim_fabric",
+    "license": "CC0-1.0",
+    "processing": "desaturated and recoloured to warm linen"
+  },
+  {
+    "name": "anders-city",
+    "source": "AI-generated for this game",
+    "license": "generated asset",
+    "processing": "distant city window background only; room itself remains real-time 3D"
+  },
+  {
+    "name": "cabinet-paint_diff",
+    "source": "https://polyhaven.com/a/painted_plaster_wall",
+    "license": "CC0-1.0",
+    "processing": "recoloured and desaturated to worn cabinet paint"
+  },
+  {
+    "name": "wall-print_diff",
+    "source": "AI-generated for this game",
+    "license": "generated asset",
+    "processing": "framed landscape painting texture; not a room background"
+  }
+]

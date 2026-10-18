@@ -543,11 +543,17 @@ function randomEvent() {
     logEvent("水管停止了供水。提前储水和瓶装水现在派得上用场。", "warn");
     notify("楼内临时停水", "warn");
   } else if (roll < 0.45) {
-    G.weather = { temp: rngNext(G) > 0.5 ? 5 : -5, until: G.minute + 24 * 60 };
+    // Warm spells come mostly in the warm half of the year, cold snaps in the cold half.
+    const warmHalf = Math.sin(((day() + 30) / 365) * Math.PI * 2) > 0;
+    G.weather = { temp: rngNext(G) > (warmHalf ? 0.3 : 0.75) ? 5 : -5, until: G.minute + 24 * 60 };
     logEvent(
       G.weather.temp > 0
-        ? "窗外热浪来袭，房间变得闷热。"
-        : "冷空气经过，室温缓慢下降。",
+        ? warmHalf
+          ? "窗外热浪来袭，房间变得闷热。"
+          : "一股暖湿的南风吹过来，屋里没那么冷了。"
+        : warmHalf
+          ? "刮了一夜北风，屋里一下子凉快了。"
+          : "冷空气经过，室温缓慢下降。",
       "normal",
     );
   } else if (roll < 0.57) {

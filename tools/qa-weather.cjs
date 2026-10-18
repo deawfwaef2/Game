@@ -6,6 +6,7 @@ const CASES0 = [
   ["0-rain-day", "rain", 11],
     ["2-rain-dusk", "rain", 18.4],
   ["3-snow-sill", "snow", 10, true],
+  ["4-frost-morning", "frost", 8],
 ];
 const CASES = ONLY ? CASES0.filter((c) => c[1] === ONLY) : CASES0;
 (async () => {
@@ -21,7 +22,17 @@ const CASES = ONLY ? CASES0.filter((c) => c[1] === ONLY) : CASES0;
     for (const [name, kind, h, sill] of CASES) {
       const info = await p.evaluate(([kind, h, sill]) => {
         cancelAnimationFrame(animId);
-        env.temp = kind === "snow" ? 6 : 22;
+        env.temp = kind === "snow" ? 6 : kind === "frost" ? 4 : 22;
+        if (kind === "frost") {
+          G.minute = (244 - 1) * 1440 + h * 60; G.curtains = false; LB.precipK = 0; LB.frostK = 1; LB.coverK = 0; LB.coverHr = -1;
+          renderer.setPixelRatio(1);
+          if (typeof lightingWindow === "function") lightingWindow();
+          lbWeather(performance.now(), 0.016);
+          camera.position.copy(roomRoot.localToWorld(new THREE.Vector3(0.35, 1.6, -env.d / 2 + 1.3)));
+          camera.lookAt(roomRoot.localToWorld(new THREE.Vector3(-0.1, 1.6, -env.d / 2)));
+          renderer.render(scene, camera);
+          return { out: lrOutdoor(244), frost: LB.frost?.visible, op: LB.frost?.material.opacity };
+        }
         let found = -1;
         for (let d = 3; d < 365 && found < 0; d++) for (let m = 0; m < 1440; m += 30) if (lrPrecip((d - 1) * 1440 + m) === kind) { found = d; break; }
         // Pick that day and the hour closest to the requested one where it is still falling.

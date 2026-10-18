@@ -39,7 +39,7 @@ const ctx = {
   },
 };
 vm.createContext(ctx);
-for (const f of ["src/data.js", "src/core.js", "src/life-text.js", "src/life.js", "src/life-more.js", "src/life-real.js"])
+for (const f of ["src/data.js", "src/core.js", "src/life-text.js", "src/life.js", "src/life-more.js", "src/life-real.js", "src/life-home.js"])
   vm.runInContext(fs.readFileSync(f, "utf8"), ctx);
 vm.runInContext(
   `
@@ -121,6 +121,15 @@ consumeMeal(nb.uid,true,false);ok(G.foodHistory.at(-1)===(DB.noodles.flavor||'no
 G.minute=1440*3+8*60;const wt=lrWatch();ok(typeof wt==='string'&&wt.length>5,'watching the street gives a scene');
 {const out={};for(const sd of ['seed-A','ANDERS-1986','cold-1','warm-9','x77']){reset(sd);lifeEnsure();let rain=0,snow=0;for(let d=3;d<=365;d++){let k=null;for(let h=0;h<24;h++){const p=lrPrecip((d-1)*1440+h*60);if(p)k=p;}if(k==='rain')rain++;if(k==='snow')snow++;}out[sd]={rain,snow,temp:env.temp,bday:G.life.birthday};ok(rain+snow>30&&rain+snow<120,'rain and snow days are occasional: '+sd);ok(G.life.birthday>=20&&G.life.birthday<=345&&!LR_DAYS.some(x=>x[0]===G.life.birthday),'birthday is seeded and on its own day');}console.log('Weather by seed',JSON.stringify(out));ok(new Set(Object.values(out).map(o=>o.bday)).size>2,'birthdays differ by seed');}
 
+{reset('seed-A');lifeEnsure();const bad=[];const can=(t)=>{for(let d=3;d<=365;d+=1)for(let h=0;h<24;h++){G.minute=(d-1)*1440+h*60+20;if(lhOk(t))return true;}return false;};
+for(const c of LM_CHAINS)for(const st of c.steps)if(!can(st))bad.push(st);for(const [t] of LM_EVENTS)if(!/蝴蝶|电影票|身高线|梦见|大雾/.test(t)&&!can(t))bad.push(t);ok(bad.length===0,'every neighbour story step has a moment when it can happen: '+bad.join(' | '));
+ok(!can('一只蝴蝶撞在窗玻璃上')&&!can('窗外起了大雾'),'no insects and no fog the window cannot show');
+G.minute=4*1440+12*60;ok(!lhOk('深夜，楼上轻轻弹了一首很慢的曲子')&&!lhOk('早上，窗外传来咕咕声。'),'night and morning lines wait for their time');
+G.minute=4*1440+23*60;ok(lhOk('深夜，楼上轻轻弹了一首很慢的曲子'),'night lines can happen at night');
+G.minute=44*1440+1*60;G.log=[];for(let k=0;k<23;k++){G.minute+=60;hourlyUpdate();}const fw=G.log.find(e=>/烟花/.test(e.text));ok(fw&&Math.floor((fw.minute/60)%24)===19,'national-day fireworks are told in the evening');
+G.minute=(G.life.birthday-1)*1440+1*60;G.log=[];for(let k=0;k<23;k++){G.minute+=60;hourlyUpdate();}const bd=G.log.find(e=>/生日/.test(e.text));ok(bd&&Math.floor((bd.minute/60)%24)===12,'birthday at noon');
+const tn=new Set();for(const sd of ['a','b','c','d','e','f','g','h']){reset(sd);lifeEnsure();tn.add(G.life.tenant);}ok(tn.size>=3,'previous tenant varies by seed');
+reset('seed-A');lifeEnsure();G.minute=4*1440+600;let warmWinter=0,coldSummer=0;for(let k=0;k<300;k++){G.minute=(240-1)*1440+600;G.weather={temp:0,until:0};const r0=G.rng;randomEvent();if(G.weather.temp>0)warmWinter++;G.minute=(60-1)*1440+600;G.weather={temp:0,until:0};randomEvent();if(G.weather.temp<0)coldSummer++;G.pendingKnock=false;G.power=true;G.waterOn=true;}console.log('Spells',warmWinter,coldSummer);}
 reset('ANDERS-1986',YEAR_KIT);const actionCounts={eat:0,water:0,sleep:0,read:0};let loops=0,lastDay=day();
 while(!G.ended&&loops++<30000){
  if(G.pendingKnock){doAction('silence');continue;}
@@ -139,6 +148,7 @@ while(!G.ended&&loops++<30000){
 }
 console.log('365-day policy result:',JSON.stringify({day:day(),win:G.win,ended:G.ended,loops,stats:G.stats,remainingFoodPortions:availableFood().reduce((a,b)=>a+b.units,0),actions:actionCounts}));
 ok(G.ended&&G.win,'resource-aware 365-day policy can win');
+console.log('Year traces',G.life.tenant,G.life.tenantBits,'dreams',G.life.dreams.length);ok(G.life.tenantBits===6,'all six traces of the previous tenant turn up within a year of ordinary cleaning');ok(G.life.dreams.length>=8,'dreams on waking from proper sleeps');
 console.log('ALL SIMULATION TESTS PASSED');
 `,
   ctx,

@@ -39,7 +39,7 @@ const LR_WATCH = {
   evening: ["街灯一盏一盏亮起来，从街口亮到街尾。", "对面楼家家户户的窗子亮了，有一家在包饺子，一家人围着桌子。", "下班的人流从电车站涌出来，很快又散进各个楼道。", "楼下有人在喊孩子回家吃饭，喊了三遍。", "天边剩下一条橘红色的光，慢慢暗下去。"],
   night: ["街上空了，只有一只猫沿着墙根走。", "对面楼只剩一扇窗还亮着，有人在台灯下写东西。", "一辆电车空着驶过，车厢里的灯照亮了半条街。", "远处的钟楼敲了一下。整座城市都睡了。", "巡夜的警察打着手电走过街口，在你楼下停了一会儿，又走了。"],
   rain: ["雨里的行人撑着各色的伞，从上面看像一朵朵移动的蘑菇。", "雨水顺着对面的屋檐往下淌，连成一道帘子。", "街上的积水映着路灯，有人踮着脚跳过去。"],
-  snow: ["雪落得很密，对面的屋顶、晾衣绳、自行车座全白了。", "一个孩子在楼下的空地上滚雪球，越滚越大，最后推不动了。", "扫雪的人在街上推出一条黑色的路，身后很快又白了。", "雪停了一会儿，街上一行脚印从楼门口一直走到电车站。", "路灯下的雪像一群一群的飞蛾，不停地往下落。"],
+  snow: ["雪落得很密，对面的屋顶、晾衣绳、自行车座全白了。", "一个孩子在楼下的空地上滚雪球，越滚越大，最后推不动了。", "扫雪的人在街上推出一条黑色的路，身后很快又白了。", "雪停了一会儿，街上一行脚印从楼门口一直走到电车站。", "路灯下的雪像撕碎的信纸，不停地往下落。"],
   overcast: ["天是灰的，对面的楼也是灰的，只有一家的红窗帘很显眼。", "云压得很低，楼顶的烟囱冒出的烟直直地往上走。"],
   alert: ["楼下停着一辆没熄火的黑色轿车，车里的人一直没下来。", "两个穿皮夹克的男人在街对面抽烟，时不时抬头数楼层。", "一个陌生人拿着一张纸，在楼门口问下棋的老头什么。老头摇了摇头。", "街角多了一个卖报的，他卖得很少，看得很多。"],
 };
@@ -167,14 +167,7 @@ dailyUpdate = function () {
     if (day() === 2) logEvent(`你一直是个${LR_TRAITS.filter((t) => L.traits.includes(t.id)).map((t) => t.t).join("、")}的人。${LR_TRAITS.filter((t) => L.traits.includes(t.id)).map((t) => t.d).join("")}`, "story");
     return;
   }
-  for (const [d, t] of LR_DAYS) if (d === day()) {
-    logEvent(t, "story");
-    G.stats.morale = clamp(G.stats.morale + 3);
-  }
-  if (L.birthday === day()) {
-    logEvent(LR_BIRTHDAY, "story");
-    G.stats.morale = clamp(G.stats.morale - 1);
-  }
+  // Dated days and the birthday are told at their own hour by life-home.js.
   // An old building: something gives out now and then. Cold-weather faults only when it is cold.
   const open = Object.keys(LR_FAULTS).filter((k) => !L.faults[k] && (!LR_FAULTS[k].cold || cold));
   if (open.length && Object.keys(L.faults).length < 2 && rngNext(G) < 0.045) {

@@ -269,3 +269,16 @@
   - lbSnowCover：外窗框底部的积雪，位置 z=back-0.25，y 约1.07。
   - 这些都从包装过的 worldFrame 里驱动。
 - 查看天气效果用 tools/qa-weather.cjs [rain|snow]。
+
+### 2026-10-18 / v0.15.0-preview 时间和天气合理性、前租客、梦、冰花
+- 新文件 `src/life-home.js`，加载顺序在 life-real 之后、life-body 之前；simulation 也会加载它。
+  - lhOk(text)：用 LH_EXACT（先判断）和 LH_RULES（正则加条件）检查当前钟点、季节、天气是否允许这句话出现。lmPoolEvent 和 lmChainStep 都已重写为先过 lhOk；邻居故事的某一步时机不对时会等待，不会跳过。
+  - 新增文本时，如果写了钟点或天气，要在 LH_RULES 里加对应规则；simulation 会检查每一句一年里至少有一个可以发生的时刻。
+  - 固定日子和生日改在 hourlyUpdate 里按 LH_DAY_HOUR 指定的钟点触发；life-real 的 dailyUpdate 不再记录它们。
+  - LH_TENANTS：4种前租客，每种6处痕迹。G.life.tenant 和 G.life.tenantBits 记录进度；第 i 处要到第 5+40i 天之后才可能出现，两处之间至少隔18天。触发途径：doAction 的 clean/laundry/dishes、lrFix、lrWatch。
+  - LH_DREAMS：做过的梦记在 G.life.dreams，睡满240分钟以上有40%概率做梦。
+  - LH.say：要轻声显示的一句话，由 life-body 的 lbCheckLines 优先显示。
+- core.js randomEvent：冷暖天气按季节决定，冬天不再出现“热浪”。
+- life-body.js：lbFrostGlass/lbFrost 在外层玻璃内侧（z=back-0.198）画冰花。
+- tools/qa-weather.cjs 的参数可以是 rain、snow 或 frost。
+- /var/tmp 被清空过一次，已按记录重新安装 QA 环境（npm、chromium 和 install-deps）。

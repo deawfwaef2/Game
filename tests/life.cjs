@@ -33,9 +33,11 @@ const { chromium } = require("playwright"), path = require("path"), assert = req
       W.focus = win; o.winHint = worldTargetInfo(win)[1]; worldInteract(true); worldFinishAction(); o.watched = /往外看/.test(G.log[0]?.text || "");
       G.life.faults = { drip: 3 }; const sink = (() => { let f = null; roomRoot.traverse((x) => { if (!f && x.userData.interact === "sink") f = x; }); return f; })(); o.sinkHint = worldTargetInfo(sink)[1];
       o.calmFilter = (LB.fx = lbTargets(), lbTick(), renderer.domElement.style.filter);
-      G.stats.food = 5; G.stats.water = 60; LB.last = {}; LB.fx = lbTargets(); lbTick(); worldRenderHUD();
+      G.stats.food = 5; G.stats.water = 60; LB.last = {}; LB.thoughtAt = G.minute; document.getElementById("bodyLine").classList.remove("on"); LB.fx = lbTargets(); lbTick(); worldRenderHUD();
       o.hungryFilter = renderer.domElement.style.filter; o.hungryLine = document.getElementById("bodyLine").textContent; o.cond = document.getElementById("worldCondition").textContent;
       G.stats.food = 80; document.getElementById("bodyLine").classList.remove("on"); lbCheckLines(); o.reliefLine = document.getElementById("bodyLine").textContent;
+      document.getElementById("bodyLine").classList.remove("on"); LH.say = "梦见一间和这里一模一样的屋子。"; lbCheckLines(); o.dreamLine = document.getElementById("bodyLine").textContent; document.getElementById("bodyLine").classList.remove("on");
+      { const keep = G.minute, kt = env.temp; env.temp = 4; G.minute = 243 * 1440 + 7 * 60; LB.frostK = undefined; lbFrost(0.016); o.frost = !!(LB.frost && LB.frost.visible); env.temp = kt; G.minute = keep; LB.frostK = 0; lbFrost(0.016); }
       { const keep = G.minute; let t = G.minute; while (lrPrecip(t) !== "rain" && t < keep + 1440 * 200) t += 30; G.minute = t; LB.precipK = 1; lbWeather(performance.now(), 0.016); o.rain = !!(LB.mesh && LB.mesh.visible && LB.mesh.parent === roomRoot && LB.mesh.userData.precip === "rain"); G.minute = keep; }
       G.life.harvests = 30; endGame(true, "test"); o.ending = G.life.ending; o.endBox = !!document.querySelector("#endScreen .life-ending") && /窗台上的春天/.test(document.querySelector("#endScreen .life-ending").textContent);
       o.records = lmRecords().endings.includes("garden");
@@ -55,11 +57,12 @@ const { chromium } = require("playwright"), path = require("path"), assert = req
     assert.ok(out.calmFilter === "" && /saturate/.test(out.hungryFilter) && /饿/.test(out.hungryLine) && !/需要吃饭/.test(out.cond), "body feedback only when it happens");
     assert.ok(/暖/.test(out.reliefLine), "relief is felt once when hunger is met");
     assert.ok(out.rain, "rain falls outside the window on rainy hours");
+    assert.ok(/一模一样/.test(out.dreamLine) && out.frost, "dream line on waking; ice flowers on hard-frost mornings");
     assert.ok(/看看窗外/.test(out.winHint) && out.watched, "window watching");
     assert.ok(/水龙头滴水/.test(out.sinkHint), "fault shown at the sink");
     assert.ok(out.ending === "garden" && out.endBox && out.records);
     assert.deepStrictEqual(errors, []);
     assert.deepStrictEqual(external, []);
-    console.log("LIFE PASS: felt hunger (screen effect + inner line, no meter) + relief / rain outside the window / watching the street / fault hints / year page on the wall calendar / hanging paper cranes / ending + cross-run records / windowsill garden sow/harvest-to-hand / letter bundle + letter page / radio caption / no pests / no external requests / JS errors 0");
+    console.log("LIFE PASS: felt hunger (screen effect + inner line, no meter) + relief / rain outside the window / dreams / frost on the glass / watching the street / fault hints / year page on the wall calendar / hanging paper cranes / ending + cross-run records / windowsill garden sow/harvest-to-hand / letter bundle + letter page / radio caption / no pests / no external requests / JS errors 0");
   } finally { await b.close(); }
 })().catch((e) => { console.error(e); process.exitCode = 1; });

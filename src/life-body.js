@@ -109,6 +109,12 @@ function lbSay(text, soft = false) {
 // One line when a threshold is first crossed (or deepened); repeats only after 3 game hours.
 // Relief is said once when the need is properly met; small wobbles around a threshold say nothing.
 function lbCheckLines() {
+  // Dreams on waking, a trace of the previous tenant, a day of the year: said softly, first.
+  if (typeof LH !== "undefined" && LH.say && !(LB.line && LB.line.classList.contains("on"))) {
+    lbSay(LH.say, true);
+    LH.say = "";
+    return;
+  }
   const s = G.stats,
     now = G.minute,
     cand = [],
@@ -527,9 +533,93 @@ function lbSnowCover(dt) {
   c.position.y = 1.07 + 0.04 * LB.coverK;
   c.material.emissiveIntensity = 0.12 + 0.45 * (LQ?.sky?.light ?? 1);
 }
+// Ice flowers on the outer pane on hard-frost nights and mornings, growing in from the edges of each pane.
+function lbFrostGlass() {
+  const c = document.createElement("canvas");
+  c.width = 1024;
+  c.height = 560;
+  const x = c.getContext("2d"),
+    W2 = c.width,
+    H2 = c.height;
+  // Pane edges in texture space: window edges, the two mullions and the transom.
+  const vx = [0, 0.332, 0.668, 1].map((u) => u * W2),
+    ty = 0.32 * H2;
+  const edge = (px, py) => Math.min(...vx.map((v) => Math.abs(px - v)), Math.abs(py - ty), py, H2 - py);
+  const g = x.createImageData(W2, H2),
+    d = g.data;
+  for (let py = 0; py < H2; py++)
+    for (let px = 0; px < W2; px++) {
+      const e = edge(px, py),
+        n = Math.sin(px * 0.11 + Math.sin(py * 0.07) * 3) * Math.sin(py * 0.13 + Math.sin(px * 0.05) * 2),
+        a = Math.max(0, 1 - e / (40 + 24 * n + (py > H2 * 0.7 ? 70 * (py / H2 - 0.7) / 0.3 : 0)));
+      const k = (py * W2 + px) * 4;
+      d[k] = d[k + 1] = 240;
+      d[k + 2] = 250;
+      d[k + 3] = Math.min(255, a * a * 205 + (Math.random() < 0.02 * a ? 90 : 0));
+    }
+  x.putImageData(g, 0, 0);
+  // Feathered crystals: branching strokes that start on a pane edge and reach into the glass.
+  const feather = (px, py, ang, len, w) => {
+    if (len < 5) return;
+    const ex = px + Math.cos(ang) * len,
+      ey = py + Math.sin(ang) * len;
+    x.strokeStyle = `rgba(245,250,255,${0.28 + w * 0.08})`;
+    x.lineWidth = w;
+    x.beginPath();
+    x.moveTo(px, py);
+    x.lineTo(ex, ey);
+    x.stroke();
+    const n = 3 + Math.floor(Math.random() * 3);
+    for (let i = 1; i <= n; i++) {
+      const t = i / (n + 1),
+        bx = px + (ex - px) * t,
+        by = py + (ey - py) * t;
+      feather(bx, by, ang + 0.75 + (Math.random() - 0.5) * 0.3, len * (0.32 + Math.random() * 0.12), Math.max(0.5, w * 0.6));
+      feather(bx, by, ang - 0.75 + (Math.random() - 0.5) * 0.3, len * (0.32 + Math.random() * 0.12), Math.max(0.5, w * 0.6));
+    }
+  };
+  for (let i = 0; i < 115; i++) {
+    const side = Math.random();
+    let px, py, ang;
+    if (side < 0.45) (px = Math.random() * W2), (py = H2 - 2), (ang = -Math.PI / 2 + (Math.random() - 0.5) * 1.2);
+    else if (side < 0.8) {
+      const v = vx[Math.floor(Math.random() * 4)];
+      px = v;
+      py = ty + Math.random() * (H2 - ty);
+      ang = (v === 0 ? 0 : v === W2 ? Math.PI : Math.random() < 0.5 ? 0 : Math.PI) + (Math.random() - 0.5) * 1.1;
+    } else (px = Math.random() * W2), (py = Math.random() < 0.5 ? ty : 2), (ang = Math.PI / 2 + (Math.random() - 0.5) * 1.2);
+    feather(px, py, ang, 40 + Math.random() * 90, 1.6);
+  }
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  const m = new THREE.Mesh(
+    new THREE.PlaneGeometry(2.62, 1.43),
+    new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, opacity: 0, toneMapped: false }),
+  );
+  m.userData.noAO = true;
+  m.raycast = () => {};
+  m.renderOrder = 1;
+  return m;
+}
+function lbFrost(dt) {
+  const h = (G.minute / 60) % 24,
+    out = lrOutdoor(day()) - (h < 8 || h > 21 ? 3 : 0),
+    target = h < 11 || h > 20 ? Math.max(0, Math.min(1, (-2 - out) / 8)) : 0;
+  LB.frostK = LB.frostK ?? target;
+  LB.frostK += (target - LB.frostK) * Math.min(1, dt * 0.01);
+  if (LB.frostK < 0.02 && !LB.frost) return;
+  if (!LB.frost || LB.frost.parent !== roomRoot) {
+    LB.frost = LB.frost || lbFrostGlass();
+    LB.frost.position.set(0, 1.72, -env.d / 2 - 0.198);
+    roomRoot.add(LB.frost);
+  }
+  LB.frost.visible = LB.frostK > 0.02;
+  LB.frost.material.opacity = Math.min(1, LB.frostK * 1.2) * (0.55 + 0.45 * (LQ?.sky?.light ?? 1));
+}
 function lbWeather(now, dt) {
   if (typeof roomRoot === "undefined" || !roomRoot || !G || phase !== "playing" || W.store || typeof lrPrecip !== "function") return;
   lbSnowCover(dt);
+  lbFrost(dt);
   const pr = lrPrecip();
   LB.precipK += ((pr ? 1 : 0) - LB.precipK) * Math.min(1, dt * 0.25);
   if (pr) LB.kind = pr;

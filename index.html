@@ -5755,7 +5755,7 @@ const OFFLINE_ROOM={"models":{"drawer_cabinet":"Z2xURgIAAABY5RAAuLQEAEpTT057ImFz
     </script>
     <script>
       /* 闭门365 — original game data, fictional 1980s subsidized prices. */
-const VERSION = "0.14.0-preview";
+const VERSION = "0.15.0-preview";
 const CATEGORIES = [
   ["all", "全部物资"],
   ["staple", "主食与干粮"],
@@ -7000,11 +7000,17 @@ function randomEvent() {
     logEvent("水管停止了供水。提前储水和瓶装水现在派得上用场。", "warn");
     notify("楼内临时停水", "warn");
   } else if (roll < 0.45) {
-    G.weather = { temp: rngNext(G) > 0.5 ? 5 : -5, until: G.minute + 24 * 60 };
+    // Warm spells come mostly in the warm half of the year, cold snaps in the cold half.
+    const warmHalf = Math.sin(((day() + 30) / 365) * Math.PI * 2) > 0;
+    G.weather = { temp: rngNext(G) > (warmHalf ? 0.3 : 0.75) ? 5 : -5, until: G.minute + 24 * 60 };
     logEvent(
       G.weather.temp > 0
-        ? "窗外热浪来袭，房间变得闷热。"
-        : "冷空气经过，室温缓慢下降。",
+        ? warmHalf
+          ? "窗外热浪来袭，房间变得闷热。"
+          : "一股暖湿的南风吹过来，屋里没那么冷了。"
+        : warmHalf
+          ? "刮了一夜北风，屋里一下子凉快了。"
+          : "冷空气经过，室温缓慢下降。",
       "normal",
     );
   } else if (roll < 0.57) {
@@ -19610,7 +19616,7 @@ const LR_WATCH = {
   evening: ["街灯一盏一盏亮起来，从街口亮到街尾。", "对面楼家家户户的窗子亮了，有一家在包饺子，一家人围着桌子。", "下班的人流从电车站涌出来，很快又散进各个楼道。", "楼下有人在喊孩子回家吃饭，喊了三遍。", "天边剩下一条橘红色的光，慢慢暗下去。"],
   night: ["街上空了，只有一只猫沿着墙根走。", "对面楼只剩一扇窗还亮着，有人在台灯下写东西。", "一辆电车空着驶过，车厢里的灯照亮了半条街。", "远处的钟楼敲了一下。整座城市都睡了。", "巡夜的警察打着手电走过街口，在你楼下停了一会儿，又走了。"],
   rain: ["雨里的行人撑着各色的伞，从上面看像一朵朵移动的蘑菇。", "雨水顺着对面的屋檐往下淌，连成一道帘子。", "街上的积水映着路灯，有人踮着脚跳过去。"],
-  snow: ["雪落得很密，对面的屋顶、晾衣绳、自行车座全白了。", "一个孩子在楼下的空地上滚雪球，越滚越大，最后推不动了。", "扫雪的人在街上推出一条黑色的路，身后很快又白了。", "雪停了一会儿，街上一行脚印从楼门口一直走到电车站。", "路灯下的雪像一群一群的飞蛾，不停地往下落。"],
+  snow: ["雪落得很密，对面的屋顶、晾衣绳、自行车座全白了。", "一个孩子在楼下的空地上滚雪球，越滚越大，最后推不动了。", "扫雪的人在街上推出一条黑色的路，身后很快又白了。", "雪停了一会儿，街上一行脚印从楼门口一直走到电车站。", "路灯下的雪像撕碎的信纸，不停地往下落。"],
   overcast: ["天是灰的，对面的楼也是灰的，只有一家的红窗帘很显眼。", "云压得很低，楼顶的烟囱冒出的烟直直地往上走。"],
   alert: ["楼下停着一辆没熄火的黑色轿车，车里的人一直没下来。", "两个穿皮夹克的男人在街对面抽烟，时不时抬头数楼层。", "一个陌生人拿着一张纸，在楼门口问下棋的老头什么。老头摇了摇头。", "街角多了一个卖报的，他卖得很少，看得很多。"],
 };
@@ -19738,14 +19744,7 @@ dailyUpdate = function () {
     if (day() === 2) logEvent(`你一直是个${LR_TRAITS.filter((t) => L.traits.includes(t.id)).map((t) => t.t).join("、")}的人。${LR_TRAITS.filter((t) => L.traits.includes(t.id)).map((t) => t.d).join("")}`, "story");
     return;
   }
-  for (const [d, t] of LR_DAYS) if (d === day()) {
-    logEvent(t, "story");
-    G.stats.morale = clamp(G.stats.morale + 3);
-  }
-  if (L.birthday === day()) {
-    logEvent(LR_BIRTHDAY, "story");
-    G.stats.morale = clamp(G.stats.morale - 1);
-  }
+  // Dated days and the birthday are told at their own hour by life-home.js.
   // An old building: something gives out now and then. Cold-weather faults only when it is cold.
   const open = Object.keys(LR_FAULTS).filter((k) => !L.faults[k] && (!LR_FAULTS[k].cold || cold));
   if (open.length && Object.keys(L.faults).length < 2 && rngNext(G) < 0.045) {
@@ -19913,6 +19912,280 @@ if (typeof worldInteract === "function") {
 
     </script>
     <script>
+      /* 闭门365 · v0.15 a home that makes sense. Things only happen when they could really happen: rain stories when
+   it actually rains, the factory whistle at knocking-off time, "late at night" at night, fireworks in the evening.
+   Plus the traces a previous tenant left in the flat (one seeded life of four, found bit by bit while you clean,
+   mend and look out of the window), and dreams when you wake from a proper sleep. Pure game logic; runs in tests. */
+const LH = { say: "" };
+// When can a line about the outside world plausibly happen? Checked against the real clock, season and weather.
+function lhHour() {
+  return (G.minute / 60) % 24;
+}
+function lhDry() {
+  return typeof lrPrecip !== "function" || !lrPrecip();
+}
+function lhDay() {
+  const h = lhHour();
+  return h >= 7 && h < 18.5;
+}
+function lhNight() {
+  const h = lhHour();
+  return h >= 21.5 || h < 5;
+}
+function lhRainedRecently() {
+  if (typeof lrPrecip !== "function") return false;
+  for (let k = 1; k <= 3; k++) if (lrPrecip(G.minute - k * 60) === "rain") return true;
+  return false;
+}
+const LH_RULES = [
+  [/蝴蝶|电影票|身高线|梦见/, () => false], // no insects; tenant traces and dreams have their own systems now
+  [/大雾/, () => false], // the window cannot show fog, so the journal must not claim it
+  [/下起了雨/, () => typeof lrPrecip === "function" && lrPrecip() === "rain"],
+  [/雷声/, () => typeof lrPrecip === "function" && lrPrecip() === "rain" && lrOutdoor() > 8],
+  [/天空特别蓝/, () => lhDay() && !lifeWeather(day()).overcast && !lifeWeather(day()).hazy],
+  [/彩虹/, () => lhDay() && lhDry() && lhRainedRecently()],
+  [/汽笛.*下班/, () => lhHour() >= 16.5 && lhHour() < 18.5],
+  [/敲了十二下/, () => (lhHour() >= 11.9 && lhHour() < 12.6) || lhHour() >= 23.9 || lhHour() < 0.6],
+  [/夜里|整夜|深夜|半夜/, () => lhNight()],
+  [/球赛/, () => lhHour() >= 18 && lhHour() < 22],
+  [/晒被子|晾/, () => lhHour() >= 9 && lhHour() < 15 && lhDry() && !lifeWeather(day()).overcast],
+  [/风筝/, () => lhDay() && lhDry() && lrOutdoor() > 6],
+  [/麻雀|一群鸟/, () => lhDay() && lhDry()],
+  [/人字/, () => (day() >= 140 && day() <= 190) || (day() >= 290 && day() <= 330)],
+  [/烤红薯/, () => lrOutdoor() < 10],
+  [/暖气管/, () => lrOutdoor() < 12],
+  [/一下午/, () => lhHour() >= 14 && lhHour() < 19],
+  [/修自行车|纸飞机/, () => lhDay() && lhDry()],
+  [/邮递员/, () => lhHour() >= 8 && lhHour() < 17],
+  [/电车/, () => lhHour() >= 5.5 && lhHour() < 23.5],
+  [/剁饺子馅|扫地|晒太阳/, () => lhHour() >= 8 && lhHour() < 19],
+  [/唱歌|二胡|打碎|吵架|练琴|琴声连起来|练了两个小时/, () => lhHour() >= 8 && lhHour() < 22],
+  [/早上|咕咕声/, () => lhHour() >= 5.5 && lhHour() < 10],
+  [/傍晚|下班/, () => lhHour() >= 16.5 && lhHour() < 20],
+  [/今晚|晚上|十点/, () => lhHour() >= 19 && lhHour() < 23.5],
+  [/一天没有|一整天的/, () => lhHour() >= 17 && lhHour() < 22],
+  [/搬走/, () => lhDay()],
+];
+// Exact moments for lines that mention two times of day (checked first; they decide on their own).
+const LH_EXACT = [
+  [/响了一整夜。早上/, () => lhHour() >= 5.5 && lhHour() < 10],
+  [/搬了一整天/, () => lhHour() >= 16 && lhHour() < 20.5],
+];
+function lhOk(text) {
+  for (const [re, ok] of LH_EXACT) if (re.test(text)) return ok();
+  for (const [re, ok] of LH_RULES) if (re.test(text) && !ok()) return false;
+  return true;
+}
+// Only offer pool events whose moment is right; neighbour stories wait for the right hour instead of being skipped.
+lmPoolEvent = function () {
+  const L = G.life,
+    d = day();
+  const pool = LM_EVENTS.map((e, i) => i).filter((i) => (!L.seen[i] || d - L.seen[i] > 40) && lhOk(LM_EVENTS[i][0]));
+  if (!pool.length) return false;
+  const i = pool[Math.floor(rngNext(G) * pool.length)];
+  L.seen[i] = d;
+  logEvent(LM_EVENTS[i][0], LM_EVENTS[i][1] < 0 ? "normal" : "good");
+  lmApply(LM_EVENTS[i][1]);
+  return true;
+};
+lmChainStep = function () {
+  const L = G.life;
+  for (const [id, c] of Object.entries(L.chains || {})) {
+    const chain = LM_CHAINS.find((x) => x.id === id);
+    if (!chain || c.step >= chain.steps.length || day() < c.next || !lhOk(chain.steps[c.step])) continue;
+    logEvent(chain.steps[c.step], "story");
+    c.step++;
+    c.next = day() + 12 + Math.floor(rngNext(G) * 30);
+    lmApply(c.step === chain.steps.length ? 6 : 2);
+    return true;
+  }
+  return false;
+};
+
+/* ---------- Dated days at the right hour ---------- */
+const LH_DAY_HOUR = { 30: 18, 45: 19, 80: 14, 120: 10, 150: 8, 215: 23, 216: 9, 262: 7, 300: 6, 330: 10 };
+const LH_COLDEST_MILD = "冬天最冷的几天。暖气片摸上去只是温的，你把毛衣领子拉到了下巴。";
+
+/* ---------- The previous tenant ---------- */
+const LH_TENANTS = [
+  {
+    id: "watch",
+    who: "一位独居的老钟表匠",
+    bits: [
+      "地板缝里卡着一颗比米粒还小的螺丝，在灯下亮了一下。是手表上的。",
+      "窗框内侧有一排很小的铅笔字：“6:12、6:10、6:07……”有人在这里记过每天日出的时间。",
+      "抽屉底下垫着一张信纸，开头写着“儿子：港口那边冷不冷”，后面一个字也没有写。",
+      "柜门内侧贴着一张发黄的单子：“修好的表——邮递员老周一块、楼下小姑娘一块、自己的，还没修。”",
+      "暖气片后面掉着一张照片：一个男孩骑在一辆大自行车上，咧着嘴，缺了一颗门牙。背面写着“小树，九岁”。",
+      "床板下面压着一张纸条，字很工整：“给下一个住这里的人：屋子会响，但不会塌。日子也是。”",
+    ],
+    end: "你把那张纸条重新压回床板下面。等你走的时候，下一个人也会读到它。",
+  },
+  {
+    id: "boy",
+    who: "一个母亲带着她的儿子",
+    bits: [
+      "门框背面有一道一道铅笔画的横线，旁边写着“小明 五岁”“小明 六岁”。",
+      "床底的墙脚上有一个蜡笔画的太阳，画得很圆，旁边还有一个歪歪扭扭的“家”字。",
+      "缝隙里塞着一张购物单，是孩子的笔迹：“盐、火柴、妈妈的药，找回来的钱买一颗糖。”",
+      "镜子背后夹着一张明信片，盖着海港的邮戳：“等我回来，带你们去看海。——爸爸”",
+      "柜子侧板上刻着一行小字：“今天妈妈哭了。我把我的糖给她了。”",
+      "门框最上面那道线写着：“小明 十二岁。搬新家啦！再见，旧房子！”字写得很大，一直写到了门框外面。",
+    ],
+    end: "你在门框上比了比自己。那道写着十二岁的线，只到你的胸口。",
+  },
+  {
+    id: "teacher",
+    who: "一位退休的语文老师",
+    bits: [
+      "抽屉角落里有一小截粉笔头，捏一下，手指就白了。",
+      "柜子里垫着一张学生写的贺卡：“老师，我考上了。您说过的，字要一笔一画写。”",
+      "柜子侧面用铅笔写着一首小诗，最后一句是：“窗子很小，天很大。”",
+      "一张对折的名单，三十几个名字，有几个名字后面画了小星星，有一个后面写着“要多关心”。",
+      "窗台的缝里卡着一支红笔，笔帽上咬满了牙印。",
+      "床头的墙上有一行很淡的字：“这间屋子的冬天很长，可春天每年都来，我数过。”",
+    ],
+    end: "你突然很想把这一年也写下来，一笔一画地写。",
+  },
+  {
+    id: "tram",
+    who: "一对开夜班电车的年轻夫妻",
+    bits: [
+      "柜子里有一个旧电车票夹，铁的，还能咔嗒咔嗒地按。",
+      "柜门内侧钉着一张发黄的排班表，有一格画了个圈，写着“结婚纪念日——换班！”",
+      "窗台下面刻着两个名字：“阿勇 + 秀兰”，中间的加号被人描过很多遍。",
+      "暖气片后面掉着半张合影，只剩一个穿制服的姑娘，笑得眼睛都看不见了。",
+      "床板缝里有一张电车票根，背面写着：“末班车，你又给我留了座。”",
+      "抽屉底下压着一张纸条：“我们搬去南边了。愿你在这间屋子里，也有人给你留一盏灯。”",
+    ],
+    end: "夜里电车开过的时候，你会想起他们。也许他们还在南边开着车。",
+  },
+];
+const LH_WHERE = { clean: "收拾屋子的时候，", dishes: "洗碗的时候，", fix: "修东西的时候，", watch: "站在窗边的时候，", nails: "", laundry: "洗衣服的时候，" };
+function lhRand(tag) {
+  let s = lifeHash(String(G.seed) + "-" + tag) || 1;
+  return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296);
+}
+function lhEnsure() {
+  if (!G || !G.life) return;
+  const L = G.life;
+  if (typeof L.tenant !== "string" || !LH_TENANTS.some((t) => t.id === L.tenant)) L.tenant = LH_TENANTS[Math.floor(lhRand("tenant")() * LH_TENANTS.length)].id;
+  if (typeof L.tenantBits !== "number") L.tenantBits = 0;
+  if (!Array.isArray(L.dreams)) L.dreams = [];
+}
+const lhPrevEnsure = lifeEnsure;
+lifeEnsure = function () {
+  lhPrevEnsure();
+  lhEnsure();
+};
+function lhTenant() {
+  lifeEnsure();
+  return LH_TENANTS.find((t) => t.id === G.life.tenant);
+}
+// The traces turn up across the whole year, one at a time, while doing ordinary things.
+function lhFindTrace(how, chance) {
+  lifeEnsure();
+  const L = G.life,
+    t = lhTenant(),
+    i = L.tenantBits;
+  if (i >= t.bits.length || day() < 5 + i * 40 || day() - (L.tenantAt || 0) < 18 || rngNext(G) > chance) return false;
+  L.tenantBits++;
+  L.tenantAt = day();
+  const last = L.tenantBits === t.bits.length;
+  logEvent((LH_WHERE[how] || "") + "你发现：" + t.bits[i] + (i === 0 ? `（这屋子以前住过${t.who}。）` : "") + (last ? t.end : ""), "story");
+  G.stats.morale = clamp(G.stats.morale + (last ? 8 : 3));
+  LH.say = last ? t.end : "以前住在这里的人，留下了一点东西。";
+  return true;
+}
+
+/* ---------- Dreams ---------- */
+const LH_DREAMS = {
+  hungry: ["梦见妈在厨房里炸油饼，满屋子都是香味。你伸手去拿，就醒了。", "梦见一张长长的桌子，上面摆满了菜，可是每一盘都够不着。"],
+  cold: ["梦见自己在雪地里走，怎么也走不到那扇亮着灯的窗户。", "梦见小时候发烧，爸背着你去医院，他的背很暖。"],
+  alert: ["梦见楼道里有脚步声，一层一层往上走，停在了你的门口。你屏住呼吸，醒了。", "梦见有人在街上喊你的名字，你想答应，又不敢。"],
+  good: ["梦见和小禾在河边骑车，她骑得飞快，回头冲你笑。", "梦见自己推开门，外面是夏天，楼下的人都在跟你打招呼。", "梦见全家坐在一起吃年夜饭，爸破天荒地给你夹了一筷子菜。"],
+  letter: ["梦见小禾坐在你的旧床上写信，一边写一边念给你听。", "梦见妈在灯下把信折好，塞进一个旧书包里。"],
+  any: [
+    "梦见自己在一列很长的电车上，车一直开，一直没有到站。",
+    "梦见一间和这里一模一样的屋子，只是窗外是海。",
+    "梦见自己又回到了那天的码头，但这一次，你转身走了。",
+    "梦见楼上的琴声变成了雨，落在你的脸上。",
+    "梦见自己在数日历上的刻痕，数着数着，日历变成了一本书。",
+    "梦见一个看不清脸的人递给你一把钥匙，说：“到时候了。”",
+    "梦见自己在学校里，老师在讲台上点名，点到你的时候，你答了一声“到”。",
+    "梦见小时候住的那条街，下着雨，有人在卖糖葫芦。",
+    "什么也没梦见。睡得很沉，醒来时窗外的光已经换了方向。",
+    "梦见窗台上的葱长得比人还高，你顺着它爬了出去。",
+  ],
+};
+function lhDream(slept) {
+  lifeEnsure();
+  const L = G.life;
+  if (slept < 240 || rngNext(G) > 0.4) return;
+  const s = G.stats,
+    pools = [];
+  if (lifeAlertActive()) pools.push("alert");
+  if (s.food < 40) pools.push("hungry");
+  if (temperature() < 13) pools.push("cold");
+  if ((L.letters || 0) > 0 && rngNext(G) < 0.4) pools.push("letter");
+  if (s.morale > 65 && rngNext(G) < 0.5) pools.push("good");
+  pools.push("any");
+  for (const p of pools) {
+    const left = LH_DREAMS[p].map((t, i) => p + i).filter((k) => !L.dreams.includes(k));
+    if (!left.length) continue;
+    const k = left[Math.floor(rngNext(G) * left.length)],
+      text = LH_DREAMS[p][+k.slice(p.length)];
+    L.dreams.push(k);
+    logEvent("醒来以前，你" + text, "story");
+    G.stats.morale = clamp(G.stats.morale + (p === "alert" ? -2 : p === "good" || p === "letter" ? 3 : 1));
+    LH.say = text.length > 26 ? text.slice(0, text.search(/[。，]/) + 1 || 26) : text;
+    return;
+  }
+}
+
+/* ---------- Hooks ---------- */
+const lhBase = { doAction, hourlyUpdate, lrFix, lrWatch };
+doAction = function (action, value) {
+  const before = G ? G.minute : 0,
+    r = lhBase.doAction(action, value);
+  if (!G || G.ended) return r;
+  if (action === "sleep") lhDream(G.minute - before);
+  else if (action === "clean") lhFindTrace("clean", 0.5);
+  else if (action === "laundry") lhFindTrace("laundry", 0.2);
+  else if (action === "dishes") lhFindTrace("dishes", 0.12);
+  return r;
+};
+lrFix = function (id) {
+  const r = lhBase.lrFix(id);
+  lhFindTrace("fix", 0.9);
+  return r;
+};
+lrWatch = function () {
+  const r = lhBase.lrWatch();
+  lhFindTrace("watch", 0.12);
+  return r;
+};
+// Dated days are told at their hour (fireworks in the evening, birdsong at dawn), not at midnight.
+hourlyUpdate = function () {
+  lhBase.hourlyUpdate();
+  if (!G || G.ended || day() < 3) return;
+  const h = Math.floor(lhHour()),
+    d = day();
+  if (G.life.birthday === d && h === 12) {
+    logEvent(LR_BIRTHDAY, "story");
+    G.stats.morale = clamp(G.stats.morale - 1);
+    LH.say = "今天是你的生日。";
+  }
+  for (const [dd, t] of LR_DAYS)
+    if (dd === d && (LH_DAY_HOUR[dd] ?? 9) === h) {
+      logEvent(dd === 262 && lrOutdoor(d) > -2 ? LH_COLDEST_MILD : t, "story");
+      G.stats.morale = clamp(G.stats.morale + 3);
+      LH.say = (dd === 262 && lrOutdoor(d) > -2 ? LH_COLDEST_MILD : t).split("。")[0] + "。";
+    }
+};
+
+    </script>
+    <script>
       /* 闭门365 · v0.13–0.14 the body speaks for itself. No meters on screen: when hunger, thirst, tiredness, low spirits,
    sickness, cold or heat actually reach a threshold, you feel it — the picture changes (colour drains, edges darken,
    eyelids droop, frost creeps in) and a short inner line appears once. Ordinary states show nothing at all. */
@@ -20024,6 +20297,12 @@ function lbSay(text, soft = false) {
 // One line when a threshold is first crossed (or deepened); repeats only after 3 game hours.
 // Relief is said once when the need is properly met; small wobbles around a threshold say nothing.
 function lbCheckLines() {
+  // Dreams on waking, a trace of the previous tenant, a day of the year: said softly, first.
+  if (typeof LH !== "undefined" && LH.say && !(LB.line && LB.line.classList.contains("on"))) {
+    lbSay(LH.say, true);
+    LH.say = "";
+    return;
+  }
   const s = G.stats,
     now = G.minute,
     cand = [],
@@ -20442,9 +20721,93 @@ function lbSnowCover(dt) {
   c.position.y = 1.07 + 0.04 * LB.coverK;
   c.material.emissiveIntensity = 0.12 + 0.45 * (LQ?.sky?.light ?? 1);
 }
+// Ice flowers on the outer pane on hard-frost nights and mornings, growing in from the edges of each pane.
+function lbFrostGlass() {
+  const c = document.createElement("canvas");
+  c.width = 1024;
+  c.height = 560;
+  const x = c.getContext("2d"),
+    W2 = c.width,
+    H2 = c.height;
+  // Pane edges in texture space: window edges, the two mullions and the transom.
+  const vx = [0, 0.332, 0.668, 1].map((u) => u * W2),
+    ty = 0.32 * H2;
+  const edge = (px, py) => Math.min(...vx.map((v) => Math.abs(px - v)), Math.abs(py - ty), py, H2 - py);
+  const g = x.createImageData(W2, H2),
+    d = g.data;
+  for (let py = 0; py < H2; py++)
+    for (let px = 0; px < W2; px++) {
+      const e = edge(px, py),
+        n = Math.sin(px * 0.11 + Math.sin(py * 0.07) * 3) * Math.sin(py * 0.13 + Math.sin(px * 0.05) * 2),
+        a = Math.max(0, 1 - e / (40 + 24 * n + (py > H2 * 0.7 ? 70 * (py / H2 - 0.7) / 0.3 : 0)));
+      const k = (py * W2 + px) * 4;
+      d[k] = d[k + 1] = 240;
+      d[k + 2] = 250;
+      d[k + 3] = Math.min(255, a * a * 205 + (Math.random() < 0.02 * a ? 90 : 0));
+    }
+  x.putImageData(g, 0, 0);
+  // Feathered crystals: branching strokes that start on a pane edge and reach into the glass.
+  const feather = (px, py, ang, len, w) => {
+    if (len < 5) return;
+    const ex = px + Math.cos(ang) * len,
+      ey = py + Math.sin(ang) * len;
+    x.strokeStyle = `rgba(245,250,255,${0.28 + w * 0.08})`;
+    x.lineWidth = w;
+    x.beginPath();
+    x.moveTo(px, py);
+    x.lineTo(ex, ey);
+    x.stroke();
+    const n = 3 + Math.floor(Math.random() * 3);
+    for (let i = 1; i <= n; i++) {
+      const t = i / (n + 1),
+        bx = px + (ex - px) * t,
+        by = py + (ey - py) * t;
+      feather(bx, by, ang + 0.75 + (Math.random() - 0.5) * 0.3, len * (0.32 + Math.random() * 0.12), Math.max(0.5, w * 0.6));
+      feather(bx, by, ang - 0.75 + (Math.random() - 0.5) * 0.3, len * (0.32 + Math.random() * 0.12), Math.max(0.5, w * 0.6));
+    }
+  };
+  for (let i = 0; i < 115; i++) {
+    const side = Math.random();
+    let px, py, ang;
+    if (side < 0.45) (px = Math.random() * W2), (py = H2 - 2), (ang = -Math.PI / 2 + (Math.random() - 0.5) * 1.2);
+    else if (side < 0.8) {
+      const v = vx[Math.floor(Math.random() * 4)];
+      px = v;
+      py = ty + Math.random() * (H2 - ty);
+      ang = (v === 0 ? 0 : v === W2 ? Math.PI : Math.random() < 0.5 ? 0 : Math.PI) + (Math.random() - 0.5) * 1.1;
+    } else (px = Math.random() * W2), (py = Math.random() < 0.5 ? ty : 2), (ang = Math.PI / 2 + (Math.random() - 0.5) * 1.2);
+    feather(px, py, ang, 40 + Math.random() * 90, 1.6);
+  }
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  const m = new THREE.Mesh(
+    new THREE.PlaneGeometry(2.62, 1.43),
+    new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, opacity: 0, toneMapped: false }),
+  );
+  m.userData.noAO = true;
+  m.raycast = () => {};
+  m.renderOrder = 1;
+  return m;
+}
+function lbFrost(dt) {
+  const h = (G.minute / 60) % 24,
+    out = lrOutdoor(day()) - (h < 8 || h > 21 ? 3 : 0),
+    target = h < 11 || h > 20 ? Math.max(0, Math.min(1, (-2 - out) / 8)) : 0;
+  LB.frostK = LB.frostK ?? target;
+  LB.frostK += (target - LB.frostK) * Math.min(1, dt * 0.01);
+  if (LB.frostK < 0.02 && !LB.frost) return;
+  if (!LB.frost || LB.frost.parent !== roomRoot) {
+    LB.frost = LB.frost || lbFrostGlass();
+    LB.frost.position.set(0, 1.72, -env.d / 2 - 0.198);
+    roomRoot.add(LB.frost);
+  }
+  LB.frost.visible = LB.frostK > 0.02;
+  LB.frost.material.opacity = Math.min(1, LB.frostK * 1.2) * (0.55 + 0.45 * (LQ?.sky?.light ?? 1));
+}
 function lbWeather(now, dt) {
   if (typeof roomRoot === "undefined" || !roomRoot || !G || phase !== "playing" || W.store || typeof lrPrecip !== "function") return;
   lbSnowCover(dt);
+  lbFrost(dt);
   const pr = lrPrecip();
   LB.precipK += ((pr ? 1 : 0) - LB.precipK) * Math.min(1, dt * 0.25);
   if (pr) LB.kind = pr;

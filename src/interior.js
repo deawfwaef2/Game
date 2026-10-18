@@ -1532,9 +1532,82 @@ function iSolid(color, roughness = 0.5, extra = {}) {
 function iLathe(points, seg = 24) {
   return new THREE.LatheGeometry(points.map(([x, y]) => new THREE.Vector2(x, y)), seg);
 }
+const I_BOOK_COLORS = {
+  小说: ["#7a2e2a", "#2f4a63", "#3e5a3c", "#6a4a2a"],
+  侦探小说: ["#1f2a33", "#3a2222", "#2b2b2b"],
+  冒险小说: ["#8a5a2a", "#2f5a4a", "#7a3a1a"],
+  科幻小说: ["#20345a", "#3a2a5a", "#1f4a5a"],
+  诗集: ["#d8cdb0", "#b8a07a", "#c9b9a0"],
+  散文集: ["#a89a7a", "#7a8a6a", "#c2b190"],
+  传记: ["#5a3a2a", "#3a3a3a", "#4a2a2a"],
+  科普: ["#2f6a8a", "#3a7a5a", "#c98a2a"],
+  连环画: ["#d9a33a", "#c94a2a", "#3a8ac9"],
+  杂志合订本: ["#8a2a2a", "#2a5a8a", "#5a7a2a"],
+  外语读本: ["#5a6a7a", "#7a5a3a"],
+  棋谱: ["#2a2a2a", "#6a5a3a"],
+  菜谱: ["#c96a3a", "#d9b03a", "#7a9a4a"],
+};
+function iBookColor(it) {
+  const pal = I_BOOK_COLORS[it.genre] || ["#6a3a2a", "#2f4a5a", "#4a5a3a", "#7a6a4a", "#3a3a4a"];
+  return pal[iHash(it.id) % pal.length];
+}
+function iBookShade(hex, k) {
+  const c = new THREE.Color(hex);
+  c.multiplyScalar(1 + k);
+  return "#" + c.getHexString();
+}
+function iBookCover(it, col) {
+  const key = "bookcover:" + it.id;
+  if (I.mats.has(key)) return I.mats.get(key);
+  const title = (it.name.match(/《(.+?)》/) || [0, it.name.replace(/ · .*/, "")])[1],
+    genre = it.genre || (it.name.split("《")[0] || ""),
+    light = ["#d8cdb0", "#b8a07a", "#c9b9a0", "#a89a7a", "#c2b190", "#d9a33a", "#d9b03a"].includes(col);
+  const tex = iCanvas(256, 364, (x, w, h) => {
+    x.fillStyle = col;
+    x.fillRect(0, 0, w, h);
+    for (let i = 0; i < 2600; i++) {
+      x.fillStyle = `rgba(${Math.random() < 0.5 ? "255,255,255" : "0,0,0"},${Math.random() * 0.05})`;
+      x.fillRect(Math.random() * w, Math.random() * h, 1.5, 1.5);
+    }
+    const ink = light ? "#2b241c" : "#efe4c8";
+    x.strokeStyle = ink;
+    x.globalAlpha = 0.55;
+    x.lineWidth = 2;
+    x.strokeRect(14, 14, w - 28, h - 28);
+    x.globalAlpha = 1;
+    x.fillStyle = ink;
+    x.textAlign = "center";
+    x.textBaseline = "middle";
+    x.font = "15px 'Noto Sans SC','PingFang SC','Microsoft YaHei',sans-serif";
+    x.fillText(genre, w / 2, 40);
+    const chars = [...title],
+      size = chars.length > 8 ? 26 : chars.length > 5 ? 32 : 38;
+    x.font = `bold ${size}px 'Noto Serif SC','Noto Serif CJK SC','Songti SC',serif`;
+    const lines = [];
+    for (let i = 0; i < chars.length; i += 6) lines.push(chars.slice(i, i + 6).join(""));
+    lines.forEach((l, i) => x.fillText(l, w / 2, h * 0.42 + (i - (lines.length - 1) / 2) * (size + 8)));
+    // A simple period emblem: a printed band or a star.
+    x.globalAlpha = 0.5;
+    x.fillRect(w * 0.3, h * 0.66, w * 0.4, 2);
+    x.globalAlpha = 1;
+    x.font = "14px 'Noto Sans SC','PingFang SC','Microsoft YaHei',sans-serif";
+    x.fillText(it.maker || "安德士人民出版社", w / 2, h - 40);
+  });
+  const m = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.72, envMapIntensity: 0.45 });
+  I.mats.set(key, m);
+  return m;
+}
+// Real formats of the time: pocket 32开 for fiction, 大32开 for essays and biographies, 16开 for picture, chess and cookery books.
+function iBookSize(it) {
+  const d = Math.min(0.05, 0.01 + (it.pages || 200) / 10000);
+  if (!it.gen) return [0.18, 0.26, 0.045];
+  if (/连环画|棋谱|菜谱|画册|地图/.test(it.genre || "")) return [0.185, 0.26, Math.max(0.008, d * 0.6)];
+  if (/散文|传记|诗|历史|哲学/.test(it.genre || "")) return [0.14, 0.203, d];
+  return [0.13, 0.184, d];
+}
 function iProduct(id, parent) {
   const it = DB[id],
-    spec = I_SPEC[id] || (it?.look && I_SPEC[it.look]);
+    spec = I_SPEC[id] || it?.shape || (it?.kind === "book" ? ["book", iBookSize(it)] : null) || (it?.look && I_SPEC[it.look]);
   if (!it || !spec || !R.ready) return null;
   const [shape, dims, color] = spec,
     g = new THREE.Group(),
@@ -1546,7 +1619,22 @@ function iProduct(id, parent) {
     g.add(mesh);
     return mesh;
   };
-  if (shape === "box" || shape === "med") {
+  if (shape === "book") {
+    const [w, h, d] = dims,
+      col = iBookColor(it),
+      cover = iSolid(col, 0.72),
+      pages = iSolid("#e8dfc6", 0.95),
+      spine = iSolid(iBookShade(col, -0.25), 0.7);
+    const mats = [pages, spine, pages, pages, iBookCover(it, col), cover];
+    const m = add(new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mats));
+    m.position.y = h / 2;
+    // Hard boards overhang the page block a little.
+    for (const z of [-1, 1]) {
+      const b = add(new THREE.Mesh(new THREE.BoxGeometry(w + 0.004, h + 0.006, 0.0025), z > 0 ? [cover, spine, cover, cover, iBookCover(it, col), cover] : cover));
+      b.position.set(0.002, h / 2, (z * d) / 2);
+    }
+    height = h;
+  } else if (shape === "box" || shape === "med") {
     const [w, h, d] = dims;
     iBox(g, [w, h, d], [0, h / 2, 0], label(), Math.min(0.004, h * 0.15));
     height = h;
@@ -1782,7 +1870,7 @@ function interiorApply() {
 }
 worldProduct = function (id, parent = null, bare = false) {
   const it = DB[id];
-  if (R.ready && it && it.category !== "canned" && id !== "cup") {
+  if (R.ready && it && (it.category !== "canned" || it.gen) && id !== "cup") {
     const g = iProduct(id, parent);
     if (g) return g;
   }

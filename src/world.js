@@ -747,15 +747,23 @@ function syncWorldRoom() {
     .forEach((b, i) => {
       const g = worldProduct(b.id, W.props);
       g.scale.setScalar(0.86);
-      g.position.set(
-        -0.68 + (i % 6) * 0.15,
-        0.835 + Math.floor(i / 6) * 0.075,
-        -env.d / 2 + 0.46,
-      );
+      // Real piles: five stacks left of the notepad, each book resting on the one below.
       g.rotation.x = -Math.PI / 2;
       g.rotation.z = 0.05 * ((i % 3) - 1);
+      g.updateMatrixWorld(true);
+      const col = i % 5,
+        th = new THREE.Box3().setFromObject(g).getSize(new THREE.Vector3()).y;
+      W.bookPile = i ? W.bookPile : [0, 0, 0, 0, 0];
+      g.position.set(-0.99 + col * 0.155, 0.82 + W.bookPile[col] + th / 2, -env.d / 2 + 0.46);
+      W.bookPile[col] += th + 0.001;
       worldTag(g, "stock:" + b.uid, DB[b.id].name, { uid: b.uid });
     });
+  // The placeholder bedside book only stands in until real books are unpacked onto the desk.
+  {
+    let prop = null;
+    roomRoot.traverse((o) => { if (!prop && o.userData.interact === "bookpick") prop = o; });
+    if (prop) prop.visible = ![...groups.values()].some((b) => DB[b.id].kind === "book");
+  }
   if (W.hygiene) {
     while (W.hygiene.children.length > 1) {
       const c = W.hygiene.children.at(-1);

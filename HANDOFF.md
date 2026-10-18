@@ -331,3 +331,24 @@
   - store.js 和 ui.js：货架和旧版商店列表都改为 shopStock()。左墙挂了一块到货牌（x −6.9）。
 - 有专门代码路径的商品没有做变体：origami、pots、种子、ducttape、radkey、radio、puzzle、notebook、tape。
 - tools/qa-catalog.cjs：截罐头货架、消遣货架和到货牌。
+
+## v0.18.0-preview（2026-10-18）：不同质化、修简陋、更真实
+- catalog-gen.js：
+  - 新增表：CG_NOTE（产品线|特色标记|描述）、CG_FX_TEXT、CG_BRAND_STYLE、CG_MAKE、CG_BOOK_FX，以及 book 用的 CG_PACK。
+  - cgFinish 给每件商品写 note/fx/pass/lineBonus/lineText/brandNote/shape。cgParts 返回 {note, fx, use, brand, prov}。
+  - 新增植物组和单一规格标记 o；口琴、笛子的活动是 play。目录 19,788 种。
+- life-catalog.js 末尾的 v0.18 区块：
+  - 食物特色：lcFoodFx / lcCure / lcSide。
+  - 被动物品：lcPassive，按每个 base/line 取最优；舒适上限 0.18/h。
+  - 包装了这些函数：consumeMeal、lcSeason、actDrink、addDisease（维C）、simulate（耐饥、睡眠、舒适）、doRead（按体裁）、doLeisure（needRadio、噪音、手工成品 G.life.made 等）。
+  - 灰尘、加分等结果都限制在 0–100。
+- store-real.js：srUseRows 逐行显示描述、特色、用途、厂牌、产地。
+- interior.js：
+  - 外形取 I_SPEC[id]，其次 it.shape，再次书的形状，最后 I_SPEC[look]。
+  - book 外形：书页块、书脊、硬封皮，iBookCover 用 canvas 画封面；iBookSize 按开本定尺寸。
+  - 注意：已有一个 iShade(opacity)，书用的新函数叫 iBookShade。
+- life-catalog.js 的 worldProduct 包装：有 shape 的生成品不再改走 look，否则会变回原版罐头模型。
+- world.js：书桌上的书按真实厚度分 5 摞叠放；有真书时隐藏占位道具“床边读物”。scene.js 把占位书放低到桌面上。
+- 测试：
+  - simulation 新增 v0.18 断言：解暑、姜茶治感冒、配菜、回忆只触发一次、耐饥、咖啡和小米粥对睡眠的影响、维C、吊兰、磁带需要收音机、口琴的噪音、织围巾、侦探小说、传记、菜谱、厂牌差价、存档校验。
+  - tools/qa-catalog.cjs 新增 9-catalog-card（加参数 nosign 可跳过到货牌）。tools/qa-views.cjs 新增 29-desk-books。

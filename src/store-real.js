@@ -182,6 +182,12 @@ function srCard() {
 #shopCard .keys{display:flex;flex-wrap:wrap;gap:8px 14px;font-size:15px;color:#e3d7bd}
 #shopCard kbd{display:inline-block;min-width:22px;padding:2px 7px;margin-right:5px;border:1px solid rgba(232,214,170,.4);border-radius:3px;font:600 14px/1.3 ui-monospace,monospace;text-align:center;color:#fff3d6;background:rgba(255,255,255,.06)}
 #shopCard .budget{margin-top:12px;font-size:15px;color:#bcae8d}
+#shopCard{max-height:92vh;overflow:hidden}
+#shopCard .note{font:italic 17px/1.5 'Noto Serif CJK SC','Songti SC',serif;color:#e6d6b0;margin:-4px 0 10px}
+#shopCard .use.fx em{background:#d9784f;color:#fff4e4}
+#shopCard .use.small{font-size:16px;line-height:1.55;color:#e9dfca}
+#shopCard .brand,#shopCard .prov{font-size:14px;line-height:1.5;color:#bfae88;margin:0 0 4px}
+#shopCard .prov{color:#a39577;font-style:italic;margin-bottom:10px}
 @media (max-width:760px){#shopCard{top:auto;bottom:12px;right:12px;left:12px;width:auto;transform:translate(0,10px);padding:14px 16px}#shopCard.on{transform:none}#shopCard h2{font-size:21px}#shopCard .use{font-size:16px}}`;
   document.head.appendChild(st);
   SR.card = document.createElement("div");
@@ -191,6 +197,17 @@ function srCard() {
 }
 function srEsc(s) {
   return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+}
+function srUseRows(it) {
+  const c = typeof cgParts === "function" ? cgParts(it) : null;
+  if (!c) return `<p class="use"><em>用途</em>${srEsc(itemUse(it))}</p>`;
+  return (
+    (c.note ? `<p class="note">${srEsc(c.note)}</p>` : "") +
+    (c.fx ? `<p class="use fx"><em>特色</em>${srEsc(c.fx)}</p>` : "") +
+    (c.use ? `<p class="use small"><em>用途</em>${srEsc(c.use)}</p>` : "") +
+    (c.brand ? `<p class="brand">厂牌 · ${srEsc(c.brand)}</p>` : "") +
+    (c.prov ? `<p class="prov">${srEsc(c.prov)}</p>` : "")
+  );
 }
 function srUpdateCard() {
   const id = worldIsShopping() && !paused && !W.glance && typeof targetId === "string" && targetId.startsWith("buy:") ? targetId.slice(4) : "";
@@ -206,7 +223,7 @@ function srUpdateCard() {
     key = id + ":" + inCart + ":" + spent.toFixed(2);
   if (key !== SR.cardKey) {
     SR.cardKey = key;
-    card.innerHTML = `<div class="cat">${srEsc(SR_CAT[it.category] || "")}</div><h2>${srEsc(it.name)}</h2><div class="price"><b>E$ ${it.price.toFixed(2)}</b><span>篮中 ×${inCart}</span></div><p class="use"><em>用途</em>${srEsc(itemUse(it))}</p><p class="facts">${srEsc(itemFacts(it))}</p><div class="keys"><span><kbd>E</kbd>放进篮子</span><span><kbd>Shift</kbd>+<kbd>E</kbd>拿5件</span><span><kbd>R</kbd>放回一件</span></div><div class="budget">已花 E$ ${spent.toFixed(2)} · 还剩 E$ ${(300 - spent).toFixed(2)} · 进门后不能再买</div>`;
+    card.innerHTML = `<div class="cat">${srEsc(SR_CAT[it.category] || "")}</div><h2>${srEsc(it.name)}</h2><div class="price"><b>E$ ${it.price.toFixed(2)}</b><span>篮中 ×${inCart}</span></div>${srUseRows(it)}<p class="facts">${srEsc(itemFacts(it))}</p><div class="keys"><span><kbd>E</kbd>放进篮子</span><span><kbd>Shift</kbd>+<kbd>E</kbd>拿5件</span><span><kbd>R</kbd>放回一件</span></div><div class="budget">已花 E$ ${spent.toFixed(2)} · 还剩 E$ ${(300 - spent).toFixed(2)} · 进门后不能再买</div>`;
   }
   card.classList.add("on");
 }

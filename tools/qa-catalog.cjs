@@ -23,7 +23,13 @@ const OUT = path.resolve("tests/artifacts/ui");
     console.log(await look(p, [4.85, 1.5, 1.15], [4.85, 0.82, 0.05]));
     await shot(p, "7-catalog-leisure");
     }
+    if (process.argv[2] !== "nosign") {
     console.log(await look(p, [-5.6, 1.6, 1.45], [-6.9, 1.72, 1.45]));
     await shot(p, "8-catalog-sign");
+    }
+    // A generated product's card: note, special, use, factory and provenance rows.
+    await look(p, [-2.58, 1.25, -4.5], [-2.58, 0.6, -5.25]);
+    console.log(await p.evaluate(() => { const it = shopStock().find((i) => i.gen && i.category === "canned" && i.fx?.length); targetId = "buy:" + it.id; SR.cardKey = ""; srUpdateCard(); return document.getElementById("shopCard").innerText; }));
+    await shot(p, "9-catalog-card");
   } finally { await b.close(); }
 })().catch((e) => { console.error(e); process.exitCode = 1; });

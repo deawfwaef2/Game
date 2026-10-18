@@ -32,6 +32,7 @@ const VIEWS = (w, d) => [
   ["26-windowsill", [0.75, 1.42, -d / 2 + 0.95], [0.88, 1.06, -d / 2 + 0.1]],
   ["27-windowsill-wide", [-0.2, 1.6, -d / 2 + 1.9], [0.8, 1.05, -d / 2 + 0.1]],
   ["28-bedside-letters", [-w / 2 + 1.25, 1.35, -1.25], [-w / 2 + 0.5, 0.5, -1.85]],
+  ["29-desk-books", [-0.3, 1.4, -d / 2 + 1.3], [-0.65, 0.84, -d / 2 + 0.46], "G.inv.forEach((b) => { if (b.packed) { b.packed = false; b.location = DB[b.id].category === 'fresh' ? 'fridge' : 'shelf'; } }); syncRoom();"],
   ["14-pantry", [w / 2 - 1.9, 1.5, 0.4], [w / 2 - 0.25, 0.8, 0.41]],
 ];(async () => {
   fs.mkdirSync(OUT, { recursive: true });

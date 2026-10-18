@@ -184,6 +184,44 @@ ok(CATALOG.filter(i=>!i.gen).every(i=>typeof ITEM_USE[i.id]==='string'&&ITEM_USE
  const game=pick(i=>i.gen&&i.kind==='leisure'&&i.activity==='chess');give(game.id);G.stats.morale=40;doLeisure(game.id);ok(G.stats.morale>40,'generated games are playable');
  ok(validateSave(JSON.parse(JSON.stringify(G))),'saves with generated goods validate');
  console.log('Catalogue',CATALOG.length,'shop',A.length,(A.length/CATALOG.length*100).toFixed(2)+'%');}
+
+// v0.18: no two lines alike — every line has a note and a special; every factory has a house style; specials are real.
+{const gen=CATALOG.filter(i=>i.gen);ok(gen.filter(i=>i.kind!=='book'&&i.kind!=='care').every(i=>i.note),'every product line has its own note');
+ ok(gen.filter(i=>i.kind!=='care').every(i=>cgParts(i).fx.length>4),'every product line has a stated special');ok(gen.filter(i=>i.kind!=='book').every(i=>i.brandNote),'every factory has a house style');
+ ok(gen.every(i=>cgProv(i).length>8),'every item has its own provenance line');ok(new Set(gen.slice(0,3000).map(i=>cgUse(i)+cgProv(i))).size===3000,'no two items read the same');
+ reset();const give=(id,n)=>{const b={uid:uid(),id,units:n||DB[id].servings,packed:false,location:'shelf',created:G.minute,age:0,opened:false};G.inv.push(b);return b;};const L=G.life;
+ const byLine=(l,f)=>CATALOG.find(i=>i.line===l&&(!f||f(i)));
+ const calm=()=>{G.stats.food=G.stats.water=G.stats.energy=G.stats.health=60;G.stats.morale=50;G.bladder=G.bowel=0;};
+ // cool: watermelon on a hot day
+ const wm=byLine('xigua');const T0=env.temp;calm();env.temp=33;const t0=temperature();const wb=give(wm.id);G.stats.morale=50;consumeMeal(wb.uid,true,false);const hot=G.stats.morale;env.temp=12;calm();const wb2=give(wm.id);consumeMeal(wb2.uid,true,false);env.temp=T0;ok(t0>24&&hot>G.stats.morale+2,'watermelon cools you on a hot day only');
+ // cureCold: ginger
+ addDisease('cold');const before=G.illness.find(x=>x.id==='cold').remaining;const gb=give(byLine('jianghong').id);G.power=true;G.waterOn=true;actDrink(gb.uid);const after=(G.illness.find(x=>x.id==='cold')||{remaining:0}).remaining;ok(after<=before-470,'ginger-jujube tea shortens a cold');
+ // side dish with rice
+ const zc=give(byLine('zhacai').id);const u=zc.units;G.foodHistory=[];const rice=G.inv.find(b=>b.id==='rice'&&b.units>0&&!b.packed);calm();consumeMeal(rice.uid,true,false);ok(zc.units===u-1&&L.sides>=1,'pickles go with a bowl of rice');
+ // memory once
+ const lb=byLine('lieba');const m1=give(lb.id,3);calm();consumeMeal(m1.uid,true,false);const first=G.stats.morale;calm();consumeMeal(m1.uid,true,false);ok(first>G.stats.morale+3,'a memory food moves you only the first time');
+ // full slows hunger
+ calm();L.fullUntil=0;for(let k=0;k<12;k++){G.bladder=G.bowel=0;simulate(5,'idle');}const hungerPlain=60-G.stats.food;calm();L.fullUntil=G.minute+300;for(let k=0;k<12;k++){G.bladder=G.bowel=0;simulate(5,'idle');}ok(60-G.stats.food<hungerPlain-0.5,'filling food keeps hunger away');
+ // wake vs sleepAid in sleep
+ calm();L.sleepAid=0;L.wakeful=G.minute+300;for(let k=0;k<12;k++){G.bladder=G.bowel=0;simulate(5,'sleep');}const eW=G.stats.energy;calm();L.wakeful=0;L.sleepAid=G.minute+300;for(let k=0;k<12;k++){G.bladder=G.bowel=0;simulate(5,'sleep');}ok(G.stats.energy>eW+0.8,'coffee late disturbs sleep, millet porridge deepens it');L.sleepAid=0;
+ // vitamin C protects from colds sometimes
+ G.illness=[];L.vitUntil=G.minute+99999;let caught=0;for(let k=0;k<40;k++){G.illness=[];addDisease('cold');if(G.illness.length)caught++;}ok(caught>5&&caught<35,'fruit makes colds less likely ('+caught+'/40)');L.vitUntil=0;G.illness=[];
+ // plants: dust and aloe
+ G.inv=G.inv.filter(b=>!DB[b.id]?.gen);give(byLine('diaolan').id);G.dirt=20;L.itemDay={};calm();simulate(5,'idle');ok(G.dirt<20,'a spider plant gathers dust');
+ // tapes need a radio; harmonica is heard
+ G.inv=G.inv.filter(b=>!isItem(b,'radio'));const tp=byLine('cidai3');give(tp.id);const m0=G.minute;doLeisure(tp.id);ok(G.minute===m0,'a tape needs a radio');
+ const hm=byLine('kouqin');give(hm.id);G.suspicion=0;doLeisure(hm.id);ok(G.suspicion>=3,'a harmonica can be heard');
+ // crafts make something lasting
+ const yarn=byLine('maoxian');give(yarn.id);for(let k=0;k<6;k++){calm();doLeisure(yarn.id);}ok(L.made&&L.made.maoxian,'knitting six times makes a scarf');
+ // books by genre
+ const det=CATALOG.find(i=>i.genre==='侦探小说'),nov=CATALOG.find(i=>i.genre==='散文集'&&i.pages===det.pages)||CATALOG.find(i=>i.genre==='散文集');give(det.id);give(nov.id);calm();doRead(det.id);calm();doRead(nov.id);ok(G.books[det.id].pages>G.books[nov.id].pages,'a detective story reads faster');
+ const bio=CATALOG.find(i=>i.genre==='传记');give(bio.id);G.books[bio.id]={pages:bio.pages-5,reads:0};calm();doRead(bio.id);ok(G.stats.morale>50+3.5,'finishing a biography lifts you');
+ const ck=CATALOG.find(i=>i.genre==='菜谱');give(ck.id);G.books[ck.id]={pages:ck.pages-5,reads:0};calm();doRead(ck.id);ok(L.cookSkill,'a finished cookbook makes cooking nicer');
+ // brand house style changes numbers
+ const a=CATALOG.find(i=>i.line==='hongshaorou'&&i.brand==='群众'),b2=CATALOG.find(i=>i.line==='hongshaorou'&&i.brand==='南港'&&a&&i.trait===a.trait&&i.id.slice(-2)===a.id.slice(-2));
+ if(a&&b2)ok(b2.price>a.price&&(b2.joy||0)>(a.joy||0),'factories differ: 南港 costs more and tastes better than 群众');
+ ok(validateSave(JSON.parse(JSON.stringify(G))),'saves with v0.18 state validate');
+ console.log('v0.18 specials OK; sides',L.sides,'made',Object.keys(L.made||{}).join(','));}
 console.log('ALL SIMULATION TESTS PASSED');
 `,
   ctx,

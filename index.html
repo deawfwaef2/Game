@@ -5777,7 +5777,7 @@ const OFFLINE_ROOM={"models":{"drawer_cabinet":"Z2xURgIAAABY5RAAuLQEAEpTT057ImFz
     </script>
     <script>
       /* 闭门365 — original game data, fictional 1980s subsidized prices. */
-const VERSION = "0.17.0-preview";
+const VERSION = "0.18.0-preview";
 const CATEGORIES = [
   ["all", "全部物资"],
   ["staple", "主食与干粮"],
@@ -6505,9 +6505,10 @@ const CG_BRANDS = {
   tool: ["永久", "工农", "红旗", "钢城", "铁牛", "老虎", "飞跃", "前进", "建设", "国营五金", "双喜", "北方"],
   med: ["国营第一制药", "北岸药厂", "白云山", "同仁", "红十字", "长青", "康乐", "南岭制药", "黎明药业"],
   home: ["友谊", "凤凰", "牡丹", "春风", "百花", "红棉", "金鹿", "幸福", "海棠", "向日葵", "梅花"],
+  plant: ["西郊苗圃", "河谷花圃", "南湖花木", "松林园艺", "红砖区花店", "向阳苗圃", "盐湖花场", "青山园艺"],
   fun: ["新华", "人民", "少年", "百花", "群星", "东方", "长江", "黄河", "未来", "启明"],
 };
-const CG_MAKER = { food: "食品厂", drink: "饮料厂", care: "日化厂", clean: "日化厂", tool: "五金厂", med: "", home: "轻工社", fun: "出版社" };
+const CG_MAKER = { plant: "", food: "食品厂", drink: "饮料厂", care: "日化厂", clean: "日化厂", tool: "五金厂", med: "", home: "轻工社", fun: "出版社" };
 /* Food lines: key|名称|category|look|kg|servings|kcal|life|cook|price|flavor|tags
    tags: p protein, v vegetable, jN joy, wN water, eN energy, hN health, tN thirst, mN warmth, s sweet group, k snack group, g grain group, c canned group, f fresh group, d drink group, ing ingredient */
 const CG_FOOD = `
@@ -6716,7 +6717,7 @@ weisheng5|维生素C片|vitamin|medical|vitamin|0.9|0.05|50|med|h
 bengdai2|创可贴 · 50片|bandage|medical|bandage|0.8|0.05|10|med|
 bengdai3|纱布药棉包|bandage|medical|bandage|1.1|0.2|6|med|
 tiwenji2|水银体温计|thermometer|medical|thermometer|0.8|0.02|1|med|
-jijiu2|红十字药箱|firstaid|medical|firstaid|8.5|1.2|8|med|
+jijiu2|红十字药箱|firstaid|medical|firstaid|8.5|1.2|8|med|o
 guo2|铝饭盒|pot|tool|pot|1.6|0.4|1|tool|
 guo3|小砂锅|pot|tool|pot|2.0|1.2|1|tool|
 pingdi2|铸铁平底锅|pan|tool|pan|3.4|1.6|1|tool|
@@ -6733,17 +6734,17 @@ mifenguan|铁皮米缸|jar|tool|jar|2.2|1.4|1|tool|
 mifenguan2|玻璃储物罐 · 3只|jar|tool|jar|1.8|1.2|1|tool|
 kaiguan2|多用开罐刀|opener|tool|opener|0.8|0.1|1|tool|
 huochai|火柴 · 10盒|lighter|tool|lighter|0.3|0.2|10|tool|
-huoji2|煤油打火机|lighter|tool|lighter|1.6|0.08|20|tool|
+huoji2|煤油打火机|lighter|tool|lighter|1.6|0.08|20|tool|o
 lazhu2|红蜡烛 · 10根|candle|tool|candle|0.6|0.6|10|tool|
 lazhu3|白蜡烛 · 6根|candle|tool|candle|0.4|0.4|6|tool|
-meiyoudeng|煤油马灯|candle|tool|candle|4.4|1.6|12|tool|
+meiyoudeng|煤油马灯|candle|tool|candle|4.4|1.6|12|tool|o
 shoudian2|长筒手电|flashlight|tool|flashlight|2.4|0.5|1|tool|
 shoudian3|充电手电|flashlight|tool|flashlight|3.6|0.4|1|tool|
-dianchi2|一号电池 · 2节|battery|tool|battery|0.5|0.3|2|tool|
+dianchi2|一号电池 · 2节|battery|tool|battery|0.5|0.3|4|tool|
 dianchi3|五号电池 · 8节|battery|tool|battery|1.2|0.2|8|tool|
 gutiran2|酒精块 · 20块|fuel|tool|fuel|1.6|0.6|20|tool|
 gutiran3|蜂窝煤式燃料饼|fuel|tool|fuel|1.2|1.2|10|tool|
-wujin|家用五金工具包|repair|tool|repair|3.8|1.6|3|tool|
+wujin|家用五金工具包|repair|tool|repair|3.8|1.6|3|tool|o
 dianlu2|酒精炉|stove|tool|stove|2.6|0.7|1|tool|
 mianbei|新棉被|blanket|furniture|blanket|9.5|3.2|1|home|w
 maotanzi|毛巾被|blanket|furniture|blanket|4.6|1.0|1|home|
@@ -6759,13 +6760,13 @@ taideng2|绿罩台灯|lamp|furniture|lamp|3.8|1.2|1|home|
 taideng3|蘑菇小夜灯|lamp|furniture|lamp|1.6|0.4|1|home|
 fengshan2|台式摇头扇|fan|furniture|fan|8.4|2.6|1|home|
 nuanqi2|油汀取暖器|heater|furniture|heater|14.0|5.6|1|home|
-diaolan|吊兰|plant|furniture|plant|0.9|0.8|1|home|
-luhui|芦荟|plant|furniture|plant|0.8|0.7|1|home|
-wenzhu|文竹|plant|furniture|plant|1.2|0.6|1|home|
-xianrenzhang|仙人掌|plant|furniture|plant|0.5|0.5|1|home|
-junzilan|君子兰|plant|furniture|plant|3.6|1.6|1|home|
-fugui|发财树|plant|furniture|plant|2.8|2.4|1|home|
-jiugui|绿萝|plant|furniture|plant|0.7|0.6|1|home|
+diaolan|吊兰|plant|furniture|plant|0.9|0.8|1|plant|
+luhui|芦荟|plant|furniture|plant|0.8|0.7|1|plant|
+wenzhu|文竹|plant|furniture|plant|1.2|0.6|1|plant|
+xianrenzhang|仙人掌|plant|furniture|plant|0.5|0.5|1|plant|
+junzilan|君子兰|plant|furniture|plant|3.6|1.6|1|plant|
+fugui|发财树|plant|furniture|plant|2.8|2.4|1|plant|
+jiugui|绿萝|plant|furniture|plant|0.7|0.6|1|plant|
 `;
 // Self-care goods used straight from the hand. key|名称|category|look|price|weight|uses|minutes|effects (hyg/mor/hp/en/cold)|use text
 const CG_CARE = `
@@ -6802,8 +6803,8 @@ puke2|扑克牌|cards|cards|0.4|0.1|8
 puke3|塔罗牌|cards|cards|1.6|0.15|8
 gupai|骨牌|cards|cards|1.8|0.6|9
 zhiwan|空竹|cards|cards|0.9|0.3|7
-kouqin|口琴|music|cards|2.4|0.2|11
-dizi|竹笛|music|cards|1.2|0.15|10
+kouqin|口琴|play|cards|2.4|0.2|11
+dizi|竹笛|play|cards|1.2|0.15|10
 cidai2|磁带·民歌精选|music|cards|1.2|0.08|11
 cidai3|磁带·古典钢琴|music|cards|1.4|0.08|12
 cidai4|磁带·流行金曲|music|cards|1.4|0.08|12
@@ -6861,6 +6862,9 @@ const CG_GOOD_TRAITS = {
   cozy: ["舒适", 1.3, { comfort: 0.04 }, "舒适：放在屋里，心情下降更慢"],
   warm: ["保暖", 1.3, { comfort: 0.06, cold: true }, "保暖：屋里低于13°C时，心情下降更慢"],
   old: ["旧货", 0.5, { mor: -0.3 }, "旧货：半价，但看着有点旧（每次心情−0.3）"],
+  bigpot: ["大盆", 1.5, { comfort: 0.02 }, "大盆：长得茂盛，心情下降再慢一点"],
+  seedling: ["小苗", 0.6, {}, "小苗：便宜，还没长开"],
+  bloomy: ["带花苞", 1.3, { comfort: 0.015 }, "带花苞：过阵子开花，心情下降慢一点"],
 };
 const CG_GOOD_POOL = {
   care: ["std", "premium", "economy", "scented", "medicated", "gentle", "imported"],
@@ -6868,6 +6872,7 @@ const CG_GOOD_POOL = {
   tool: ["std", "premium", "economy", "durable", "old"],
   med: ["std", "premium", "economy"],
   home: ["std", "premium", "economy", "cozy", "warm", "old"],
+  plant: ["std", "bigpot", "seedling", "bloomy"],
 };
 const CG_SIZES = [
   ["小包装", 0.5, 0.58],
@@ -6934,6 +6939,7 @@ function cgBuild() {
             look,
             flavor,
             maker: brand + CG_MAKER.food,
+            brand,
             trait: tr,
             line: key,
           };
@@ -6994,6 +7000,7 @@ function cgBuild() {
             flavor,
             water: t.liters ? 38 : base?.water || 25,
             maker: brand + CG_MAKER.drink,
+            brand,
             trait: tr,
             line: key,
           };
@@ -7017,21 +7024,22 @@ function cgBuild() {
     const b = DB[base];
     if (!b) continue;
     const pool = CG_GOOD_POOL[group] || CG_GOOD_POOL.tool,
-      brands = cgSample(CG_BRANDS[group === "med" ? "med" : group === "clean" ? "clean" : group === "care" ? "care" : group === "home" ? "home" : "tool"], 7),
+      brands = cgSample(CG_BRANDS[["med", "clean", "care", "home", "plant"].includes(group) ? group : "tool"], 7),
       traits = cgSample(pool, 4),
       consumable = +uses > 1;
     brands.forEach((brand, bi) => {
       const bf = 0.85 + cgR() * 0.4;
       [0, 1, 2].forEach((si) => {
-        if (!consumable && si !== 1) return;
+        if ((!consumable || /o/.test(ex || "")) && si !== 1) return;
         const [sname, sx, px] = CG_SIZES[si];
         traits.forEach((tr, ti) => {
           if ((tr === "durable" || tr === "economy") && !consumable && group !== "tool" && group !== "home") return;
           if ((tr === "cozy" || tr === "warm") && category !== "furniture" && !/w/.test(ex)) return;
+          if (group === "plant" && !["std", "bigpot", "seedling", "bloomy"].includes(tr)) return;
           const [tn, tp, mod] = CG_GOOD_TRAITS[tr];
           const it = {
             id: `${key}.${bi}${si}${ti}`,
-            name: `${brand}${tn}${name}${sname && consumable ? " · " + sname : ""}`,
+            name: `${brand}${group === "plant" && tr === "std" ? "" : tn}${name}${sname && consumable ? " · " + sname : ""}`,
             price: cgMoney(+price * (consumable ? px : 1) * tp * bf),
             weight: +(+weight * (consumable ? sx : 1)).toFixed(2),
             servings: Math.max(1, Math.round(+uses * (consumable ? sx : 1) * (mod.usesX || 1))),
@@ -7041,6 +7049,7 @@ function cgBuild() {
             base,
             look,
             maker: brand + (group === "med" ? "" : CG_MAKER[group] || ""),
+            brand,
             trait: tr,
             line: key,
           };
@@ -7096,6 +7105,7 @@ function cgBuild() {
           look,
           care: { ...care, morale: (care.morale || 0) + (mod.mor || 0), hygiene: (care.hygiene || 0) + (mod.hyg || 0), health: (care.health || 0) + (mod.hp || 0) },
           maker: brand + (category === "medical" ? "" : category === "leisure" ? "体育用品厂" : CG_MAKER.care),
+          brand,
           trait: tr,
           line: key,
         });
@@ -7123,6 +7133,7 @@ function cgBuild() {
           activity,
           joy: Math.max(4, +joy + (mod.mor || 0) * 2),
           maker: brand + "文体用品社",
+          brand,
           trait: tr,
           line: key,
         });
@@ -7199,20 +7210,655 @@ function cgBooks() {
     made++;
   }
 }
+
+/* ===== v0.18 every line, factory and item has its own character ===== */
+// key|special tokens|note. Food/drink tokens: full cool warm cureCold cureStomach sleepAid wake pastime side comfort memory vitc
+// strength focus heavy sugar crumbs festive craftcook pure. Goods tokens: m h y d (per-use bonus), mc (morale when cold),
+// c cc ch (comfort/h: always, cold, hot), sl slc slh (sleep energy/h: always, cold, hot), pw (needs power), rd (reading morale),
+// dust aloe winter hope noise needRadio.
+const CG_NOTE_SRC = `
+xiangmi|full|东北粳米，煮出来油亮
+nuomi|heavy memory|包粽子、打年糕用的糯米
+xiaomi|sleepAid|熬小米粥，养胃安神
+gaoliang|full|北方粗粮，嚼劲足
+yimi|cureStomach|祛湿的薏米，煮得开花才好吃
+cumi|full|没碾白的糙米，带着糠香
+fuqiang|craftcook|最白最细的富强粉，能擀面条
+quanmai|craftcook full|麸皮多，烙出来的饼扎实
+lvdou|cool|煮一锅绿豆汤解暑
+huangdou|strength|能发豆芽、磨豆浆的黄豆
+candou|strength|蚕豆，煮软了撒点盐
+mianpian|full|早上冲一碗，管到中午
+fangbianmian|comfort|红烧牛肉味，深夜一碗最解愁
+fbmian2|comfort|海鲜味，汤头鲜
+fbmian3|warm|酸辣味，越吃越热
+fbmian4|comfort|葱香排骨味，调料包是油块
+longxu|cureStomach|细如龙须，煮两分钟就软，病中也好下咽
+daoxiao|full|山西刀削面，筋道
+qiaomaimian|cool|荞麦面，夏天过凉水吃
+fensi|warm|粉丝，煮汤热乎乎
+hefen|comfort|南方河粉，滑溜溜
+mianjin|strength|烤麸，吸饱了汤汁
+gjgan|full|压缩干粮，一块顶一顿
+gjgan2|full|军用口粮饼，硬得硌牙
+taosu|crumbs comfort|酥得掉渣的桃酥
+mahua|crumbs|大麻花，嘎嘣脆
+shaqima|comfort|沙琪玛，粘手
+dangao|memory|小时候过生日才有的鸡蛋糕
+yuebing|festive memory|五仁月饼，切成四瓣慢慢吃
+binggan2|comfort|奶油夹心，先舔掉中间那层
+binggan3|crumbs|葱油饼干，咸香
+binggan4|full|全麦消化饼，顶饿
+hongzao|warm|红枣，补气血
+hetao|focus|核桃补脑，读书前吃两个
+guazi|pastime|五香瓜子，能嗑一下午
+huasheng|side|花生米，配粥配什么都行
+xingren|focus|杏仁，微苦回甘
+lizi|warm memory|糖炒栗子，冬天街口的味道
+guofu|comfort|什锦果脯，蜜得发亮
+naitang|comfort|奶糖，含着化开
+shuiguotang|sugar|水果硬糖，一颗能含很久
+sutang|sugar|花生酥糖，一咬就碎
+zhimahu|sleepAid|黑芝麻糊，睡前一碗
+ouqfen|cureStomach|藕粉，冲出来晶莹透亮
+mifen|cureStomach|米粉糊，最好消化
+fengmi|cureCold|蜂蜜，冲水润喉
+heitang|cureCold|红糖，冬天冲一碗姜糖水
+bingtang|cureCold|冰糖，炖梨止咳
+jiangyou|full|酿造酱油，红烧必备
+cu|cureStomach|老陈醋，开胃
+zhimayou|comfort|小磨香油，滴两滴满屋香
+caiyou|full|菜籽油，炒菜更香
+zhuyou|comfort|猪油拌饭，香得很
+zhimajiang|side|芝麻酱，拌面拌菜
+lajiang|warm|辣椒酱，下饭
+doubanjiang|warm|豆瓣酱，炒什么都香
+furu|side|红腐乳，一块配一碗粥
+zhacai|side|榨菜，脆生生
+luobogan|side|萝卜干，咯吱咯吱
+paocai|side cureStomach|泡菜，酸爽开胃
+suanbaicai|side warm|酸菜，炖着吃
+meicai|side|梅干菜，蒸肉最香
+xiandan|side|咸鸭蛋，筷子一戳冒红油
+pidan|side|松花蛋，蘸醋吃
+hongshaorou|strength comfort|红烧肉罐头，肥瘦相间
+meicaikourou|strength memory|梅菜扣肉，盖在米饭上
+huiguorou|strength warm|回锅肉罐头，辣
+jirou|strength|红烧鸡块，骨头都炖酥了
+yaroutin|strength|酱鸭，咸香
+lingyu|side|豆豉鲮鱼，广东风味
+fengweiyu|comfort|凤尾鱼，酥到骨头
+qingyu|strength|茄汁鲭鱼
+yutou|strength|红烧带鱼
+babaozhou|memory sleepAid|八宝粥，甜糯
+yinergeng|cureCold|银耳莲子羹，润肺
+lvdoutang|cool|绿豆汤，凉着喝
+jitang|cureCold|鸡汤，生病时喝一碗
+luobotang|cureCold|萝卜排骨汤，暖胃
+juzi|vitc|糖水橘子，一瓣瓣
+lizhi|comfort|荔枝罐头，一颗颗剥好的
+shanzha|cureStomach|山楂罐头，酸甜开胃
+xueli|cureCold|冰糖雪梨，止咳
+yingtao|comfort|樱桃罐头，红艳艳
+longyan|sleepAid|桂圆，安神
+qingdou2|side|五香毛豆
+zhusun|side|油焖笋，鲜
+mogu2|strength|香菇罐头，肉厚
+jiaobai|cool|茭白，清爽
+huotui|comfort|火腿肠，撕开就能吃
+laxiang|memory|广式腊肠，过年的味道
+rousong|side|肉松，撒在粥上
+niurougan|strength|风干牛肉干，越嚼越香
+xiaoyugan|pastime|香辣小鱼干，一条条撕着吃
+lianru|sugar|炼乳，抹馒头
+mairujing|strength memory|麦乳精，那几年最体面的营养品
+doufen|strength|豆奶粉，冲一大杯
+tudou2|full|新土豆，皮薄
+yutou2|full|芋头，粉糯
+shanyao|cureStomach|山药，养胃
+nangua|sugar|老南瓜，蒸着甜
+dongua|cool|冬瓜，煮汤消暑
+baicai|vitc|大白菜，冬储菜
+qincai|vitc|芹菜，脆
+bocai|vitc|菠菜，补铁
+qiezi|comfort|茄子，红烧最下饭
+fanqie|vitc|西红柿，生吃也行
+huanggua|cool|黄瓜，拍一拍
+lajiao|vitc warm|青椒
+dasuan|vitc|大蒜，杀菌
+shengjiang|cureCold|生姜，驱寒
+li|cureCold|鸭梨，润喉
+taozi|comfort|水蜜桃，一咬一嘴汁
+putao|comfort|葡萄，一粒一粒
+xigua|cool|西瓜，夏天的味道
+juzi2|vitc|蜜橘，剥完满手香
+shiliu|pastime|石榴，一粒粒剥着吃
+shizi|sugar|柿饼，挂着白霜
+dofu|strength|嫩豆腐
+dofugan|side|豆腐干，有嚼劲
+xianroumian|strength comfort|鲜肉，得赶紧吃
+jidan2|strength|土鸡蛋，蛋黄红
+yadan|strength|鸭蛋，个大
+suannai2|cureStomach|老酸奶，稠得倒不出
+doujiang|strength|鲜豆浆，当天喝
+mantou|full|白面馒头
+huajuan|full|葱油花卷
+shaobing|full|芝麻烧饼
+youtiao|comfort|油条，最好配豆浆
+lieba|full memory|大列巴，一个能吃好几天
+lvcha|wake|绿茶，头道最香
+molihua|comfort|茉莉花茶，香
+wulong|cureStomach|乌龙，解腻
+puer|cureStomach|普洱茶饼，越陈越香
+juhua|cool|菊花茶，去火
+damai|sleepAid|大麦茶，晚上喝也不影响睡觉
+gouqi|focus|枸杞，明目
+jianghong|cureCold|姜枣茶，驱寒
+ningmengcha|vitc|柠檬茶
+kafei2|wake|速溶咖啡
+kafeidou|wake focus|咖啡粉，煮得满屋香
+keke2|comfort sleepAid|热可可
+juzifen|vitc|橘子粉，冲一大杯
+suanmei|cool|酸梅汤，解暑
+qishui|cool|橘子汽水，冒泡
+qishui2|cool|山楂汽水
+qishui3|cool|酸梅汽水
+kele|wake|可乐，冰着喝
+guozhi|cureStomach|山楂汁，开胃
+guozhi2|comfort|葡萄汁
+yezhi|cool|椰子汁，清甜
+kuangquan|pure|矿泉水，带点矿物味
+kuangquan2|pure|山泉水
+chunjing|pure|纯净水
+xiangzao|m1|檀香香皂，洗完一身香
+yaozao|h0.5|硫磺药皂，防痱子湿疹
+fzao|d2|洗衣肥皂，搓领口最好使
+xifa2|y2|洗发膏，铁盒装
+xifa3|m1|去屑洗发水
+hufa|m1.5|护发素，头发顺滑
+yagao2|h0.4|药物牙膏，牙龈不出血
+yagao3|m1|水果味牙膏
+yashua2|y2|硬毛牙刷，刷得干净
+weisheng2|m-0.3|草纸，糙但量大
+weisheng3|m0.5|卷纸，软
+maojin2|sl0.2|枕巾，睡得干净
+maojin3|m1|浴巾，能裹住全身
+chenshan2|ch0.03|的确良衬衫，夏天凉快
+chenshan3|m0.5|劳动布工作服，耐磨耐脏
+neiyi2|cc0.04|秋衣秋裤，入冬必备
+wazi2|cc0.04|羊毛袜，脚不冰
+maoyi2|cc0.05 m1|手织毛衣，针脚里有人情味
+maoyi3|cc0.03|棉背心，贴身暖
+zhijiadao2|m1|指甲锉，边缘磨圆
+tifudao|m1|剃须刀片，锋利
+shuzi2|m1|牛角梳，梳头顺气
+xiyifen2|y2|加酶洗衣粉，去汗渍
+xiyifen3|m0.5|皂粉，不伤手
+xijie2|d1|洗洁精大桶
+xijie3|d2|碱面，去油污猛
+saozhou2|d3|高粱扫帚，扫得干净
+saozhou3|dust|鸡毛掸子，随手掸灰
+tuoba2|d3|海绵拖把，吸水
+lajidai2|m0.5|厚垃圾袋，不漏
+haimian2|d2|钢丝球，刷锅底
+haimian3|h0.2|丝瓜络，天然
+xiaodu2|d4 m-0.5|84消毒液，味道冲
+xiaodu3|h0.5|来苏水，医院的味道
+shoutao2|y1|劳保线手套
+tuire2|h1|安乃近，退热快
+tuire3|m1|退烧冲剂，甜的
+weiyao2|m1|健胃消食片，嚼着酸甜
+weiyao3|h1|黄连素，苦
+ganmao2|h0.5|板蓝根冲剂
+ganmao3|m0.5|感冒清热颗粒
+ganmao4|m1.5|川贝枇杷膏，止咳润喉
+weisheng4|h0.5|鱼肝油丸
+weisheng5|h0.3 m0.5|维生素C片
+bengdai2|m0.5|创可贴，一盒五十片
+bengdai3|h0.5|纱布药棉包
+tiwenji2|h0.5|水银体温计，准
+jijiu2|h1|红十字药箱，样样齐
+guo2|m0.5|铝饭盒，能蒸饭
+guo3|mc2|小砂锅，冬天炖汤最暖
+pingdi2|h0.3 m1|铸铁平底锅，补铁
+wan2|m0.5|蓝边瓷碗
+wan3|m0.3|木碗，不烫手
+beizi2|m0.5|搪瓷缸，印着红字
+beizi3|m0.3|玻璃杯，看得见茶叶舒展
+baowenping|#停电又没炉子时，每天还能冲一杯热饮|竹壳暖水瓶，瓶胆是镀银的
+shuitong2|#10升，装满了还提得动|塑料水桶，轻
+shuitong3|#12升，铁皮结实不怕磕|铁皮水桶，结实
+shuihu2|#1.5升，挂在床头随手喝|军用水壶，带帆布套
+shuihu3|#25升，停水几天也不慌|大塑料桶，停水时最安心
+mifenguan|jarplus|铁皮米缸，防潮
+mifenguan2|jarplus|玻璃储物罐，看得见还剩多少
+kaiguan2|m0.5|多用开罐刀，还能开瓶
+huochai|#便宜，一盒五十根|火柴，划一下满屋硫磺味
+huoji2|m0.5|煤油打火机，防风
+lazhu2|m1|红蜡烛，喜庆
+lazhu3|#最便宜的照明|白蜡烛，素净
+meiyoudeng|m2|煤油马灯，光又亮又稳
+shoudian2|m0.5|长筒手电，照得远
+shoudian3|m0.3|长寿灯泡手电，灯泡不容易烧
+dianchi2|#一号电池劲大，一节能顶两次|一号电池，粗粗一节
+dianchi3|#一板八节，够听好几个月|五号电池，一板八节
+gutiran2|#火苗蓝，没有烟|酒精块
+gutiran3|#便宜，一块煮一顿饭|燃料饼，黑乎乎的
+wujin|m1|五金工具包，扳手钳子都有
+dianlu2|#停电时也能煮饭（要燃料块）|酒精炉，小巧
+mianbei|sl0.4 cc0.03|新棉被，晒过的太阳味
+maotanzi|slh0.5|毛巾被，夏夜盖着正好
+tanzi2|slc0.8 pw|电热毯，冬夜睡得暖（要有电）
+zhentou2|sl0.4|荞麦皮枕头，翻身沙沙响
+zhentou3|sl0.6|乳胶枕，软弹
+ditan2|c0.03|草编蒲团，坐着发会儿呆
+ditan3|cc0.05|羊毛脚垫
+chuanglian2|c0.03|碎花布窗帘，屋里亮堂些
+naozhong2|m1|双铃马蹄表，叫得响
+naozhong3|c0.03|小座钟，滴答声让人安心
+taideng2|rd1|绿罩台灯，读书护眼
+taideng3|sl0.3 pw|蘑菇小夜灯，夜里醒来不怕黑
+fengshan2|#热天开着（要有电），屋里凉快2°C|台式摇头扇
+nuanqi2|#冷天开着（要有电），屋里暖4°C，还没声音|油汀取暖器
+diaolan|dust|吊兰，吸灰
+luhui|aloe|芦荟，掰一片抹伤口
+wenzhu|rd0.5|文竹，书桌上的一点雅致
+xianrenzhang|c0.02|仙人掌，几乎不用管
+junzilan|winter|君子兰，冬天开花
+fugui|hope|发财树，图个盼头
+jiugui|c0.03|绿萝，暗处也长得好
+xiangqi|focus|中国象棋，红先黑后
+weiqi|focus|围棋，一个人打谱
+tiaoqi|rainy|跳棋，玻璃珠子
+junqi|nightowl|军棋，一个人翻着玩
+moshu|focus|魔方，拧乱了再拼回来
+jiulianhuan|focus|九连环，解开要很久
+huarongdao|focus|华容道，曹操逃出去了吗
+qiqiaoban|focus|七巧板，拼小猫小鸟
+puke2|nightowl|扑克，一个人接龙
+puke3|fortune|塔罗牌，给自己算一卦
+gupai|rainy|骨牌，码成一排推倒
+zhiwan|noise|空竹，抖起来嗡嗡响（楼下会听见）
+kouqin|noise|口琴，吹一曲（邻居可能听见）
+dizi|noise|竹笛，声音清亮（邻居可能听见）
+cidai2|needRadio|民歌磁带
+cidai3|needRadio|古典钢琴磁带
+cidai4|needRadio|流行金曲磁带
+cidai5|needRadio|相声磁带，笑出声
+cidai6|needRadio|轻音乐磁带
+cidai7|needRadio|戏曲选段磁带
+maoxian|make6|毛线与毛衣针，织着织着就入神
+shizi2|make8|十字绣，一针一格
+jianzhi|make3|红纸，剪窗花贴在玻璃上
+moxing|focus make6|木制模型，一块块粘
+huace|make5|速写本，画窗外
+shuicai|make5|水彩，颜色淡淡的
+maobi|focus|毛笔，写几个大字
+youhua|make4|蜡笔，涂涂抹抹
+tianzi|focus|填字游戏本
+shudu|focus|数字谜题
+jiyou|memory|集邮册，翻翻旧邮票
+pintu2|make8|故宫雪景拼图，一千片
+pintu3|make4|北境森林拼图，三百片
+pintu4|make6|海港拼图，七百五十片
+`;
+const CG_NOTE = {};
+for (const l of CG_NOTE_SRC.trim().split("\n")) {
+  const [k, fx, note] = l.split("|");
+  const text = fx.startsWith("#") ? fx.slice(1) : "";
+  CG_NOTE[k] = { fx: text ? [] : fx.split(/\s+/).filter(Boolean), note, text };
+}
+const CG_FX_TEXT = {
+  full: "顶饱：吃完5小时内不容易饿",
+  cool: "解暑：热天（高于24°C）心情+3、水分+6",
+  warm: "暖身：冷天（低于15°C）心情+2",
+  cureCold: "驱寒润喉：感冒时吃，病程缩短约8小时",
+  cureStomach: "开胃养胃：肠胃不适时吃，病程缩短约8小时",
+  sleepAid: "安神：之后6小时内睡觉，睡得更沉",
+  wake: "提神：体力+6，但晚上8点后喝会睡不踏实",
+  pastime: "消磨时间：慢慢吃，多花20分钟，心情+3（会掉点壳屑）",
+  side: "下饭：煮主食时自动配一点，心情+2，吃腻了也能救回来",
+  comfort: "解愁：心情低落（低于40）时吃，心情再+3",
+  memory: "回忆：第一次吃到时，心情+5",
+  vitc: "维生素：之后3天不容易感冒",
+  strength: "长力气：体力+4",
+  focus: "提神醒脑：之后4小时读书心情+1.5",
+  heavy: "黏糯难消化：一天吃第二次会胃胀（心情−2）",
+  sugar: "糖分：体力+4，心情+1",
+  crumbs: "掉渣：屋里脏乱+1",
+  festive: "晚上吃更有滋味：18点后吃，心情再+4",
+  craftcook: "要和面：多花10分钟，心情+2",
+  pure: "干净的水：每份健康+0.3",
+  dust: "放在屋里，每天脏乱自动−1",
+  aloe: "生病时每天健康+0.5",
+  winter: "冬天（12–2月）开花，心情下降更慢",
+  hope: "心情低于30时，每天心情+2",
+  noise: "会发出声音：每次玩外人注意+3",
+  needRadio: "要有收音机（收录机）才能放",
+  rd: "读书时心情多一点",
+};
+function cgGoodsFx(tokens) {
+  const o = { bonus: {}, pass: {} };
+  for (const t of tokens) {
+    const m = t.match(/^(mc|slc|slh|sl|cc|ch|c|m|h|y|d|rd|make)(-?[\d.]+)$/);
+    if (!m) {
+      o.pass[t] = true;
+      continue;
+    }
+    const v = +m[2];
+    if (m[1] === "m") o.bonus.morale = v;
+    else if (m[1] === "h") o.bonus.health = v;
+    else if (m[1] === "y") o.bonus.hygiene = v;
+    else if (m[1] === "d") o.bonus.dirt = v;
+    else o.pass[m[1]] = v;
+  }
+  return o;
+}
+const CG_MAKE = {
+  maoxian: ["一条毛线围巾", "冷天心情下降慢一点"],
+  shizi2: ["一幅十字绣", "挂在墙上，心情下降慢一点"],
+  jianzhi: ["一窗红窗花", "贴在玻璃上，心情下降慢一点"],
+  huace: ["一本画满窗外的速写", "心情下降慢一点"],
+  shuicai: ["几张水彩画", "贴在墙上，心情下降慢一点"],
+  youhua: ["几张蜡笔画", "贴在墙上，心情下降慢一点"],
+  pintu2: ["一幅拼好的故宫雪景", "挂在墙上，心情下降慢一点"],
+  pintu3: ["一幅拼好的北境森林", "挂在墙上，心情下降慢一点"],
+  pintu4: ["一幅拼好的海港", "挂在墙上，心情下降慢一点"],
+  moxing: ["一只木头模型", "摆在桌上，心情下降慢一点"],
+};
+function cgGoodsFxText(it) {
+  const p = it.pass || {},
+    out = [];
+  const lb = it.lineBonus;
+  if (lb) {
+    const t = [];
+    if (lb.morale) t.push(`心情${lb.morale > 0 ? "+" : "−"}${Math.abs(lb.morale)}`);
+    if (lb.hygiene) t.push(`清洁+${lb.hygiene}`);
+    if (lb.health) t.push(`健康+${lb.health}`);
+    if (lb.dirt) t.push(`脏乱−${lb.dirt}`);
+    if (t.length) out.push(`这一种每次用：${t.join("、")}`);
+  }
+  if (it.lineText) out.push(it.lineText);
+  if (p.jarplus) out.push("米面干货存得更久（再慢15%）");
+  if (p.make && CG_MAKE[it.line]) out.push(`玩满${p.make}次会做成${CG_MAKE[it.line][0]}，${CG_MAKE[it.line][1]}`);
+  if (p.nightowl) out.push("夜里（20点后）玩心情再+1.5");
+  if (p.rainy) out.push("下雨下雪时玩心情再+1.5");
+  if (p.fortune) out.push("每次抽到的牌不同：心情−1到+4不等");
+  if (p.memory) out.push("第一次翻开时心情+5");
+  if (p.mc) out.push(`冷天用它，每次心情+${p.mc}`);
+  if (p.c) out.push("放在屋里，心情下降慢一点");
+  if (p.cc) out.push("屋里低于13°C时，心情下降慢一点");
+  if (p.ch) out.push("天热（高于24°C）时，心情下降慢一点");
+  if (p.sl) out.push(`睡觉时每小时体力多恢复${p.sl}${p.pw ? "（要有电）" : ""}`);
+  if (p.slc) out.push(`冷天睡觉每小时体力多恢复${p.slc}${p.pw ? "（要有电）" : ""}`);
+  if (p.slh) out.push(`热天睡觉每小时体力多恢复${p.slh}`);
+  if (p.rd) out.push(`读书时心情再+${p.rd}`);
+  for (const k of ["dust", "aloe", "winter", "hope", "noise", "needRadio", "focus"]) if (p[k]) out.push(k === "focus" ? "动脑子：之后4小时读书心情+1.5" : CG_FX_TEXT[k]);
+  return out;
+}
+// Factory house styles: every brand changes something real.
+const CG_BRAND_STYLE = {
+  红星: ["老字号，口味稳定", { joy: 0.5 }],
+  北极星: ["北方大厂，分量给得足", { serv: 1 }],
+  长城: ["军工转民用，保质期长两成", { lifeX: 1.2 }],
+  金鹰: ["包装讲究，价格略高", { priceX: 1.1, joy: 0.5 }],
+  丰收: ["农场直供，便宜一成", { priceX: 0.9 }],
+  海燕: ["沿海厂，口味偏咸", { thirst: 1, joy: 0.3 }],
+  黎明: ["早点专门厂，吃完精神好", { energy: 2 }],
+  向阳: ["县办厂，便宜实在", { priceX: 0.92 }],
+  松鹤: ["老年营养食品厂，清淡健康", { health: 0.2 }],
+  雪莲: ["高原厂，耐储", { lifeX: 1.15 }],
+  牡丹: ["南方厂，口味偏甜", { joy: 0.8 }],
+  前进: ["大厂量产，便宜，味道普通", { priceX: 0.85, joy: -0.3 }],
+  东风: ["东风厂，分量足", { serv: 1 }],
+  群众: ["群众食品厂，最便宜，用料一般", { priceX: 0.8, joy: -0.5 }],
+  胜利: ["老牌国营，封口严实，保质期长一成", { lifeX: 1.1 }],
+  和平: ["和平厂，口味温和", { joy: 0.3 }],
+  白桦: ["北境合资厂，洋气", { priceX: 1.2, joy: 1 }],
+  铁塔: ["铁塔厂，重口味", { thirst: 2, joy: 0.8 }],
+  老码头: ["老码头，重油重辣", { thirst: 2, warmth: 1 }],
+  南港: ["出口转内销，品相好", { priceX: 1.25, joy: 1.2 }],
+  北境: ["北境进口货", { priceX: 1.3, joy: 1.5 }],
+  河谷: ["乡镇小厂，便宜但保质期短", { priceX: 0.75, lifeX: 0.8 }],
+  山城: ["山城厂，偏麻辣", { thirst: 2, joy: 1 }],
+  金穗: ["粮食大厂，足斤足两", { serv: 1, priceX: 1.05 }],
+  绿洲: ["少添加，健康但不耐放", { health: 0.3, lifeX: 0.85 }],
+  冰川: ["包装结实，耐放", { lifeX: 1.25, priceX: 1.05 }],
+  清泉: ["水源好", { health: 0.1 }],
+  北冰洋: ["老牌汽水厂，气足", { joy: 0.8 }],
+  海鸥: ["沿海厂，便宜", { priceX: 0.9 }],
+  白鹤: ["茶厂老字号，香", { joy: 0.8 }],
+  山泉: ["山里的厂，水甜", { health: 0.15 }],
+  碧螺: ["茶叶嫩", { joy: 1, priceX: 1.15 }],
+  红磨坊: ["合资厂，洋气", { joy: 1, priceX: 1.2 }],
+  南湖: ["南方厂，偏甜", { joy: 0.5 }],
+  天鹅: ["分量足", { serv: 1 }],
+  云岭: ["高山茶园", { health: 0.2 }],
+  老树: ["老树茶，回甘", { joy: 0.6 }],
+  雪峰: ["便宜实在", { priceX: 0.85 }],
+  白鸽: ["老牌日化，温和", { m: 0.3 }],
+  蜂花: ["洗得干净", { y: 1 }],
+  友谊: ["老字号，香味淡雅", { m: 0.5 }],
+  百雀: ["百雀羚式的老配方，讲究", { m: 0.8, priceX: 1.2 }],
+  雪花: ["最便宜的那种", { priceX: 0.85 }],
+  茉莉: ["一股茉莉香", { m: 0.5 }],
+  上海风: ["上海货，体面", { m: 1, priceX: 1.3 }],
+  芳草: ["加了草药", { h: 0.2 }],
+  灯塔: ["耐用，用得久", { usesX: 1.2 }],
+  郁金香: ["香味浓", { m: 0.6 }],
+  黄河: ["便宜，质量一般", { priceX: 0.8, m: -0.2 }],
+  春蕾: ["泡沫多", { y: 0.8 }],
+  白猫: ["去污强", { d: 1 }],
+  活力: ["清清爽爽", { y: 0.5 }],
+  立白: ["不伤手", { m: 0.3 }],
+  雪山: ["洗得白", { d: 0.5 }],
+  工农: ["工厂货，便宜", { priceX: 0.85 }],
+  劳动: ["量大耐用", { usesX: 1.1 }],
+  金鱼: ["味道清淡", { m: 0.3 }],
+  红旗: ["老牌子，扎实", { d: 0.8 }],
+  大桥: ["便宜实惠", { priceX: 0.9, d: 0.3 }],
+  蓝天: ["带消毒成分", { h: 0.2 }],
+  永久: ["结实耐用", { m: 0.3 }],
+  钢城: ["钢材好", { m: 0.3, priceX: 1.1 }],
+  铁牛: ["粗笨但便宜", { priceX: 0.85 }],
+  老虎: ["做工好", { m: 0.5, priceX: 1.15 }],
+  飞跃: ["轻巧", { m: 0.2 }],
+  建设: ["建筑工具厂出品", { priceX: 0.9 }],
+  国营五金: ["国营标准件", {}],
+  双喜: ["喜庆的红色", { m: 0.4 }],
+  北方: ["北方厂，结实", { m: 0.2 }],
+  国营第一制药: ["国家标准药", { h: 0.2 }],
+  北岸药厂: ["便宜", { priceX: 0.85 }],
+  白云山: ["老药厂", { h: 0.3 }],
+  同仁: ["老字号，药材好", { h: 0.4, priceX: 1.2 }],
+  红十字: ["医院同款", { h: 0.2 }],
+  长青: ["中成药", { m: 0.3 }],
+  康乐: ["糖衣，好入口", { m: 0.5 }],
+  南岭制药: ["南方药厂", {}],
+  黎明药业: ["新厂，便宜", { priceX: 0.85 }],
+  凤凰: ["做工细", { m: 0.4, comfort: 0.01 }],
+  春风: ["料子软", { comfort: 0.01 }],
+  百花: ["花样好看", { m: 0.3 }],
+  红棉: ["南方轻工，便宜", { priceX: 0.88 }],
+  金鹿: ["结实", { m: 0.2 }],
+  幸福: ["喜庆", { m: 0.4 }],
+  海棠: ["细致", { comfort: 0.01 }],
+  向日葵: ["颜色暖", { m: 0.3 }],
+  梅花: ["老牌轻工", { m: 0.2 }],
+  西郊苗圃: ["苗壮，好养活", { comfort: 0.005 }],
+  河谷花圃: ["便宜，土是自家配的", { priceX: 0.85 }],
+  南湖花木: ["南方花木，叶子油亮", { comfort: 0.008 }],
+  松林园艺: ["盆是陶的，透气", { comfort: 0.005 }],
+  红砖区花店: ["包着彩纸，体面", { priceX: 1.2, comfort: 0.01 }],
+  向阳苗圃: ["向阳养大的，耐晒", {}],
+  盐湖花场: ["耐旱品种", { priceX: 0.9 }],
+  青山园艺: ["老师傅修剪过", { comfort: 0.01, priceX: 1.15 }],
+  新华: ["印刷清楚", { joy: 0.5 }],
+  人民: ["装订结实", { joy: 0.3 }],
+  少年: ["给孩子做的，简单", { joy: -0.5, priceX: 0.8 }],
+  群星: ["花哨", { joy: 0.6 }],
+  东方: ["老牌", { joy: 0.3 }],
+  长江: ["量大", { priceX: 0.9 }],
+  未来: ["新奇", { joy: 0.8, priceX: 1.1 }],
+  启明: ["适合动脑", { joy: 0.5 }],
+};
+const CG_COUNTY = ["河谷县", "白桦镇", "北岸市", "南港市", "山城", "雪原农场", "盐湖县", "松林县", "铁路桥镇", "海湾区", "第三工业区", "麦田公社", "红砖区", "冬宫区", "灯塔县", "东郊", "西岭", "柳河", "石滩", "青山县"];
+const CG_PACK = {
+  staple: ["牛皮纸袋，订书钉封口", "印着红色麦穗", "袋角有一点受潮的痕迹", "外包装是旧报纸改的纸袋", "封口压着蓝色批号", "纸箱里垫着稻草"],
+  canned: ["铁皮罐，纸标签有点褪色", "罐底压着生产批号", "标签上画着一个笑着的工人", "罐身略有压痕，但没鼓", "玻璃瓶，铁盖拧得很紧", "标签边角翘起来了"],
+  fresh: ["用草绳捆着", "还带着一点泥", "装在竹筐里", "用旧报纸包着", "是早上刚到的", "挑过的，品相好"],
+  drink: ["玻璃瓶，可以退瓶", "铁盒装，盒上画着山水", "纸盒装，印着拼音", "瓶盖里有兑奖字样", "外包装是油纸", "瓶身贴着红标签"],
+  hygiene: ["纸盒上印着香味说明", "包着一层透明玻璃纸", "铝管装", "盒子上画着一枝花", "说明书是繁体字", "外盒有点压扁了"],
+  clean: ["包装上写着\u201c去污力强\u201d", "牛皮纸盒", "塑料袋装，扎着口", "瓶身印着使用说明", "铁皮盖子", "外包装是麻绳捆的"],
+  tool: ["用油纸包着防锈", "附一张合格证", "木箱里用刨花垫着", "铭牌上刻着厂名", "带一张保修卡", "外盒印着型号"],
+  medical: ["铝箔板装", "棕色玻璃瓶", "说明书叠得很小", "盒上印着红十字", "纸袋装，写着用法用量", "瓶口塞着棉花"],
+  leisure: ["纸盒上贴着合作社的价签", "盒子有一点压痕", "附一张手写说明", "纸盒有点旧", "盒里垫着碎纸", "边角磨圆了"],
+  book: ["扉页盖着合作社的章", "封面有一点折痕", "包着一层牛皮纸书皮", "书页里夹着一张旧书签", "页边有前一位读者的铅笔字", "书脊有点开胶"],
+  furniture: ["用麻袋包着运来", "吊牌写着规格", "外面缠着草绳", "附一张合格证", "包装纸印着厂名", "装在纸箱里"],
+};
+function cgHash(s) {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619);
+  return h >>> 0;
+}
+function cgProv(it) {
+  if (!it?.gen) return "";
+  const h = cgHash(it.id),
+    y = 1983 + (h % 4),
+    mo = 1 + ((h >>> 3) % 12),
+    county = CG_COUNTY[(h >>> 7) % CG_COUNTY.length],
+    pack = (CG_PACK[it.kind === "book" ? "book" : it.category] || CG_PACK.tool)[(h >>> 11) % 6];
+  return it.kind === "book" ? `${y}年${mo}月第${1 + ((h >>> 5) % 4)}次印刷 · ${pack}` : `产地 ${county} · ${y}年${mo}月批次 · ${pack}`;
+}
+// Shapes for generated goods so tins, jars and games stop looking alike.
+const CG_SHAPE_FUN = {
+  chess: ["box", [0.3, 0.035, 0.3]],
+  weiqi: ["box", [0.32, 0.04, 0.32]],
+  puzzlebox: ["box", [0.07, 0.07, 0.07]],
+  cards: ["box", [0.065, 0.09, 0.022]],
+  music: ["box", [0.11, 0.07, 0.017]],
+  craft: ["box", [0.24, 0.06, 0.17]],
+  draw: ["box", [0.22, 0.02, 0.3]],
+};
+function cgFinish() {
+  for (const it of CATALOG) {
+    if (!it.gen) continue;
+    const n = CG_NOTE[it.line];
+    if (n) {
+      it.note = n.note;
+      if (n.text) it.lineText = n.text;
+      if (it.kind === "food" || it.kind === "drink" || it.kind === "seasoning") it.fx = n.fx;
+      else {
+        const g = cgGoodsFx(n.fx);
+        if (Object.keys(g.bonus).length) {
+          it.bonus ??= {};
+          for (const [k, v] of Object.entries(g.bonus)) it.bonus[k] = Math.round(((it.bonus[k] || 0) + v) * 10) / 10;
+        }
+        if (Object.keys(g.pass).length) it.pass = g.pass;
+        if (Object.keys(g.bonus).length) it.lineBonus = g.bonus;
+      }
+    }
+    const st = CG_BRAND_STYLE[it.brand];
+    if (st && it.kind !== "book") {
+      const [txt, m] = st;
+      const nums = [];
+      const food = it.kind === "food" || it.kind === "drink" || it.kind === "seasoning";
+      if (m.priceX) nums.push(m.priceX < 1 ? `便宜${Math.round((1 - m.priceX) * 100)}%` : `贵${Math.round((m.priceX - 1) * 100)}%`);
+      if (food) {
+        if (m.joy) nums.push(`心情${m.joy > 0 ? "+" : "−"}${Math.abs(m.joy)}`);
+        if (m.thirst) nums.push(`水分−${m.thirst}`);
+        if (m.health) nums.push(`健康+${m.health}`);
+        if (m.energy) nums.push(`体力+${m.energy}`);
+        if (m.warmth) nums.push(`冷天心情+${m.warmth}`);
+        if (m.serv && it.servings >= 2) nums.push(`多${m.serv}份`);
+        if (m.lifeX) nums.push(`保质期×${m.lifeX}`);
+      } else if (it.kind === "leisure") {
+        if (m.joy) nums.push(`心情${m.joy > 0 ? "+" : "−"}${Math.abs(m.joy)}`);
+      } else {
+        if (m.m) nums.push(`每次心情${m.m > 0 ? "+" : "−"}${Math.abs(m.m)}`);
+        if (m.y) nums.push(`清洁+${m.y}`);
+        if (m.h) nums.push(`健康+${m.h}`);
+        if (m.d) nums.push(`脏乱−${m.d}`);
+        if (m.usesX && it.servings > 1) nums.push(`多用${Math.round((m.usesX - 1) * 100)}%`);
+        if (m.comfort && it.category === "furniture") nums.push("更舒适");
+      }
+      it.brandNote = `${it.brand}：${txt}${nums.length ? "（" + nums.join("，") + "）" : ""}`;
+      if (m.priceX) it.price = cgMoney(it.price * m.priceX);
+      if (it.kind === "food" || it.kind === "drink" || it.kind === "seasoning") {
+        if (m.joy && it.kind !== "seasoning") it.joy = Math.round(((it.joy || 0) + m.joy) * 10) / 10;
+        if (m.joy && it.kind === "seasoning") it.season = Math.round((it.season + m.joy * 0.5) * 10) / 10;
+        if (m.thirst) it.thirst = (it.thirst || 0) + m.thirst;
+        if (m.health) it.health = Math.round(((it.health || 0) + m.health) * 10) / 10;
+        if (m.energy) it.energy = (it.energy || 0) + m.energy;
+        if (m.warmth) it.warmth = (it.warmth || 0) + m.warmth;
+        if (m.serv && it.servings >= 2 && !it.liters) {
+          it.servings += m.serv;
+          it.weight = +(it.weight * (it.servings / (it.servings - m.serv))).toFixed(2);
+        }
+        if (m.lifeX && it.life < 9999) it.life = Math.max(2, Math.round(it.life * m.lifeX));
+      } else if (it.kind === "leisure" || it.kind === "care") {
+        if (m.joy && it.kind === "leisure") it.joy = Math.max(4, Math.round((it.joy + m.joy) * 10) / 10);
+        if (m.m && it.kind === "care") it.care.morale = Math.round(((it.care.morale || 0) + m.m) * 10) / 10;
+      } else {
+        const add = { m: "morale", h: "health", y: "hygiene", d: "dirt" };
+        for (const [k, key] of Object.entries(add))
+          if (m[k]) {
+            it.bonus ??= {};
+            it.bonus[key] = Math.round(((it.bonus[key] || 0) + m[k]) * 10) / 10;
+          }
+        if (m.usesX && it.servings > 1) it.servings = Math.round(it.servings * m.usesX);
+        if (m.comfort && it.category === "furniture") it.comfort = Math.round(((it.comfort || 0) + m.comfort) * 1000) / 1000;
+      }
+    }
+    // shapes
+    if (it.category === "canned" && !it.shape) {
+      const L = it.look;
+      if (["fish", "beef", "pork", "peach", "peas", "mushroom", "soup", "tomato", "bakedbeans"].includes(L)) {
+        const r = it.weight >= 0.5 ? 0.05 : it.weight >= 0.35 ? 0.043 : 0.038,
+          h = Math.max(0.05, Math.min(0.16, (it.weight / it.servings) * 0.28 + 0.05));
+        it.shape = ["tin", [r, +h.toFixed(3)]];
+      } else if (L === "jam") it.shape = ["jar", [0.045, 0.1 + Math.min(0.06, it.weight * 0.08)], ["#c9a24a", "#8e3b2a", "#5a7a3a", "#d8c9a0"][cgHash(it.line) % 4]];
+    }
+    if (it.kind === "leisure" && !it.base && CG_SHAPE_FUN[it.line === "weiqi" ? "weiqi" : it.activity]) it.shape = CG_SHAPE_FUN[it.line === "weiqi" ? "weiqi" : it.activity];
+    if (it.kind === "leisure" && /pintu/.test(it.line)) it.shape = ["box", [0.32, 0.06, 0.22]];
+  }
+}
+
 cgBuild();
+cgFinish();
 const CATALOG_CORE = new Set([...Object.keys(STARTER), ...Object.keys(YEAR_KIT)]);
 
 /* ---------- Plain-language use text for generated goods ---------- */
+const CG_BOOK_FX = {
+  小说: "动情：心情低于40时读，心情再+2",
+  侦探小说: "一口气读下去：每次多读四分之一的页数",
+  冒险小说: "逃离现实：晚上8点后读，心情再+1",
+  科幻小说: "逃离现实：晚上8点后读，心情再+1",
+  诗集: "下雨下雪时读，心情再+1.5",
+  散文集: "安神：读完6小时内睡觉睡得更沉",
+  传记: "读完全书心情+4：别人的一生让你觉得自己也能熬过去",
+  科普: "学到东西：读完全书心情+6",
+  外语读本: "学到东西：读完全书心情+6",
+  连环画: "重读也有意思：重读时新鲜感掉得慢",
+  杂志合订本: "重读也有意思：重读时新鲜感掉得慢",
+  棋谱: "读完后下棋，每次心情+2",
+  菜谱: "读完后煮饭，每顿心情+1",
+};
 const CG_BOOK_TRAIT = { hard: "精装：更耐读，心情多一点", old: "旧书：半价，书页发黄（心情少一点）", illus: "插图本：有很多插画，心情多一点" };
 function cgUse(it) {
-  if (!it?.gen) return "";
+  const c = cgParts(it);
+  return c ? [c.note && c.note + "。", c.fx && "【特色】" + c.fx, c.use, c.brand && "厂牌 " + c.brand].filter(Boolean).join("") : "";
+}
+function cgParts(it) {
+  if (!it?.gen) return null;
   const parts = [];
+  const fxText = it.kind === "book" ? [CG_BOOK_FX[it.genre]].filter(Boolean) : it.fx ? it.fx.map((k) => CG_FX_TEXT[k]).filter(Boolean) : cgGoodsFxText(it);
   if (it.kind === "seasoning") {
     parts.push(`调味料，不能单独吃。每顿煮的饭会自动用一点（几种调料轮流用），这顿饭心情+${it.season}。`);
     if (it.thirst) parts.push(`辣：那顿饭水分−${it.thirst}。`);
   } else if (it.kind === "food") {
     if (it.ingredient) parts.push("食用油：煮饭时自动用一勺，这顿饭更顶饱。");
-    else parts.push(it.cook ? "在电炉上煮熟再吃。" : "不用煮，打开就能吃，停电也行。");
+    else if (it.trait !== "instant") parts.push(it.cook ? "在电炉上煮熟再吃。" : "不用煮，打开就能吃，停电也行。");
     if (it.protein) parts.push("有蛋白质。");
     if (it.vegetable) parts.push("蔬菜，和主食轮换口味。");
     if (it.life <= 14 && it.category === "fresh") parts.push("很快会坏，放冰箱能多放几倍时间。");
@@ -7224,7 +7870,7 @@ function cgUse(it) {
   } else if (it.kind === "book") {
     parts.push(`${it.genre}，${it.pages}页。拿在手里读，每次2小时，心情+${it.joy}。每本书单独计算新鲜感，书越多越不腻。`);
   } else if (it.kind === "leisure" && !it.base) {
-    const act = { chess: "一个人摆棋局", puzzlebox: "动脑筋解开它", cards: "一个人玩一会儿", music: "听一会儿（停电时要电池）", craft: "慢慢做手工", draw: "画画、写写、填填" }[it.activity] || "打发时间";
+    const act = { chess: "一个人摆棋局", puzzlebox: "动脑筋解开它", cards: "一个人玩一会儿", music: "听一会儿（停电时要电池）", play: "吹奏几曲", craft: "慢慢做手工", draw: "画画、写写、填填" }[it.activity] || "打发时间";
     parts.push(`拿在手里使用：${act}，一个半小时，心情+${it.joy}。和别的消遣轮换着玩，不容易腻。`);
   } else if (it.base) {
     parts.push(typeof ITEM_USE !== "undefined" && ITEM_USE[it.base] ? ITEM_USE[it.base] : "");
@@ -7238,7 +7884,16 @@ function cgUse(it) {
   if (it.warmth && !/暖身/.test(tr || "")) parts.push(`热乎乎的，冷天心情再+${it.warmth}。`);
   if (it.health && !/健康/.test(tr || "")) parts.push(`每份健康+${it.health}。`);
   if (it.coldComfort && !/保暖/.test(tr || "")) parts.push("天冷时格外有用。");
-  return parts.filter(Boolean).join("");
+  if (it.bonus && it.base && !it.trait?.startsWith?.("x")) {
+    const b = it.bonus,
+      t = [];
+    if (b.morale) t.push(`心情${b.morale > 0 ? "+" : "−"}${Math.abs(b.morale)}`);
+    if (b.hygiene) t.push(`清洁+${b.hygiene}`);
+    if (b.health) t.push(`健康+${b.health}`);
+    if (b.dirt) t.push(`脏乱−${b.dirt}`);
+    if (t.length) parts.push(`（这一件每次用：${t.join("、")}）`);
+  }
+  return { note: it.note || "", fx: fxText.length ? fxText.join("；") + "。" : "", use: parts.filter(Boolean).join(""), brand: it.brandNote ? it.brandNote + "。" : "", prov: cgProv(it) };
 }
 
 /* ---------- This run's shop: ~1% of the catalogue, chosen by the seed ---------- */
@@ -8904,7 +9559,7 @@ function buildRoom(e) {
     0.04,
     0.3,
     -0.5,
-    0.85,
+    0.84,
     -0.13,
     material("#5b6a59"),
     desk,
@@ -11443,15 +12098,23 @@ function syncWorldRoom() {
     .forEach((b, i) => {
       const g = worldProduct(b.id, W.props);
       g.scale.setScalar(0.86);
-      g.position.set(
-        -0.68 + (i % 6) * 0.15,
-        0.835 + Math.floor(i / 6) * 0.075,
-        -env.d / 2 + 0.46,
-      );
+      // Real piles: five stacks left of the notepad, each book resting on the one below.
       g.rotation.x = -Math.PI / 2;
       g.rotation.z = 0.05 * ((i % 3) - 1);
+      g.updateMatrixWorld(true);
+      const col = i % 5,
+        th = new THREE.Box3().setFromObject(g).getSize(new THREE.Vector3()).y;
+      W.bookPile = i ? W.bookPile : [0, 0, 0, 0, 0];
+      g.position.set(-0.99 + col * 0.155, 0.82 + W.bookPile[col] + th / 2, -env.d / 2 + 0.46);
+      W.bookPile[col] += th + 0.001;
       worldTag(g, "stock:" + b.uid, DB[b.id].name, { uid: b.uid });
     });
+  // The placeholder bedside book only stands in until real books are unpacked onto the desk.
+  {
+    let prop = null;
+    roomRoot.traverse((o) => { if (!prop && o.userData.interact === "bookpick") prop = o; });
+    if (prop) prop.visible = ![...groups.values()].some((b) => DB[b.id].kind === "book");
+  }
   if (W.hygiene) {
     while (W.hygiene.children.length > 1) {
       const c = W.hygiene.children.at(-1);
@@ -17409,9 +18072,82 @@ function iSolid(color, roughness = 0.5, extra = {}) {
 function iLathe(points, seg = 24) {
   return new THREE.LatheGeometry(points.map(([x, y]) => new THREE.Vector2(x, y)), seg);
 }
+const I_BOOK_COLORS = {
+  小说: ["#7a2e2a", "#2f4a63", "#3e5a3c", "#6a4a2a"],
+  侦探小说: ["#1f2a33", "#3a2222", "#2b2b2b"],
+  冒险小说: ["#8a5a2a", "#2f5a4a", "#7a3a1a"],
+  科幻小说: ["#20345a", "#3a2a5a", "#1f4a5a"],
+  诗集: ["#d8cdb0", "#b8a07a", "#c9b9a0"],
+  散文集: ["#a89a7a", "#7a8a6a", "#c2b190"],
+  传记: ["#5a3a2a", "#3a3a3a", "#4a2a2a"],
+  科普: ["#2f6a8a", "#3a7a5a", "#c98a2a"],
+  连环画: ["#d9a33a", "#c94a2a", "#3a8ac9"],
+  杂志合订本: ["#8a2a2a", "#2a5a8a", "#5a7a2a"],
+  外语读本: ["#5a6a7a", "#7a5a3a"],
+  棋谱: ["#2a2a2a", "#6a5a3a"],
+  菜谱: ["#c96a3a", "#d9b03a", "#7a9a4a"],
+};
+function iBookColor(it) {
+  const pal = I_BOOK_COLORS[it.genre] || ["#6a3a2a", "#2f4a5a", "#4a5a3a", "#7a6a4a", "#3a3a4a"];
+  return pal[iHash(it.id) % pal.length];
+}
+function iBookShade(hex, k) {
+  const c = new THREE.Color(hex);
+  c.multiplyScalar(1 + k);
+  return "#" + c.getHexString();
+}
+function iBookCover(it, col) {
+  const key = "bookcover:" + it.id;
+  if (I.mats.has(key)) return I.mats.get(key);
+  const title = (it.name.match(/《(.+?)》/) || [0, it.name.replace(/ · .*/, "")])[1],
+    genre = it.genre || (it.name.split("《")[0] || ""),
+    light = ["#d8cdb0", "#b8a07a", "#c9b9a0", "#a89a7a", "#c2b190", "#d9a33a", "#d9b03a"].includes(col);
+  const tex = iCanvas(256, 364, (x, w, h) => {
+    x.fillStyle = col;
+    x.fillRect(0, 0, w, h);
+    for (let i = 0; i < 2600; i++) {
+      x.fillStyle = `rgba(${Math.random() < 0.5 ? "255,255,255" : "0,0,0"},${Math.random() * 0.05})`;
+      x.fillRect(Math.random() * w, Math.random() * h, 1.5, 1.5);
+    }
+    const ink = light ? "#2b241c" : "#efe4c8";
+    x.strokeStyle = ink;
+    x.globalAlpha = 0.55;
+    x.lineWidth = 2;
+    x.strokeRect(14, 14, w - 28, h - 28);
+    x.globalAlpha = 1;
+    x.fillStyle = ink;
+    x.textAlign = "center";
+    x.textBaseline = "middle";
+    x.font = "15px 'Noto Sans SC','PingFang SC','Microsoft YaHei',sans-serif";
+    x.fillText(genre, w / 2, 40);
+    const chars = [...title],
+      size = chars.length > 8 ? 26 : chars.length > 5 ? 32 : 38;
+    x.font = `bold ${size}px 'Noto Serif SC','Noto Serif CJK SC','Songti SC',serif`;
+    const lines = [];
+    for (let i = 0; i < chars.length; i += 6) lines.push(chars.slice(i, i + 6).join(""));
+    lines.forEach((l, i) => x.fillText(l, w / 2, h * 0.42 + (i - (lines.length - 1) / 2) * (size + 8)));
+    // A simple period emblem: a printed band or a star.
+    x.globalAlpha = 0.5;
+    x.fillRect(w * 0.3, h * 0.66, w * 0.4, 2);
+    x.globalAlpha = 1;
+    x.font = "14px 'Noto Sans SC','PingFang SC','Microsoft YaHei',sans-serif";
+    x.fillText(it.maker || "安德士人民出版社", w / 2, h - 40);
+  });
+  const m = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.72, envMapIntensity: 0.45 });
+  I.mats.set(key, m);
+  return m;
+}
+// Real formats of the time: pocket 32开 for fiction, 大32开 for essays and biographies, 16开 for picture, chess and cookery books.
+function iBookSize(it) {
+  const d = Math.min(0.05, 0.01 + (it.pages || 200) / 10000);
+  if (!it.gen) return [0.18, 0.26, 0.045];
+  if (/连环画|棋谱|菜谱|画册|地图/.test(it.genre || "")) return [0.185, 0.26, Math.max(0.008, d * 0.6)];
+  if (/散文|传记|诗|历史|哲学/.test(it.genre || "")) return [0.14, 0.203, d];
+  return [0.13, 0.184, d];
+}
 function iProduct(id, parent) {
   const it = DB[id],
-    spec = I_SPEC[id] || (it?.look && I_SPEC[it.look]);
+    spec = I_SPEC[id] || it?.shape || (it?.kind === "book" ? ["book", iBookSize(it)] : null) || (it?.look && I_SPEC[it.look]);
   if (!it || !spec || !R.ready) return null;
   const [shape, dims, color] = spec,
     g = new THREE.Group(),
@@ -17423,7 +18159,22 @@ function iProduct(id, parent) {
     g.add(mesh);
     return mesh;
   };
-  if (shape === "box" || shape === "med") {
+  if (shape === "book") {
+    const [w, h, d] = dims,
+      col = iBookColor(it),
+      cover = iSolid(col, 0.72),
+      pages = iSolid("#e8dfc6", 0.95),
+      spine = iSolid(iBookShade(col, -0.25), 0.7);
+    const mats = [pages, spine, pages, pages, iBookCover(it, col), cover];
+    const m = add(new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mats));
+    m.position.y = h / 2;
+    // Hard boards overhang the page block a little.
+    for (const z of [-1, 1]) {
+      const b = add(new THREE.Mesh(new THREE.BoxGeometry(w + 0.004, h + 0.006, 0.0025), z > 0 ? [cover, spine, cover, cover, iBookCover(it, col), cover] : cover));
+      b.position.set(0.002, h / 2, (z * d) / 2);
+    }
+    height = h;
+  } else if (shape === "box" || shape === "med") {
     const [w, h, d] = dims;
     iBox(g, [w, h, d], [0, h / 2, 0], label(), Math.min(0.004, h * 0.15));
     height = h;
@@ -17659,7 +18410,7 @@ function interiorApply() {
 }
 worldProduct = function (id, parent = null, bare = false) {
   const it = DB[id];
-  if (R.ready && it && it.category !== "canned" && id !== "cup") {
+  if (R.ready && it && (it.category !== "canned" || it.gen) && id !== "cup") {
     const g = iProduct(id, parent);
     if (g) return g;
   }
@@ -21540,8 +22291,271 @@ if (typeof worldProduct === "function" && typeof I_SPEC !== "undefined") {
   const lcProduct = worldProduct;
   worldProduct = function (id, parent = null, bare = false) {
     const it = DB[id];
-    if (it?.gen && it.look && it.kind !== "book" && !I_SPEC[it.look] && DB[it.look]) return lcProduct(it.look, parent, bare);
+    if (it?.gen && it.look && it.kind !== "book" && !it.shape && !I_SPEC[it.look] && DB[it.look]) return lcProduct(it.look, parent, bare);
     return lcProduct(id, parent, bare);
+  };
+}
+
+/* ===== v0.18 line specials, sleep aids, plants, books by genre ===== */
+function lcL() {
+  G.life ??= {};
+  return G.life;
+}
+function lcCure(id, min) {
+  const d = G.illness.find((x) => x.id === id);
+  if (!d) return false;
+  d.remaining = Math.max(0, d.remaining - min);
+  G.illness = G.illness.filter((x) => x.remaining > 0);
+  return true;
+}
+// Food/drink/seasoning specials. mode: eat | drink | season
+function lcFoodFx(it, mode) {
+  if (!it?.fx?.length || !G) return;
+  const s = G.stats,
+    L = lcL(),
+    t = temperature(),
+    hr = hour();
+  for (const k of it.fx) {
+    if (k === "full") L.fullUntil = G.minute + 300;
+    else if (k === "cool" && t > 24) {
+      s.morale = clamp(s.morale + 3);
+      s.water = clamp(s.water + 6);
+    } else if (k === "warm" && t < 15) s.morale = clamp(s.morale + 2);
+    else if (k === "cureCold") lcCure("cold", 480);
+    else if (k === "cureStomach") lcCure("stomach", 480);
+    else if (k === "sleepAid") L.sleepAid = G.minute + 360;
+    else if (k === "wake") {
+      s.energy = clamp(s.energy + 6);
+      if (hr >= 20 || hr < 4) L.wakeful = G.minute + 300;
+    } else if (k === "comfort" && s.morale < 43) s.morale = clamp(s.morale + 3);
+    else if (k === "memory" && mode !== "season") {
+      L.tasted ??= {};
+      if (!L.tasted[it.line]) {
+        L.tasted[it.line] = 1;
+        s.morale = clamp(s.morale + 5);
+        logEvent(`第一次在这屋里吃到${it.note.split("，")[0]}。${it.note.includes("，") ? it.note.split("，").slice(1).join("，") + "。" : ""}有那么一会儿，你忘了自己在躲。`, "story");
+      }
+    } else if (k === "vitc") L.vitUntil = G.minute + 3 * 1440;
+    else if (k === "strength") s.energy = clamp(s.energy + 4);
+    else if (k === "focus") L.focusUntil = G.minute + 240;
+    else if (k === "heavy" && mode !== "season") {
+      if (L.heavyDay === day()) s.morale = clamp(s.morale - 2);
+      L.heavyDay = day();
+    } else if (k === "sugar") {
+      s.energy = clamp(s.energy + 4);
+      s.morale = clamp(s.morale + 1);
+    } else if (k === "crumbs") G.dirt = Math.min(100, G.dirt + 1);
+    else if (k === "festive" && hr >= 18) s.morale = clamp(s.morale + 4);
+    else if (k === "pure") s.health = clamp(s.health + 0.3);
+    else if (k === "craftcook" && mode === "eat" && it.cook) {
+      s.morale = clamp(s.morale + 2);
+      advanceTime(10, "cook");
+    } else if (k === "pastime" && mode === "eat") {
+      s.morale = clamp(s.morale + 3);
+      G.dirt = Math.min(100, G.dirt + 1);
+      advanceTime(20, "leisure");
+    }
+  }
+}
+// Pickles, peanuts, salted eggs…: one serving goes with each cooked staple meal.
+const LC_GRAIN = ["rice", "noodles", "oats", "buckwheat", "flour", "lentils", "beans"];
+function lcSide(meal, repeats) {
+  if (!meal.cook || !(LC_GRAIN.includes(meal.look) || LC_GRAIN.includes(meal.id) || meal.flavor === "grain")) return null;
+  const opts = G.inv.filter((b) => !b.packed && b.units > 0 && DB[b.id]?.fx?.includes("side") && DB[b.id].kind === "food" && !isSpoiled(b) && !b.contaminated);
+  if (!opts.length) return null;
+  const L = lcL(),
+    pick = opts.find((b) => DB[b.id].line !== L.lastSide) || opts[0],
+    it = DB[pick.id];
+  pick.units--;
+  G.inv = G.inv.filter((x) => x.units > 0.0001);
+  L.lastSide = it.line;
+  L.sides = (L.sides || 0) + 1;
+  G.stats.morale = clamp(G.stats.morale + 2 + (repeats > 1 ? 1.5 : 0));
+  if (it.thirst) G.stats.water = clamp(G.stats.water - it.thirst * 0.5);
+  return it;
+}
+{
+  const prevMeal = consumeMeal;
+  consumeMeal = function (uidValue, success = true, slow = false) {
+    const b = G?.inv.find((x) => x.uid === uidValue),
+      it = b && DB[b.id],
+      units = b?.units,
+      m0 = G?.minute,
+      flavor = it && (it.flavor || it.id),
+      repeats = it ? G.foodHistory.slice(-5).filter((f) => f === flavor).length : 0;
+    const r = prevMeal(uidValue, success, slow);
+    if (!G || !it || G.minute === m0 || (b.units === units && G.inv.includes(b))) return r;
+    lcFoodFx(it, "eat");
+    if (it.cook) {
+      const side = lcSide(it, repeats);
+      if (side && typeof showToast === "function") showToast(`配了一点${side.name.replace(/ · .*/, "")}，这碗饭香多了。`);
+      if (lcL().cookSkill) G.stats.morale = clamp(G.stats.morale + 1);
+    }
+    return r;
+  };
+  const prevSeason = lcSeason;
+  lcSeason = function () {
+    const it = prevSeason();
+    if (it) lcFoodFx(it, "season");
+    return it;
+  };
+  const prevDrink = actDrink;
+  actDrink = function (uidValue) {
+    const b = uidValue !== "tap" && G?.inv.find((x) => x.uid === uidValue),
+      it = b && DB[b.id],
+      m0 = G?.minute;
+    const r = prevDrink(uidValue);
+    if (G && it && G.minute !== m0) lcFoodFx(it, "drink");
+    return r;
+  };
+  const prevDisease = addDisease;
+  addDisease = function (id) {
+    if (G && id === "cold" && (G.life?.vitUntil || 0) > G.minute && !G.illness.some((i) => i.id === id) && rngNext(G) < 0.5) {
+      G.life.vitSaved = (G.life.vitSaved || 0) + 1;
+      return;
+    }
+    return prevDisease(id);
+  };
+}
+// Owned goods with passive character: best one per base/line counts.
+function lcPassive() {
+  const out = {};
+  for (const b of G?.inv || []) {
+    if (b.packed || b.units <= 0) continue;
+    const it = DB[b.id];
+    if (!it?.pass) continue;
+    for (const [k, v] of Object.entries(it.pass)) {
+      if (k === "pw" && !G.power) continue;
+      if (it.pass.pw && !G.power && /^sl/.test(k)) continue;
+      const key = k + "|" + (it.base || it.line);
+      out[key] = Math.max(out[key] || 0, v === true ? 1 : v);
+    }
+  }
+  const sum = {};
+  for (const [key, v] of Object.entries(out)) {
+    const k = key.split("|")[0];
+    sum[k] = (sum[k] || 0) + v;
+  }
+  return sum;
+}
+{
+  const prevSim = simulate;
+  simulate = function (minutes, context) {
+    prevSim(minutes, context);
+    if (!G || G.ended) return;
+    const h = minutes / 60,
+      s = G.stats,
+      L = lcL(),
+      t = temperature();
+    if ((L.fullUntil || 0) > G.minute) s.food = clamp(s.food + 0.9 * h);
+    const P = lcPassive();
+    let comfort = 0;
+    if (P.c) comfort += P.c;
+    if (P.cc && t < 13) comfort += P.cc;
+    if (P.ch && t > 24) comfort += P.ch;
+    const winter = typeof lrOutdoor === "function" ? lrOutdoor() < 3 : t < 12;
+    if (P.winter && winter) comfort += 0.03;
+    if (L.made) for (const line of Object.keys(L.made)) comfort += line === "maoxian" ? (t < 13 ? 0.04 : 0) : 0.015;
+    if (comfort) s.morale = clamp(s.morale + Math.min(0.18, comfort) * h);
+    if (context === "sleep") {
+      let e = (P.sl || 0) + (t < 13 ? P.slc || 0 : 0) + (t > 24 ? P.slh || 0 : 0);
+      if ((L.sleepAid || 0) > G.minute) e += 0.6;
+      if ((L.wakeful || 0) > G.minute) e -= 0.5;
+      if (e) s.energy = clamp(s.energy + Math.max(-0.5, Math.min(1.4, e)) * h);
+    }
+    if (P.jarplus)
+      for (const b of G.inv) {
+        const it = DB[b.id];
+        if (it?.category === "staple" && it.life < 9999 && !b.packed && b.location !== "fridge") b.age -= (minutes / 1440) * 0.15;
+      }
+    if (P.dust && G.dirt > 0 && liDaily("lc-dust")) G.dirt = Math.max(0, G.dirt - Math.min(2, P.dust));
+    if (P.aloe && G.illness.length && liDaily("lc-aloe")) s.health = clamp(s.health + 0.5);
+    if (P.hope && s.morale < 30 && liDaily("lc-hope")) s.morale = clamp(s.morale + 2);
+  };
+}
+// Books by genre, reading lamps and desk plants, "brain food".
+const LC_BOOK = { finishJoy: { 传记: 4, 科普: 6, 外语读本: 6 } };
+{
+  const prevRead = doRead;
+  doRead = function (id) {
+    const it = DB[id],
+      m0 = G?.minute,
+      L = G && lcL(),
+      startMorale = G?.stats.morale,
+      st = G?.books[id],
+      before = st ? st.pages : 0,
+      wasFinished = st && it ? st.pages >= it.pages : false,
+      reads = st?.reads || 0,
+      hr = G ? hour() : 12;
+    const r = prevRead(id);
+    if (!G || !it || G.minute === m0) return r;
+    const s = G.stats,
+      b = G.books[id],
+      g = it.genre;
+    let extra = 0;
+    const P = lcPassive();
+    if (P.rd) extra += Math.min(1.5, P.rd);
+    if ((L.focusUntil || 0) > m0) extra += 1.5;
+    if (g === "小说" && startMorale < 40) extra += 2;
+    if (g === "侦探小说" && b) b.pages = Math.min(it.pages, b.pages + 20);
+    if ((g === "冒险小说" || g === "科幻小说") && (hr >= 20 || hr < 4)) extra += 1;
+    if (g === "诗集" && typeof lrPrecip === "function" && lrPrecip(m0)) extra += 1.5;
+    if (g === "散文集") L.sleepAid = G.minute + 360;
+    if ((g === "连环画" || g === "杂志合订本") && wasFinished) extra += Math.max(1, it.joy / (reads + 2)) * 0.6;
+    if (b && !wasFinished && b.pages >= it.pages) {
+      if (LC_BOOK.finishJoy[g]) {
+        extra += LC_BOOK.finishJoy[g];
+        logEvent(g === "传记" ? `读完了${it.name.replace(/ · .*/, "")}。别人的一生也有熬不下去的时候，后来都熬过去了。` : `读完了${it.name.replace(/ · .*/, "")}，脑子里多了点东西。`, "good");
+      }
+      if (g === "棋谱") L.chessSkill = true;
+      if (g === "菜谱") L.cookSkill = true;
+    }
+    if (extra) s.morale = clamp(s.morale + extra);
+    return r;
+  };
+  const prevLeisure = doLeisure;
+  doLeisure = function (id) {
+    const it = DB[id];
+    if (G && it?.pass?.needRadio && !has("radio")) return notify("磁带要用收音机（收录机）才能放。");
+    const m0 = G?.minute;
+    const r = prevLeisure(id);
+    if (!G || !it || G.minute === m0) return r;
+    const L = lcL();
+    if (it.pass?.noise) {
+      G.suspicion = Math.min(100, (G.suspicion || 0) + 3);
+      if (typeof showToast === "function") showToast("声音不小，楼道里可能有人听见。");
+    }
+    if (it.pass?.focus) L.focusUntil = G.minute + 240;
+    if (it.activity === "chess" && L.chessSkill) G.stats.morale = clamp(G.stats.morale + 2);
+    const p = it.pass || {},
+      hr = hour();
+    if (p.nightowl && (hr >= 20 || hr < 4)) G.stats.morale = clamp(G.stats.morale + 1.5);
+    if (p.rainy && typeof lrPrecip === "function" && lrPrecip(m0)) G.stats.morale = clamp(G.stats.morale + 1.5);
+    if (p.fortune) {
+      const v = Math.round((rngNext(G) * 5 - 1) * 10) / 10;
+      G.stats.morale = clamp(G.stats.morale + v);
+      logEvent(v >= 2 ? "抽到一张好牌。明知道是自己哄自己，还是高兴了一下。" : v < 0 ? "抽到一张不吉利的牌。你把它塞回了牌堆最底下。" : "抽到的牌说不清好坏。", "normal");
+    }
+    if (p.memory) {
+      L.tasted ??= {};
+      if (!L.tasted[it.line]) {
+        L.tasted[it.line] = 1;
+        G.stats.morale = clamp(G.stats.morale + 5);
+        logEvent(`翻开${it.name}，里面夹着几张别人的旧邮票，有一张盖着你老家的邮戳。`, "story");
+      }
+    }
+    if (p.make && CG_MAKE[it.line]) {
+      L.makeCount ??= {};
+      L.made ??= {};
+      L.makeCount[it.line] = (L.makeCount[it.line] || 0) + 1;
+      if (!L.made[it.line] && L.makeCount[it.line] >= p.make) {
+        L.made[it.line] = day();
+        G.stats.morale = clamp(G.stats.morale + 4);
+        logEvent(`做好了${CG_MAKE[it.line][0]}。${CG_MAKE[it.line][1].replace("心情下降慢一点", "看着它，心里踏实一点")}。`, "good");
+        if (typeof showToast === "function") showToast(`做好了${CG_MAKE[it.line][0]}`);
+      }
+    }
+    return r;
   };
 }
 
@@ -22407,6 +23421,12 @@ function srCard() {
 #shopCard .keys{display:flex;flex-wrap:wrap;gap:8px 14px;font-size:15px;color:#e3d7bd}
 #shopCard kbd{display:inline-block;min-width:22px;padding:2px 7px;margin-right:5px;border:1px solid rgba(232,214,170,.4);border-radius:3px;font:600 14px/1.3 ui-monospace,monospace;text-align:center;color:#fff3d6;background:rgba(255,255,255,.06)}
 #shopCard .budget{margin-top:12px;font-size:15px;color:#bcae8d}
+#shopCard{max-height:92vh;overflow:hidden}
+#shopCard .note{font:italic 17px/1.5 'Noto Serif CJK SC','Songti SC',serif;color:#e6d6b0;margin:-4px 0 10px}
+#shopCard .use.fx em{background:#d9784f;color:#fff4e4}
+#shopCard .use.small{font-size:16px;line-height:1.55;color:#e9dfca}
+#shopCard .brand,#shopCard .prov{font-size:14px;line-height:1.5;color:#bfae88;margin:0 0 4px}
+#shopCard .prov{color:#a39577;font-style:italic;margin-bottom:10px}
 @media (max-width:760px){#shopCard{top:auto;bottom:12px;right:12px;left:12px;width:auto;transform:translate(0,10px);padding:14px 16px}#shopCard.on{transform:none}#shopCard h2{font-size:21px}#shopCard .use{font-size:16px}}`;
   document.head.appendChild(st);
   SR.card = document.createElement("div");
@@ -22416,6 +23436,17 @@ function srCard() {
 }
 function srEsc(s) {
   return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+}
+function srUseRows(it) {
+  const c = typeof cgParts === "function" ? cgParts(it) : null;
+  if (!c) return `<p class="use"><em>用途</em>${srEsc(itemUse(it))}</p>`;
+  return (
+    (c.note ? `<p class="note">${srEsc(c.note)}</p>` : "") +
+    (c.fx ? `<p class="use fx"><em>特色</em>${srEsc(c.fx)}</p>` : "") +
+    (c.use ? `<p class="use small"><em>用途</em>${srEsc(c.use)}</p>` : "") +
+    (c.brand ? `<p class="brand">厂牌 · ${srEsc(c.brand)}</p>` : "") +
+    (c.prov ? `<p class="prov">${srEsc(c.prov)}</p>` : "")
+  );
 }
 function srUpdateCard() {
   const id = worldIsShopping() && !paused && !W.glance && typeof targetId === "string" && targetId.startsWith("buy:") ? targetId.slice(4) : "";
@@ -22431,7 +23462,7 @@ function srUpdateCard() {
     key = id + ":" + inCart + ":" + spent.toFixed(2);
   if (key !== SR.cardKey) {
     SR.cardKey = key;
-    card.innerHTML = `<div class="cat">${srEsc(SR_CAT[it.category] || "")}</div><h2>${srEsc(it.name)}</h2><div class="price"><b>E$ ${it.price.toFixed(2)}</b><span>篮中 ×${inCart}</span></div><p class="use"><em>用途</em>${srEsc(itemUse(it))}</p><p class="facts">${srEsc(itemFacts(it))}</p><div class="keys"><span><kbd>E</kbd>放进篮子</span><span><kbd>Shift</kbd>+<kbd>E</kbd>拿5件</span><span><kbd>R</kbd>放回一件</span></div><div class="budget">已花 E$ ${spent.toFixed(2)} · 还剩 E$ ${(300 - spent).toFixed(2)} · 进门后不能再买</div>`;
+    card.innerHTML = `<div class="cat">${srEsc(SR_CAT[it.category] || "")}</div><h2>${srEsc(it.name)}</h2><div class="price"><b>E$ ${it.price.toFixed(2)}</b><span>篮中 ×${inCart}</span></div>${srUseRows(it)}<p class="facts">${srEsc(itemFacts(it))}</p><div class="keys"><span><kbd>E</kbd>放进篮子</span><span><kbd>Shift</kbd>+<kbd>E</kbd>拿5件</span><span><kbd>R</kbd>放回一件</span></div><div class="budget">已花 E$ ${spent.toFixed(2)} · 还剩 E$ ${(300 - spent).toFixed(2)} · 进门后不能再买</div>`;
   }
   card.classList.add("on");
 }

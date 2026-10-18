@@ -353,7 +353,7 @@ function buildRoom(e) {
     0.04,
     0.3,
     -0.5,
-    0.85,
+    0.84,
     -0.13,
     material("#5b6a59"),
     desk,

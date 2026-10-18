@@ -39,6 +39,7 @@ const LR_WATCH = {
   evening: ["街灯一盏一盏亮起来，从街口亮到街尾。", "对面楼家家户户的窗子亮了，有一家在包饺子，一家人围着桌子。", "下班的人流从电车站涌出来，很快又散进各个楼道。", "楼下有人在喊孩子回家吃饭，喊了三遍。", "天边剩下一条橘红色的光，慢慢暗下去。"],
   night: ["街上空了，只有一只猫沿着墙根走。", "对面楼只剩一扇窗还亮着，有人在台灯下写东西。", "一辆电车空着驶过，车厢里的灯照亮了半条街。", "远处的钟楼敲了一下。整座城市都睡了。", "巡夜的警察打着手电走过街口，在你楼下停了一会儿，又走了。"],
   rain: ["雨里的行人撑着各色的伞，从上面看像一朵朵移动的蘑菇。", "雨水顺着对面的屋檐往下淌，连成一道帘子。", "街上的积水映着路灯，有人踮着脚跳过去。"],
+  snow: ["雪落得很密，对面的屋顶、晾衣绳、自行车座全白了。", "一个孩子在楼下的空地上滚雪球，越滚越大，最后推不动了。", "扫雪的人在街上推出一条黑色的路，身后很快又白了。", "雪停了一会儿，街上一行脚印从楼门口一直走到电车站。", "路灯下的雪像一群一群的飞蛾，不停地往下落。"],
   overcast: ["天是灰的，对面的楼也是灰的，只有一家的红窗帘很显眼。", "云压得很低，楼顶的烟囱冒出的烟直直地往上走。"],
   alert: ["楼下停着一辆没熄火的黑色轿车，车里的人一直没下来。", "两个穿皮夹克的男人在街对面抽烟，时不时抬头数楼层。", "一个陌生人拿着一张纸，在楼门口问下棋的老头什么。老头摇了摇头。", "街角多了一个卖报的，他卖得很少，看得很多。"],
 };
@@ -49,13 +50,13 @@ const LR_DAYS = [
   [80, "夏天最热的几天。楼下的孩子们拿水管互相浇水，尖叫声一直传到你的窗口。"],
   [120, "丰收节。电台里放了一整天的手风琴，楼上的人家在烤面包，香味顺着楼梯往上飘。"],
   [150, "秋天了。对面楼下的白杨树一夜之间黄了一半。"],
-  [184, "今天是你的生日。没有人知道你在这里。你给自己多煮了一点，假装那是蛋糕。"],
   [215, "新年夜。零点的时候整座城市都在放鞭炮，你在黑暗里对着窗户说了一声“新年好”。"],
   [216, "新年第一天。楼道里家家户户互相拜年，有人在你门口停了一下，说了句“新年好”，又走了。"],
   [262, "冬天最冷的几天。窗玻璃上结了冰花，像一片小小的森林。"],
   [300, "早上第一次听见了鸟叫。春天要来了。"],
   [330, "楼下的白杨树发芽了，远远看去像一层淡绿色的雾。"],
 ];
+const LR_BIRTHDAY = "今天是你的生日。没有人知道你在这里。你给自己多煮了一点，假装那是蛋糕。";
 const LR = {};
 function lrRand(tag) {
   let s = lifeHash(String(G.seed) + "-" + tag) || 1;
@@ -76,6 +77,31 @@ function lrEnsure() {
   if (typeof L.watchDay !== "number") L.watchDay = 0;
   if (typeof L.watchToday !== "number") L.watchToday = 0;
   if (!L.dishes || typeof L.dishes !== "object") L.dishes = {};
+  // Your birthday is part of who you are, so it comes from the seed (never on another dated day).
+  if (typeof L.birthday !== "number") {
+    const r = lrRand("birthday"),
+      taken = new Set(LR_DAYS.map((x) => x[0]));
+    let d = 20 + Math.floor(r() * 320);
+    while (taken.has(d)) d++;
+    L.birthday = d;
+  }
+}
+// Seeded rain and snow. Only on the grey days the window already shows; snow when it is cold outside.
+// The street is colder than the flat and swings harder with the seasons.
+function lrOutdoor(d = day()) {
+  const season = Math.sin(((d + 30) / 365) * Math.PI * 2) * 4;
+  return env.temp + season * 2.5 - 8 + (G?.weather?.temp || 0);
+}
+function lrPrecip(minute = G.minute) {
+  const d = Math.floor(minute / 1440) + 1;
+  if (!G || !lifeWeather(d).overcast) return null;
+  const r = lrRand("rain-" + d);
+  if (r() < 0.3) return null;
+  const start = r() * 20,
+    len = 3 + r() * 9,
+    h = (minute / 60) % 24;
+  if (h < start || h >= start + len) return null;
+  return lrOutdoor(d) < 1.5 ? "snow" : "rain";
 }
 const lrPrevEnsure = lifeEnsure;
 lifeEnsure = function () {
@@ -101,6 +127,14 @@ hourlyUpdate = function () {
   const s = G.stats,
     h = hour();
   if (trait("sunny")) s.morale = clamp(s.morale + 0.06);
+  // The first snow of the year, seen as it starts.
+  const pr = lrPrecip();
+  if (pr === "snow" && !G.life.snow && day() > 2) {
+    G.life.snow = day();
+    logEvent("下雪了。今年的第一场雪，窗外的屋顶一点一点白了。", "story");
+    s.morale = clamp(s.morale + 4);
+  }
+  if (pr === "rain" && G.activity === "sleep") s.morale = clamp(s.morale + 0.05);
   if (trait("hungry")) s.food = clamp(s.food - 0.3);
   if (trait("owl")) s.morale = clamp(s.morale + (h >= 21 || h < 2 ? 0.25 : h >= 6 && h < 10 ? -0.2 : 0));
   if (G.activity === "sleep") {
@@ -135,12 +169,11 @@ dailyUpdate = function () {
   }
   for (const [d, t] of LR_DAYS) if (d === day()) {
     logEvent(t, "story");
-    G.stats.morale = clamp(G.stats.morale + (d === 184 ? -1 : 3));
+    G.stats.morale = clamp(G.stats.morale + 3);
   }
-  if (!L.snow && lrBase.temperature() < 6 && day() > 120) {
-    L.snow = day();
-    logEvent("下雪了。今年的第一场雪，窗外的屋顶一点一点白了。", "story");
-    G.stats.morale = clamp(G.stats.morale + 4);
+  if (L.birthday === day()) {
+    logEvent(LR_BIRTHDAY, "story");
+    G.stats.morale = clamp(G.stats.morale - 1);
   }
   // An old building: something gives out now and then. Cold-weather faults only when it is cold.
   const open = Object.keys(LR_FAULTS).filter((k) => !L.faults[k] && (!LR_FAULTS[k].cold || cold));
@@ -273,12 +306,13 @@ function lrWatch() {
   if (h < 5.5) pool = "night";
   const r = rngNext(G);
   if (lifeAlertActive(d) && r < 0.45) pool = "alert";
-  else if (w.overcast && r < 0.3) pool = rngNext(G) < 0.5 ? "rain" : "overcast";
+  else if (lrPrecip() && r < 0.75) pool = lrPrecip();
+  else if (w.overcast && r < 0.3) pool = "overcast";
   const list = LR_WATCH[pool],
     t = list[Math.floor(rngNext(G) * list.length)];
   advanceTime(30, "leisure");
   L.watchToday++;
-  G.stats.morale = clamp(G.stats.morale + Math.max(0, 3 - L.watchToday) + (pool === "alert" ? -2 : 0));
+  G.stats.morale = clamp(G.stats.morale + Math.max(0, 3 - L.watchToday) + (pool === "alert" ? -2 : pool === "snow" || pool === "rain" ? 1 : 0));
   if (!G.curtains && (h >= 18 || h < 6)) G.suspicion = clamp(G.suspicion + 4);
   logEvent((G.curtains ? "你从窗帘缝往外看。" : "你站在窗边往外看。") + t, pool === "alert" ? "warn" : "story");
   return t;

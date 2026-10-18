@@ -35,7 +35,8 @@ const { chromium } = require("playwright"), path = require("path"), assert = req
       o.calmFilter = (LB.fx = lbTargets(), lbTick(), renderer.domElement.style.filter);
       G.stats.food = 5; G.stats.water = 60; LB.last = {}; LB.fx = lbTargets(); lbTick(); worldRenderHUD();
       o.hungryFilter = renderer.domElement.style.filter; o.hungryLine = document.getElementById("bodyLine").textContent; o.cond = document.getElementById("worldCondition").textContent;
-      G.stats.food = 80;
+      G.stats.food = 80; document.getElementById("bodyLine").classList.remove("on"); lbCheckLines(); o.reliefLine = document.getElementById("bodyLine").textContent;
+      { const keep = G.minute; let t = G.minute; while (lrPrecip(t) !== "rain" && t < keep + 1440 * 200) t += 30; G.minute = t; LB.precipK = 1; lbWeather(performance.now(), 0.016); o.rain = !!(LB.mesh && LB.mesh.visible && LB.mesh.parent === roomRoot && LB.mesh.userData.precip === "rain"); G.minute = keep; }
       G.life.harvests = 30; endGame(true, "test"); o.ending = G.life.ending; o.endBox = !!document.querySelector("#endScreen .life-ending") && /窗台上的春天/.test(document.querySelector("#endScreen .life-ending").textContent);
       o.records = lmRecords().endings.includes("garden");
       return o;
@@ -52,11 +53,13 @@ const { chromium } = require("playwright"), path = require("path"), assert = req
     assert.ok(/看看这一年/.test(out.calHint) && out.year === "year" && out.yearPaper);
     assert.strictEqual(out.cranes, 300);
     assert.ok(out.calmFilter === "" && /saturate/.test(out.hungryFilter) && /饿/.test(out.hungryLine) && !/需要吃饭/.test(out.cond), "body feedback only when it happens");
+    assert.ok(/暖/.test(out.reliefLine), "relief is felt once when hunger is met");
+    assert.ok(out.rain, "rain falls outside the window on rainy hours");
     assert.ok(/看看窗外/.test(out.winHint) && out.watched, "window watching");
     assert.ok(/水龙头滴水/.test(out.sinkHint), "fault shown at the sink");
     assert.ok(out.ending === "garden" && out.endBox && out.records);
     assert.deepStrictEqual(errors, []);
     assert.deepStrictEqual(external, []);
-    console.log("LIFE PASS: felt hunger (screen effect + inner line, no meter) / watching the street / fault hints / year page on the wall calendar / hanging paper cranes / ending + cross-run records / windowsill garden sow/harvest-to-hand / letter bundle + letter page / radio caption / no pests / no external requests / JS errors 0");
+    console.log("LIFE PASS: felt hunger (screen effect + inner line, no meter) + relief / rain outside the window / watching the street / fault hints / year page on the wall calendar / hanging paper cranes / ending + cross-run records / windowsill garden sow/harvest-to-hand / letter bundle + letter page / radio caption / no pests / no external requests / JS errors 0");
   } finally { await b.close(); }
 })().catch((e) => { console.error(e); process.exitCode = 1; });

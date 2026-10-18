@@ -250,3 +250,22 @@
   - worldRenderHUD 已包装：#worldCondition 只显示敲门、停电、停水。
   - 截图时 toDataURL 拿不到 CSS 效果，所以 qa-views 不受影响；要看效果用 tools/qa-body.cjs。
 - life-real.js 新增 LR_DAYS（固定日子的事件）和第一场雪（G.life.snow）。
+
+### 2026-10-18 / v0.14.0-preview 身体动作和天气
+- 用户再次强调同样的要求，并补充说明：128MB的限制指的是Arena工作区，GitHub上的文件大小无所谓（推送后仍然把本地仓库重新浅克隆，让工作区保持在50多MB）。
+- life-real.js：
+  - lrOutdoor(d)：室外温度。
+  - lrPrecip(minute)：返回 "rain"、"snow" 或 null，只在 lifeWeather 判定为阴天的日子里出现，按种子决定。
+  - 今年第一场雪改到 hourlyUpdate 里，在开始下雪的时候记一笔。
+  - 生日存在 G.life.birthday，由种子决定。
+  - 在窗边看街时，下雨或下雪会用对应的画面。
+- life-body.js：
+  - LB_RELIEF：状态恢复时说的话，带滞后，并有一道暖光（第5层 i.g）。
+  - LB_THOUGHTS：闲下来时偶尔冒出的念头，用过的记在 G.life.thoughts。
+  - lbMotion：通过 canvas 的 CSS transform 做发抖和摇晃。
+  - lbGrowl / lbHeartbeat / lbRainSound：只在 soundOn 打开时发声。
+  - lbPrecipMesh：在 GPU 上画雨丝（LineSegments）和雪花（叠加混合的 Points），挂在 roomRoot 下，位置 (0,1.72,back)。
+  - lbWetGlass：外层玻璃上的水珠，位置 z=back-0.235。
+  - lbSnowCover：外窗框底部的积雪，位置 z=back-0.25，y 约1.07。
+  - 这些都从包装过的 worldFrame 里驱动。
+- 查看天气效果用 tools/qa-weather.cjs [rain|snow]。

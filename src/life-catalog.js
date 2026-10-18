@@ -102,6 +102,7 @@ function lcSeason() {
   pick.units--;
   G.inv = G.inv.filter((x) => x.units > 0.0001);
   G.life.lastSeason = it.line;
+  G.life.lastSeasonId = it.id;
   G.life.seasoned = (G.life.seasoned || 0) + 1;
   G.stats.morale = clamp(G.stats.morale + it.season);
   if (it.thirst) G.stats.water = clamp(G.stats.water - it.thirst);
@@ -297,6 +298,7 @@ function lcSide(meal, repeats) {
   pick.units--;
   G.inv = G.inv.filter((x) => x.units > 0.0001);
   L.lastSide = it.line;
+  L.lastSideId = it.id;
   L.sides = (L.sides || 0) + 1;
   G.stats.morale = clamp(G.stats.morale + 2 + (repeats > 1 ? 1.5 : 0));
   if (it.thirst) G.stats.water = clamp(G.stats.water - it.thirst * 0.5);
@@ -310,7 +312,7 @@ function lcSide(meal, repeats) {
       units = b?.units,
       m0 = G?.minute,
       flavor = it && (it.flavor || it.id),
-      repeats = it ? G.foodHistory.slice(-5).filter((f) => f === flavor).length : 0;
+      repeats = it && !G.level ? G.foodHistory.slice(-5).filter((f) => f === flavor).length : 0;
     const r = prevMeal(uidValue, success, slow);
     if (!G || !it || G.minute === m0 || (b.units === units && G.inv.includes(b))) return r;
     lcFoodFx(it, "eat");

@@ -704,7 +704,7 @@ if (W.enabled) {
           : it.kind === "food"
             ? `${it.servings}份 · ${it.kcal}kcal/份${it.cook ? " · 需烹煮" : ""}`
             : `${it.servings}次用量`;
-      const life = it.life < 9999 ? ` · 常温${it.life}天` : " · 长期保存";
+      const life = it.life < 9999 ? ` · ${expiryPublicLabel(it)}` : " · 长期保存";
       return [
         it.name,
         `E 入篮  ·  Shift+E 拿5件  ·  R 放回  |  E$ ${(it.price * 1).toFixed(2)} · ${it.weight}kg · ${detail}${life}  |  篮中×${cart[it.id] || 0}`,

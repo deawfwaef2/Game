@@ -376,3 +376,13 @@
 - 版本号升级为`0.19.1-preview`。`node tests/levels.cjs` 60断言通过；经典模拟162断言和365天策略通过；levels-browser、browser、realism、navigation、audio全通过，外部请求0、JS错误0；音频72/72解码。
 - QA截图：`tests/artifacts/levels/05-shop-shelves.jpg`、`03-order-book.jpg`、`04-hidden-clock-room.jpg`。Screenshot overlay可用`QA_SCREENSHOTS=1`；为避开软件GPU截图超时，仅在截图时临时关闭backdrop blur。
 - 本地保持完全离线；本轮没有推送GitHub或发布ZIP。用户本轮再次粘贴了PAT，未使用、未保存到任何文件/配置/提交；交付时提醒用户立即撤销。
+
+## v0.20.0-preview — 章节难度、味觉疲劳与模糊标期（2026-10-18）
+- 在沿用既有六章/固定机关/隐藏时间规则的基础上，章节簿加入「宽裕、标准、拮据」三档。预算倍率依次为1.20、1.00、0.82；各章卡片显示本档预算。难度也调整机关时间窗（1.45、1.00、0.60）、误触代价（0.72、1.00、1.50）和味觉疲劳积累（0.72、1.00、1.30）。经典365天预算与原有短期重复口味惩罚未变。
+- `G.level` 新增经过验证且存档兼容的 `difficulty` / `taste` 字段。章节吃喝时按风味、商品特征、口感词条和厂牌累积暴露；相似商品共享相同词条；30个游戏日半衰期缓慢消退；精神减少仍走既有零值失败条件。烹饪自动消耗的配料/配菜也参与疲劳。
+- `catalog-gen.js` 在已有生成目录末尾追加12条专门食品/饮品/调味线，不扰动既有种子产品线分配：酸梅汤粉、焙大麦茶、姜枣茶、现磨豆浆、芝麻汤圆、风干鱿鱼、干香菇、油豆皮、海苔脆片、老姜糖、玫瑰红腐乳、脆口酸萝卜；都使用现有实际游戏效果接口，目录现为19,800件，第一章开放3,068件。
+- 每件易腐商品现在有清晰、模糊或无日期标记。商品详情/目录/货架提示/库存卡不会再泄露模糊或无标期物品的精确天数；`b.age`、冰箱、供电和 `isSpoiled()` 仍按内部准确保质期运行，变质时明确显示已不能食用。
+- `scene.js` 本来就会在未暂停、未忙碌的活跃游戏中自然推进空闲时间；没有改动时间系统，也没有加入离线耗时。导航回归仍报告 `liveClock:true`。
+- 验证：`node tests/levels.cjs` 89断言通过；`node tests/simulation.cjs` 162断言通过，经典全年策略仍在第366日胜利。`tests/levels-browser.cjs`、`tests/browser.cjs`、`tests/realism.cjs`、`tests/navigation.cjs`、`tests/audio.cjs` 全通过：文件离线网络请求0、JS错误0；导航覆盖257种种子；72/72音频可解码。软件GPU截图临时人工检查了新的章节难度选择器，截图/测试产物已清理。
+- `python3 tools/build.py` 生成最新单文件 `index.html`（22,855,124字节）与临时`dist/Game-playable.zip`；QA后删除`dist/`和截图，保持根`index.html`为最新离线可玩版。构建前后源码通过语法与diff whitespace检查；工作区约71MB。
+- GitHub安全：不使用、不保存、不回显用户此前粘贴的PAT；应立即撤销该token。GitHub connector不可用，本版尚未推送或发布。若要尝试推送，必须使用不带该PAT的安全认证路径。

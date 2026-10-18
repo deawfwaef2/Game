@@ -657,7 +657,8 @@ function consumeMeal(uidValue, success = true, slow = false) {
       kcal += DB.oil.kcal;
     }
   }
-  let joy = (it.joy || 1) + (success ? 1 : 0) - Math.max(0, repeats - 1) * 1.4;
+  // Chapter mode uses the slower trait-based palate system; classic mode keeps its original short-window penalty.
+  let joy = (it.joy || 1) + (success ? 1 : 0) - (G.level ? 0 : Math.max(0, repeats - 1) * 1.4);
   if (repeats > 1 && has("spice")) {
     use("spice");
     joy += 3;

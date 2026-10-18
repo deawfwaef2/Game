@@ -352,3 +352,22 @@
 - `tests/browser.cjs`: all classic physical shop/room/purchase/save/touch/no-WebGL regressions pass; **0 external requests, 0 JS errors**.
 - `tests/realism.cjs`, `tests/navigation.cjs`, and `tests/audio.cjs`: pass; navigation audited 257 seeded routes, audio decoded **72/72** embedded clips; **0 external requests, 0 JS errors**.
 - Manually inspected `tests/artifacts/levels/05-shop-shelves.jpg` (200 physical samples), `03-order-book.jpg` (photo header and catalogue), and `04-hidden-clock-room.jpg` (upper-left needs panel). Overlay screenshots are opt-in with `QA_SCREENSHOTS=1`; the QA screenshot path disables backdrop blur only during capture to avoid software-GPU timeout.
+
+# v0.20.0-preview — chapter difficulty, palate fatigue, and uncertain expiry (2026-10-18)
+
+## Pure simulation
+- `node tests/levels.cjs`: **89 chapter assertions pass**. Covers three budget multipliers and actual checkout cash, easy/strict timing windows, scaled wrong-action penalties, save validation for bounded palate exposure, shared trait boredom and 30-day half-life, unmarked/blurred labels with exact hidden spoilage, and 12 differentiated new food lines. Existing chapter-specific fixtures and clear/unlock flow still pass.
+- `node tests/simulation.cjs`: **162 deterministic assertions pass**. The classic 365-day resource policy still wins at day 366; its original short-window same-flavor penalty remains. Catalogue is **19,800 goods**, with 200 classic seed-stock goods.
+
+## Browser / offline regressions
+- `tests/levels-browser.cjs`: passes the three difficulty controls, selected standard state, chapter-specific budget display, 3D stock/order book, checkout, hidden clock and needs HUD; **0 external requests, 0 JS errors**.
+- `tests/browser.cjs`: classic shop, purchasing, placement, save/import, mobile route and no-WebGL fallback pass; **0 external requests, 0 JS errors**.
+- `tests/realism.cjs`: offline models/hands/placement/sample save isolation and opaque no-network iframe pass.
+- `tests/navigation.cjs`: 14 shop stops, touch arrows, pause/load, and 257 seeded routes pass; reports **`liveClock:true`**, **0 external requests**, **0 JS errors**.
+- `tests/audio.cjs`: **72/72** embedded clips decode; sound controls/actions pass.
+- `QA_SCREENSHOTS=1 ... node tests/levels-browser.cjs` passed; manually inspected updated chapter picker (three difficulty cards and per-chapter budget). Temporary screenshots were removed.
+
+## Build / boundaries
+- `python3 tools/build.py` generated offline `index.html` at **22,855,124 bytes** and a temporary ZIP in `dist/`; `dist/` and QA artifacts were removed after verification. Workspace measured about **71 MB**.
+- `scene.js` already advances idle time during active play. This update does not add offline time advancement. Pause/panels/busy actions continue to suppress idle time.
+- Uncertain/missing expiry is only a public label; internal spoilage age, refrigeration and power effects are unchanged. Trait fatigue and difficulty are chapter-only; classic mode keeps its 365-day rules and 300-paper budget.

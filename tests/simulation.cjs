@@ -159,6 +159,7 @@ ok(CATALOG.filter(i=>!i.gen).every(i=>typeof ITEM_USE[i.id]==='string'&&ITEM_USE
  G.dirt=60;G.inv=G.inv.filter(b=>!['disinfect','broom','mop'].includes(b.id));doAction('clean');const noDis=60-G.dirt;give('disinfect');G.dirt=60;doAction('clean');ok(60-G.dirt>=noDis+9.9,'disinfectant cleans more');
  const rice=()=>G.inv.find(b=>b.id==='rice'&&b.units>0&&!b.packed);G.inv=G.inv.filter(b=>!['salt','pepper','pan','bowl','spice','onion','greens','sprouts','cherrytom'].includes(b.id));G.foodHistory=[];G.stats.morale=40;consumeMeal(rice().uid,true,false);const m1=G.stats.morale-40;
  give('salt');give('pepper');give('pan');G.foodHistory=[];G.stats.morale=40;const salt=amount('salt');consumeMeal(rice().uid,true,false);ok(G.stats.morale-40>=m1+2.9&&amount('salt')===salt-1,'salt, pepper and a pan make a cooked meal nicer');
+ G.inv=G.inv.filter(b=>!['salt','pepper','pan','bowl','spice','onion','greens','sprouts','cherrytom'].includes(b.id));G.foodHistory=[DB.rice.flavor,DB.rice.flavor,DB.rice.flavor];G.stats.morale=40;consumeMeal(rice().uid,true,false);ok(G.stats.morale<40,'classic 365-day mode retains its original short-window repeat penalty');
  give('jar');const jr=rice();jr.age=0;jr.location='shelf';for(let k=0;k<288;k++){G.stats.food=G.stats.water=G.stats.energy=G.stats.health=G.stats.morale=80;G.bladder=G.bowel=0;simulate(5,'idle');}ok(jr.age<0.8&&jr.age>0.7,'storage jars slow dry goods');}
 
 // v0.17: a vast catalogue, ~1% stocked per seed, every trait does something real.

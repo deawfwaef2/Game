@@ -14,8 +14,8 @@ for (const f of ["src/data.js","src/catalog-gen.js","src/core.js","src/life-text
 const run = (code) => vm.runInContext(code,ctx);
 run(`
 let checks=0; function ok(x,m){assert.ok(x,m);checks++;}
-function startChapter(id, kit={water:1}){
-  closePreparation(); phase="title"; currentSeed="test-"+id; env=environment(currentSeed); lvPending=id;
+function startChapter(id, kit={water:1}, difficulty="standard"){
+  closePreparation(); phase="title"; currentSeed="test-"+id; env=environment(currentSeed); lvPending=id; lvDifficultyKey=difficulty;
   ok(startPreparation(),"chapter may enter its one-time procurement"); cart={...kit}; ok(beginGame(),"chapter checkout succeeds");
   for(const b of G.inv){b.packed=false;b.opened=true;b.location="shelf";}
   return G;
@@ -39,7 +39,18 @@ ok(lvPhysicalCatalog().length<=200,"walkable shelf displays only a readable samp
 ok(SHOP_CATS.every(cat=>lvPhysicalCatalog().some(x=>x.category===cat)),"each category receives visible shelf stock");
 lvProgress.unlocked=1;lvPending=null;phase="title";
 
-let g=startChapter("bellhouse");
+// Difficulty changes chapter-only budgets; the classic budget remains the original 300.
+lvPending="bellhouse";phase="shop";lvDifficultyKey="calm";ok(gameBudget()===360,"calm chapter budget is increased by twenty percent");
+lvPending="thousand";ok(gameBudget()===3000,"long chapter has a distinctly larger calm budget");
+lvPending="bellhouse";lvDifficultyKey="strict";ok(gameBudget()===246,"strict chapter budget is reduced");
+lvPending=null;phase="title";lvDifficultyKey="standard";ok(gameBudget()===300,"classic 365-day budget remains unchanged");
+
+let g=startChapter("bellhouse",{water:1},"calm");ok(G.level.difficulty==="calm"&&Math.abs(G.cash-(360-cartSummary({water:1}).cost))<0.01,"checkout records the selected chapter budget and deducts only purchased goods");
+g=startChapter("night-radio",{radio:1},"calm");ok(lvWithinWindow(2*1440+20*60+15,20*60+30,22*60),"calm difficulty widens chapter signal windows");
+g=startChapter("night-radio",{radio:1},"strict");ok(!lvWithinWindow(2*1440+20*60+30,20*60+30,22*60),"strict difficulty narrows chapter signal windows");
+g=startChapter("bellhouse",{water:1},"strict");G.minute=3*1440+12*60;lvTryAt("bell",G.minute);ok(G.level.penalty===1.5,"strict difficulty increases a wrong-mechanism penalty");
+
+g=startChapter("bellhouse");
 ok(g.level.id==="bellhouse"&&g.level.nominal===60,"fresh chapter save stores its chapter rules");
 ok(timeHidden()&&gameGoalDays()===60&&gameBudget()===300,"chapter hides the clock and loads its own goal and budget");
 G.minute=1440+23*60+30;ok(lvTryAt("bell",G.minute),"night bell accepted within its hidden window");
@@ -50,6 +61,28 @@ ok(G.level.wrong===1&&G.level.penalty===1,"wrong press adds a hidden penalty");
 ok(validateSave(JSON.parse(JSON.stringify(G))),"chapter save validates and round-trips");
 let bad=JSON.parse(JSON.stringify(G));bad.level.id="made-up";ok(!validateSave(bad),"unknown chapter IDs are rejected");
 bad=JSON.parse(JSON.stringify(G));bad.level.rng=-1;ok(!validateSave(bad),"invalid chapter random state is rejected");
+
+// Chapter-only palate memory is shared across trait tags, accumulates with meals, and fades with game time.
+g=startChapter("bellhouse",{water:1},"standard");
+const tasteFood={id:"test_taste_food",name:"测试风味食品",kind:"food",life:9999,flavor:"plain-grain",trait:"sweet",tasteTags:["sweet","soft"],joy:0.5,kcal:180};DB[tasteFood.id]=tasteFood;
+G.stats.morale=80;G.stats.food=G.stats.water=G.stats.energy=100;G.stats.health=100;G.nextEvent=1e7;G.level.taste={};
+let tasteN=0;function eatTaste(){const uid="itaste"+(tasteN++);G.inv.push({uid,id:tasteFood.id,units:1,packed:false,opened:false,location:"shelf",bag:0,age:0,created:G.minute});consumeMeal(uid,true,false);}
+for(let i=0;i<9;i++)eatTaste();
+const samePenalty=lvTastePenalty(tasteFood),sibling={...tasteFood,id:"test_sibling",flavor:"different-fruit",trait:"sweet",tasteTags:["sweet"]};
+const exposure=G.level.taste["flavor:plain-grain"];
+ok(samePenalty>1,"repeated meals build a meaningful trait-based boredom penalty");
+ok(lvTastePenalty(sibling)>0,"different foods sharing the same traits inherit some monotony");
+const beforeTenth=G.stats.morale;eatTaste();ok(G.stats.morale<beforeTenth,"accumulated boredom reduces chapter morale");
+const beforeFade=G.level.taste["flavor:plain-grain"];lvDecayTaste(30*1440);
+ok(Math.abs(G.level.taste["flavor:plain-grain"]/beforeFade-0.5)<0.002,"palate fatigue has a slow thirty-day half-life");
+ok(validateSave(JSON.parse(JSON.stringify(G))),"trait exposure persists in validated chapter saves");
+bad=JSON.parse(JSON.stringify(G));bad.level.taste["flavor:plain-grain"]=101;ok(!validateSave(bad),"impossible palate exposure is rejected");
+const unmarked=CATALOG.find(i=>i.life<9999&&i.expiryMark==="unmarked"),blurred=CATALOG.find(i=>i.life<9999&&i.expiryMark==="blurred");
+ok(!!unmarked&&!!blurred,"catalogue contains both absent and smudged expiry labels");
+const labelBatch={age:0,location:"shelf"};ok(expiryPublicLabel(unmarked)==="包装未印日期"&&!expiryPublicLabel(unmarked).includes(String(unmarked.life)),"unmarked goods conceal exact shelf life in public labels");
+ok(expiryInventoryLabel(unmarked,labelBatch).includes("批次仍会变质"),"unknown expiry does not disable internal spoilage");
+labelBatch.age=unmarked.life;ok(isSpoiled({id:unmarked.id,age:unmarked.life})&&expiryInventoryLabel(unmarked,labelBatch).includes("已变质"),"spoilage still follows the exact internal shelf-life clock");
+ok(CG_EXTRA_PRODUCTS.length>=10&&CG_EXTRA_PRODUCTS.every(i=>DB[i.id]?.tasteTags?.length),"new foods add differentiated taste traits and descriptions");
 
 // Each chapter has its own operational trigger, and no operation emits success/failure text.
 g=startChapter("sealed");

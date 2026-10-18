@@ -17,6 +17,9 @@ const fileURL="file://"+path.resolve("index.html"),out=path.resolve("tests/artif
  await page.locator("#lvPicker").waitFor({state:"visible"});
  assert.equal(await page.locator(".lv-chapter").count(),6);
  assert.equal(await page.locator(".lv-chapter:not([disabled])").count(),1);
+ assert.equal(await page.locator("[data-lv-difficulty]").count(),3,"chapter picker offers three difficulty profiles");
+ assert.equal(await page.locator('[data-lv-difficulty="standard"]').getAttribute("aria-pressed"),"true","standard difficulty is selected by default");
+ assert.ok((await page.locator('[data-level-select="bellhouse"]').innerText()).includes("预算 · E$ 300"),"chapter cards show chapter-specific budget");
  await snap("02-chapter-book.jpg",84);
  await page.locator('[data-level-select="bellhouse"]').click();
  await page.waitForFunction(()=>phase==="shop"&&W.store,{timeout:30000});

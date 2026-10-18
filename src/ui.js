@@ -120,20 +120,22 @@ function showProduct(id) {
   if (!it) return;
   const description =
     it.desc ||
-    (it.kind === "food"
-      ? it.cook
-        ? "需要热源和少量水烹煮。开启包装后注意收纳，搭配不同口味有助于精神。"
-        : "可直接食用，按份数消耗。免煮食物适合停电时应急。"
-      : it.kind === "book"
-        ? "可按页阅读并重读。读完之后，新鲜感与精神收益会逐渐降低。"
-        : it.kind === "drink"
-          ? "按份取用，及时补水。冲泡饮品需要水和合适热源。"
-          : "解包后放入对应生活分区；在家务或个人护理面板中使用。");
+    (it.gen && typeof cgUse === "function"
+      ? cgUse(it)
+      : it.kind === "food"
+        ? it.cook
+          ? "需要热源和少量水烹煮。开启包装后注意收纳，搭配不同口味有助于精神。"
+          : "可直接食用，按份数消耗。免煮食物适合停电时应急。"
+        : it.kind === "book"
+          ? "可按页阅读并重读。读完之后，新鲜感与精神收益会逐渐降低。"
+          : it.kind === "drink"
+            ? "按份取用，及时补水。冲泡饮品需要水和合适热源。"
+            : "解包后放入对应生活分区；在家务或个人护理面板中使用。");
   showPanel(
     "product",
     it.name,
     "COOPERATIVE / PRODUCT DETAILS",
-    `<div class="product-detail-art">${productArt(it)}</div><div class="stat-grid"><div class="stat-tile"><span>单件价格</span><strong>${it.price.toFixed(2)}<small>纸币</small></strong><p>仅开局可购买，入室后不能补货</p></div><div class="stat-tile"><span>单件重量</span><strong>${it.weight}<small>kg</small></strong><p>${it.bulky ? "大件独立包装" : "按8kg承重分袋"}</p></div><div class="stat-tile"><span>${it.kind === "book" ? "总页数" : "份数 / 次数"}</span><strong>${it.kind === "book" ? it.pages : it.servings}</strong><p>${it.life < 9999 ? "常温标示保质期" + it.life + "天" : "可长期保存"}</p></div></div><p class="panel-intro">${description}${it.kcal ? "<br>每份约" + it.kcal + "kcal，包装合计约" + it.kcal * it.servings + "kcal。" : ""}${it.capacity ? "<br>容器容量" + it.capacity + "L，需先在水槽装水。" : ""}</p>${phase === "shop" ? `<button class="full-button gold" data-cart="${it.id}" data-delta="1">加入一件采购单 · ${money(it.price * 1)}</button>` : ""}<p class="panel-note">保质期按游戏时间结算；现实中关掉页面不会消耗物资。页面中的药品与健康效果均为虚构游戏机制。</p>`,
+    `<div class="product-detail-art">${productArt(it)}</div><div class="stat-grid"><div class="stat-tile"><span>单件价格</span><strong>${it.price.toFixed(2)}<small>纸币</small></strong><p>仅开局可购买，入室后不能补货</p></div><div class="stat-tile"><span>单件重量</span><strong>${it.weight}<small>kg</small></strong><p>${it.bulky ? "大件独立包装" : "按8kg承重分袋"}</p></div><div class="stat-tile"><span>${it.kind === "book" ? "总页数" : "份数 / 次数"}</span><strong>${it.kind === "book" ? it.pages : it.servings}</strong><p>${expiryPublicLabel(it)}</p></div></div><p class="panel-intro">${description}${it.kcal ? "<br>每份约" + it.kcal + "kcal，包装合计约" + it.kcal * it.servings + "kcal。" : ""}${it.capacity ? "<br>容器容量" + it.capacity + "L，需先在水槽装水。" : ""}</p>${phase === "shop" ? `<button class="full-button gold" data-cart="${it.id}" data-delta="1">加入一件采购单 · ${money(it.price * 1)}</button>` : ""}<p class="panel-note">保质期按游戏时间结算；现实中关掉页面不会消耗物资。页面中的药品与健康效果均为虚构游戏机制。</p>`,
   );
 }
 function renderCategories() {
@@ -162,7 +164,7 @@ function renderCatalog() {
             : it.servings > 1
               ? `${it.servings}次用量`
               : "耐用物品";
-      return `<article class="product-card ${q ? "in-cart" : ""}" title="${esc(it.desc || it.name)}"><button class="product-art" data-product="${it.id}" aria-label="查看${esc(it.name)}详情">${productArt(it)}</button><h3>${it.name}</h3><div class="product-meta"><span>${it.weight.toFixed(it.weight < 1 ? 2 : 1)}kg</span><span>${meta}</span>${it.life < 9999 ? `<span>${it.life}天${it.cook ? " · 需烹煮" : ""}</span>` : ""}</div><div class="product-footer"><span class="product-price"><small>E$</small>${(it.price * 1).toFixed(2)}</span><div class="qty-control"><button data-cart="${it.id}" data-delta="-1" aria-label="减少${it.name}">−</button><span>${q}</span><button data-cart="${it.id}" data-delta="1" aria-label="添加${it.name}">＋</button></div></div></article>`;
+      return `<article class="product-card ${q ? "in-cart" : ""}" title="${esc(it.desc || it.name)}"><button class="product-art" data-product="${it.id}" aria-label="查看${esc(it.name)}详情">${productArt(it)}</button><h3>${it.name}</h3><div class="product-meta"><span>${it.weight.toFixed(it.weight < 1 ? 2 : 1)}kg</span><span>${meta}</span>${it.life < 9999 ? `<span>${expiryPublicLabel(it)}${it.cook ? " · 需烹煮" : ""}</span>` : ""}</div><div class="product-footer"><span class="product-price"><small>E$</small>${(it.price * 1).toFixed(2)}</span><div class="qty-control"><button data-cart="${it.id}" data-delta="-1" aria-label="减少${it.name}">−</button><span>${q}</span><button data-cart="${it.id}" data-delta="1" aria-label="添加${it.name}">＋</button></div></div></article>`;
     })
     .join("");
 }
@@ -417,7 +419,8 @@ function openInventory() {
   const html = `<div class="inv-toolbar"><div class="inventory-filters">${filters.map(([id, name]) => `<button class="inventory-filter ${selectedInv === id ? "active" : ""}" data-inv-filter="${id}">${name}</button>`).join("")}</div><span class="inv-count">${list.length}批物资 · 储水${G.tank.toFixed(1)}L</span></div>${countPackages() ? '<p class="panel-note warn" style="margin:0 0 17px">仍有未拆采购袋。<button class="text-button" data-station="bags">去解开袋口 ↗</button></p>' : ""}<div class="inv-list">${list
     .map((b) => {
       const it = DB[b.id],
-        spoiled = isSpoiled(b) || b.contaminated;
+        expired = isSpoiled(b),
+        spoiled = expired || b.contaminated;
       const location =
         {
           fridge: "冰箱",
@@ -428,9 +431,9 @@ function openInventory() {
         }[b.location] || "储物架";
       const expiry =
         it.life < 9999
-          ? spoiled
-            ? '<span class="spoiled-label">已过期，不能食用</span>'
-            : `剩余约${Math.max(0, Math.floor((it.life - b.age) / (b.location === "fridge" && env.fridge && G.power ? 0.22 : 1)))}天`
+          ? expired
+            ? '<span class="spoiled-label">已变质，不能食用</span>'
+            : expiryInventoryLabel(it, b)
           : "耐用 / 可长期存放";
       let actions = "";
       if (b.packed)

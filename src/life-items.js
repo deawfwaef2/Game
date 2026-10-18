@@ -154,7 +154,7 @@ function itemFacts(it) {
   } else if (it.kind === "book") out.push(`${it.pages}页`, "每次读2小时");
   else if (it.servings > 1) out.push(`可用${it.servings}次`);
   else out.push("耐用品");
-  if (it.life < 9999) out.push(it.life >= 365 ? `可存${(it.life / 365).toFixed(it.life % 365 ? 1 : 0)}年` : `常温${it.life}天就坏`);
+  if (it.life < 9999) out.push(expiryPublicLabel(it));
   out.push(`${it.weight}kg`);
   return out.join(" · ");
 }

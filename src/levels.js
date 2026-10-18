@@ -46,6 +46,11 @@ const LV_CHAPTERS = [
   },
 ];
 const LV_BY_ID = Object.fromEntries(LV_CHAPTERS.map((c) => [c.id, c]));
+const LV_DIFFICULTIES = {
+  calm: { id:"calm", name:"宽裕", budget:1.2, fatigue:0.72, penalty:0.72, window:1.45, note:"预算多两成 · 味觉疲劳较缓 · 机关时窗较宽" },
+  standard: { id:"standard", name:"标准", budget:1, fatigue:1, penalty:1, window:1, note:"按本章原始预算与机关时窗" },
+  strict: { id:"strict", name:"拮据", budget:0.82, fatigue:1.3, penalty:1.5, window:0.6, note:"预算少近两成 · 味觉疲劳更重 · 误触代价更高" },
+};
 const LV_PRODUCTS = [];
 const LV = {};
 function lvAddProduct(id, name, price, weight, category, clock, desc, shape) {
@@ -70,6 +75,16 @@ lvAddProduct("lv_sandglass", "半小时沙漏", 1.25, 0.16, "tool", "hourglass",
 
 let lvPending = null;
 let lvBaseSeed = "";
+function lvReadDifficultyKey() {
+  try {
+    const saved = localStorage.getItem("anders-room-difficulty-v1");
+    return LV_DIFFICULTIES[saved] ? saved : "standard";
+  } catch (e) { return "standard"; }
+}
+let lvDifficultyKey = lvReadDifficultyKey();
+function lvDifficulty(key = lvState()?.difficulty || lvDifficultyKey) { return LV_DIFFICULTIES[key] || LV_DIFFICULTIES.standard; }
+function lvBudgetFor(id, difficulty = lvDifficultyKey) { return Math.round((LV_BY_ID[id]?.budget || 300) * lvDifficulty(difficulty).budget); }
+function lvSaveDifficultyKey() { try { localStorage.setItem("anders-room-difficulty-v1", lvDifficultyKey); } catch (e) {} }
 let lvShopPage = 0;
 let lvOrderPage = 0;
 let lvOrderCategory = "all";
@@ -106,23 +121,24 @@ function lvUnlocked() {
   return Math.max(1, Math.min(6, lvProgress.unlocked || 1));
 }
 function lvBudget() {
-  const id = phase === "shop" && lvPending ? lvPending : G?.level?.id;
-  return LV_BY_ID[id]?.budget || 300;
+  const pending = phase === "shop" && lvPending;
+  const id = pending ? lvPending : G?.level?.id;
+  return lvBudgetFor(id, pending ? lvDifficultyKey : G?.level?.difficulty || "standard");
 }
 function lvGoalDays() {
   const id = phase === "shop" && lvPending ? lvPending : G?.level?.id;
   return LV_BY_ID[id]?.nominal || 365;
 }
 function lvChapterLabel() {
-  return G?.level ? `${String(lvDef(G.level.id).no).padStart(2, "0")} · ${lvDef(G.level.id).title}` : "没有日期的房间";
+  return G?.level ? `${String(lvDef(G.level.id).no).padStart(2, "0")} · ${lvDef(G.level.id).title} · ${lvDifficulty(G.level.difficulty).name}` : "没有日期的房间";
 }
 function lvWindowBlocked() {
   return !!(G?.level && !G.ended && phase === "playing" && lvDef(G.level.id).window);
 }
-function lvNewRun(id, seed) {
+function lvNewRun(id, seed, difficulty = lvDifficultyKey) {
   const c = lvDef(id);
   return {
-    id, nominal: c.nominal, cut: 0, penalty: 0,
+    id, difficulty: LV_DIFFICULTIES[difficulty] ? difficulty : "standard", taste:{}, nominal: c.nominal, cut: 0, penalty: 0,
     correct: 0, wrong: 0, missed: 0,
     lastAttempt: {}, lastCueAt: 0, cueAt: 0, cueUntil: 0, cueOpen: false, cueNo: 0,
     rng: hashSeed(`${seed}|${id}|hidden-mechanism`),
@@ -132,12 +148,19 @@ function lvNewRun(id, seed) {
     datePages: 0,
   };
 }
-function lvState() { return G?.level && LV_BY_ID[G.level.id] ? G.level : null; }
+function lvState() {
+  const l = G?.level && LV_BY_ID[G.level.id] ? G.level : null;
+  if (l) {
+    if (!LV_DIFFICULTIES[l.difficulty]) l.difficulty = "standard";
+    l.taste ||= {};
+  }
+  return l;
+}
 const lvBaseFreshState = freshState;
 freshState = function (seed) {
   const s = lvBaseFreshState.apply(this, arguments);
   if (lvPending && phase === "shop") {
-    s.level = lvNewRun(lvPending, seed);
+    s.level = lvNewRun(lvPending, seed, lvDifficultyKey);
     s.level.startedAt = s.minute;
     s.level.windAt = s.minute;
     if (s.level.id === "sealed" || s.level.id === "thousand")
@@ -153,6 +176,11 @@ validateSave = function (s) {
   const n = (v, min = 0, max = maxMinute) => typeof v === "number" && Number.isFinite(v) && v >= min && v <= max;
   const bool = (v) => typeof v === "boolean";
   if (!l || typeof l !== "object" || !LV_BY_ID[l.id] || l.nominal !== LV_BY_ID[l.id].nominal) return false;
+  if (l.difficulty !== undefined && !LV_DIFFICULTIES[l.difficulty]) return false;
+  if (l.taste !== undefined) {
+    if (!l.taste || typeof l.taste !== "object" || Array.isArray(l.taste) || Object.keys(l.taste).length > 256) return false;
+    for (const [k,v] of Object.entries(l.taste)) if (!k || k.length > 90 || !n(v,0,100)) return false;
+  }
   for (const [k, min, max] of [["cut",0,1e7],["penalty",0,1e7],["correct",0,1e6],["wrong",0,1e6],["missed",0,1e6],["cueAt",0,maxMinute],["cueUntil",0,maxMinute],["cueNo",0,1e6],["rng",0,4294967295],["elapsed",0,2000],["startedAt",0,maxMinute],["windAt",0,maxMinute],["datePages",0,2000],["clockDrift",-100,100],["stars",0,3]]) if (!n(l[k],min,max)) return false;
   if (!["cueOpen","lastStory","complete"].every((k) => bool(l[k]))) return false;
   if (!l.lastAttempt || typeof l.lastAttempt !== "object" || Array.isArray(l.lastAttempt) || Object.keys(l.lastAttempt).length > 32) return false;
@@ -319,6 +347,13 @@ function lvInWindow(minute, start, end) {
   const t = lvTimeOf(minute);
   return start <= end ? t >= start && t <= end : t >= start || t <= end;
 }
+function lvWithinWindow(minute, start, end) {
+  const width = start <= end ? end - start : 1440 - start + end;
+  const center = (start + width / 2) % 1440;
+  const half = Math.max(1, (width * lvDifficulty().window) / 2);
+  return lvInWindow(minute, (center - half + 1440) % 1440, (center + half) % 1440);
+}
+function lvCueDuration() { return Math.max(5, Math.round(20 * lvDifficulty().window)); }
 function lvAttemptOnce(key, at = G.minute, dayKey = null) {
   const l = lvState();
   if (!l) return false;
@@ -332,7 +367,7 @@ function lvOutcome(ok, reward, penalty = 1) {
   const l = lvState();
   if (!l) return false;
   if (ok) { l.correct++; l.cut += reward; }
-  else { l.wrong++; l.penalty += penalty; }
+  else { l.wrong++; l.penalty += penalty * lvDifficulty(l.difficulty).penalty; }
   return !!ok;
 }
 function lvTryAt(action, at = G.minute, shift = false) {
@@ -343,7 +378,7 @@ function lvTryAt(action, at = G.minute, shift = false) {
     const key = id === "thousand" ? "bell" : "press";
     const night = Math.floor(at / 1440) - (lvTimeOf(at) < 60 ? 1 : 0);
     if (!lvAttemptOnce(key, at, night)) return false;
-    const ok = lvInWindow(at, 23 * 60, 60);
+    const ok = lvWithinWindow(at, 23 * 60, 60);
     lvOutcome(ok, id === "thousand" ? 4 : 1, id === "thousand" ? 2 : 1);
     return ok;
   }
@@ -357,14 +392,14 @@ function lvTryAt(action, at = G.minute, shift = false) {
   }
   if (id === "night-radio") {
     if (action !== "radio" || !lvAttemptOnce("radio", at)) return false;
-    const ok = lvInWindow(at, 20 * 60 + 30, 22 * 60) && (G.power || has("battery"));
+    const ok = lvWithinWindow(at, 20 * 60 + 30, 22 * 60) && (G.power || has("battery"));
     lvOutcome(ok, 3, 2);
     return ok;
   }
   if (id === "ledger") {
     if (action !== "ledger" || !shift || !lvAttemptOnce("ledger", at)) return false;
     const rain = typeof lrPrecip === "function" ? lrPrecip(at) === "rain" : false;
-    const ok = lvInWindow(at, 18 * 60, 20 * 60) && rain && has("lighter");
+    const ok = lvWithinWindow(at, 18 * 60, 20 * 60) && rain && has("lighter");
     if (has("lighter")) lvConsumeOne("lighter");
     lvOutcome(ok, 2, 2);
     return ok;
@@ -374,7 +409,7 @@ function lvTryAt(action, at = G.minute, shift = false) {
     if (shift) {
       if (!lvAttemptOnce("wind", at)) return false;
       if (at - (l.windAt || l.startedAt) < 6 * 1440) {
-        l.wrong++; l.penalty++;
+        l.wrong++; l.penalty += lvDifficulty(l.difficulty).penalty;
         return false;
       }
       l.windAt = at;
@@ -382,7 +417,7 @@ function lvTryAt(action, at = G.minute, shift = false) {
     }
     if (!lvAttemptOnce("clock", at)) return false;
     const due = !l.windAt || at - l.windAt <= 8 * 1440;
-    const ok = lvInWindow(at, 11 * 60 + 50, 12 * 60 + 10) && due;
+    const ok = lvWithinWindow(at, 11 * 60 + 50, 12 * 60 + 10) && due;
     lvOutcome(ok, 4, 3);
     return ok;
   }
@@ -397,13 +432,13 @@ function lvTryAt(action, at = G.minute, shift = false) {
     }
     if (action === "radio") {
       if (!lvAttemptOnce("radio", at)) return false;
-      const ok = lvInWindow(at, 20 * 60 + 30, 22 * 60) && (G.power || has("battery"));
+      const ok = lvWithinWindow(at, 20 * 60 + 30, 22 * 60) && (G.power || has("battery"));
       lvOutcome(ok, 4, 2); return ok;
     }
     if (action === "ledger") {
       if (!shift || !lvAttemptOnce("ledger", at)) return false;
       const rain = typeof lrPrecip === "function" && lrPrecip(at) === "rain";
-      const ok = lvInWindow(at, 18 * 60, 20 * 60) && rain && has("lighter");
+      const ok = lvWithinWindow(at, 18 * 60, 20 * 60) && rain && has("lighter");
       if (has("lighter")) lvConsumeOne("lighter");
       lvOutcome(ok, 2, 2); return ok;
     }
@@ -418,7 +453,7 @@ function lvProcess(before, after, minutes, context) {
   if ((l.id === "sealed" || l.id === "thousand") && l.cueAt && before < l.cueAt && after >= l.cueAt) {
     l.cueOpen = true;
     l.cueNo++;
-    l.cueUntil = l.cueAt + 20;
+    l.cueUntil = l.cueAt + lvCueDuration();
     l.lastCueAt = l.cueAt;
     l.cueAt = 0;
     G.lvBreak = true;
@@ -450,11 +485,94 @@ function lvProcess(before, after, minutes, context) {
     endGame(true, "门外传来了约定好的声音。屋里的日子，到此为止。");
   }
 }
+function lvTasteEntries(it, mode = "eat") {
+  if (!it || !["food", "drink", "seasoning"].includes(it.kind)) return [];
+  const scale = mode === "season" || mode === "side" ? 0.55 : mode === "drink" ? 0.8 : 1;
+  const entries = [];
+  const add = (kind, value, rate, weight, threshold) => {
+    if (!value) return;
+    const key = `${kind}:${String(value).slice(0,72)}`;
+    if (!entries.some((x) => x.key === key)) entries.push({key,rate:rate*scale,weight,threshold});
+  };
+  add("flavor", it.flavor || it.line || it.id, 0.85, 0.27, 2.2);
+  if (it.trait && it.trait !== "std") add("trait", it.trait, 0.55, 0.18, 2.4);
+  for (const tag of [...new Set(it.tasteTags || [])].slice(0,4)) add("taste", tag, 0.35, 0.10, 2.8);
+  if (it.brand) add("brand", it.brand, 0.2, 0.08, 3.5);
+  return entries;
+}
+function lvTastePenalty(it, mode = "eat") {
+  const l = lvState();
+  if (!l) return 0;
+  let score = 0;
+  for (const x of lvTasteEntries(it, mode)) score += Math.max(0, (l.taste[x.key] || 0) - x.threshold) * x.weight;
+  return Math.min(4.5, Math.round(score * 100) / 100);
+}
+function lvRecordTaste(it, mode = "eat") {
+  const l = lvState();
+  if (!l) return;
+  const factor = lvDifficulty(l.difficulty).fatigue;
+  for (const x of lvTasteEntries(it, mode)) l.taste[x.key] = Math.min(80, (l.taste[x.key] || 0) + x.rate * factor);
+  const keys = Object.keys(l.taste);
+  if (keys.length > 256) {
+    for (const [key] of Object.entries(l.taste).sort((a,b)=>a[1]-b[1]).slice(0,keys.length-256)) delete l.taste[key];
+  }
+}
+function lvDecayTaste(minutes) {
+  const l = lvState();
+  if (!l || !(minutes > 0)) return;
+  const factor = Math.pow(0.5, minutes / (30 * 1440));
+  for (const [key,value] of Object.entries(l.taste)) {
+    const next = Math.round(value * factor * 1000) / 1000;
+    if (next < 0.02) delete l.taste[key];
+    else l.taste[key] = next;
+  }
+}
+function lvApplyTaste(it, mode = "eat") {
+  const l = lvState();
+  if (!l || G.ended || !it) return 0;
+  const penalty = lvTastePenalty(it, mode);
+  lvRecordTaste(it, mode);
+  if (penalty > 0) {
+    G.stats.morale = clamp(G.stats.morale - penalty);
+    if (penalty >= 0.75 && mode === "eat")
+      logEvent(penalty >= 2 ? "熟悉的口味吃得太多，饭菜没能带来安慰。" : "相似的口味吃得多了，心情没有得到多少提振。", "normal");
+    if (G.stats.morale <= 0 && !G.ended) endGame(false, "相似的味道耗尽了最后一点精神。门仍然关着。 ");
+  }
+  if (typeof saveGame === "function") saveGame(false);
+  if (typeof renderHUD === "function") renderHUD();
+  return penalty;
+}
 const lvBaseSimulate = simulate;
 simulate = function (minutes, context) {
   const before = G?.minute || 0;
   const result = lvBaseSimulate(minutes, context);
-  if (G?.level && !G.ended) lvProcess(before, G.minute, minutes, context);
+  if (G?.level && !G.ended) {
+    lvDecayTaste(Math.max(0, G.minute - before));
+    lvProcess(before, G.minute, minutes, context);
+  }
+  return result;
+};
+const lvBaseConsumeMeal = consumeMeal;
+consumeMeal = function (uidValue, success = true, slow = false) {
+  const l = lvState();
+  if (!l) return lvBaseConsumeMeal.apply(this, arguments);
+  const b = G?.inv.find((x) => x.uid === uidValue), it = b && DB[b.id], units = b?.units, minute = G?.minute;
+  const seasoned = G.life?.seasoned || 0, sides = G.life?.sides || 0;
+  const result = lvBaseConsumeMeal.apply(this, arguments);
+  const consumed = G && it && G.minute !== minute && (b.units < units || !G.inv.includes(b));
+  if (consumed && !G.ended) {
+    lvApplyTaste(it, "eat");
+    if (it.cook && (G.life?.seasoned || 0) > seasoned) lvApplyTaste(DB[G.life.lastSeasonId], "season");
+    if (it.cook && (G.life?.sides || 0) > sides) lvApplyTaste(DB[G.life.lastSideId], "side");
+  }
+  return result;
+};
+const lvBaseActDrink = actDrink;
+actDrink = function (uidValue) {
+  if (!lvState() || uidValue === "tap") return lvBaseActDrink.apply(this, arguments);
+  const b = G?.inv.find((x) => x.uid === uidValue), it = b && DB[b.id], units = b?.units, minute = G?.minute;
+  const result = lvBaseActDrink.apply(this, arguments);
+  if (G && it && G.minute !== minute && (b.units < units || !G.inv.includes(b)) && !G.ended) lvApplyTaste(it, "drink");
   return result;
 };
 function lvServiceOrTry(id, shift = false) {
@@ -595,17 +713,26 @@ function lvOpenPicker() {
   let root = document.getElementById("lvPicker");
   if (!root) {
     root = document.createElement("section"); root.id="lvPicker"; root.className="lv-overlay"; root.hidden=true;
-    root.innerHTML = `<div class="lv-picker-card"><header><div><span class="lv-kicker">ANDERS EMPIRE · SEALED ROOMS</span><h2>章节簿</h2><p>每一间房都有自己的故事、时限和规则。没有时钟，也没有成功提示。</p></div><button class="lv-close" data-lv-close aria-label="关闭">×</button></header><div id="lvChapterGrid" class="lv-chapter-grid"></div><footer><span>通关会留下星级，并逐步开放供销社的全国目录。</span><span>时间在房间里不会自己告诉你。</span></footer></div>`;
+    root.innerHTML = `<div class="lv-picker-card"><header><div><span class="lv-kicker">ANDERS EMPIRE · SEALED ROOMS</span><h2>章节簿</h2><p>每一间房都有自己的故事、时限和规则。没有时钟，也没有成功提示。</p></div><button class="lv-close" data-lv-close aria-label="关闭">×</button></header><section class="lv-difficulty-block"><div class="lv-difficulty-heading"><strong>章节难度</strong><span>只影响章节；经典365天规则保持不变</span></div><div id="lvDifficultySelect" class="lv-difficulty-grid"></div></section><div id="lvChapterGrid" class="lv-chapter-grid"></div><footer><span>通关会留下星级，并逐步开放供销社的全国目录。</span><span>时间在房间里不会自己告诉你。</span></footer></div>`;
     document.body.appendChild(root);
   }
+  lvRenderPicker(root);
+  root.hidden=false;
+  root.querySelector(".lv-close")?.focus();
+}
+function lvRenderPicker(root) {
+  if (!root) return;
+  const choices = root.querySelector("#lvDifficultySelect");
+  if (choices) choices.innerHTML = Object.values(LV_DIFFICULTIES).map((d) =>
+    `<button class="lv-difficulty-card ${d.id === lvDifficultyKey ? "selected" : ""}" data-lv-difficulty="${d.id}" aria-pressed="${d.id === lvDifficultyKey}"><strong>${d.name}</strong><span>${d.note}</span></button>`
+  ).join("");
   const grid = root.querySelector("#lvChapterGrid");
+  if (!grid) return;
   grid.innerHTML = LV_CHAPTERS.map((c) => {
     const record = lvProgress.clears[c.id], unlocked = c.no <= lvUnlocked();
     const stars = record ? `<span class="lv-stars">${"★".repeat(record.stars)}${"☆".repeat(3-record.stars)}</span>` : `<span class="lv-locked">${unlocked ? "尚未通关" : "完成前一章后开放"}</span>`;
-    return `<button class="lv-chapter ${unlocked ? "" : "locked"}" ${unlocked ? `data-level-select="${c.id}"` : "disabled"}><span class="lv-chapter-no">${String(c.no).padStart(2,"0")} / 06</span><h3>${esc(c.title)}</h3><p>${esc(c.synopsis)}</p><div class="lv-card-meta"><span>基础期限 · ${c.nominal}天</span>${stars}</div><small>${esc(c.hint)}</small></button>`;
+    return `<button class="lv-chapter ${unlocked ? "" : "locked"}" ${unlocked ? `data-level-select="${c.id}"` : "disabled"}><span class="lv-chapter-no">${String(c.no).padStart(2,"0")} / 06</span><h3>${esc(c.title)}</h3><p>${esc(c.synopsis)}</p><div class="lv-card-meta"><span>期限 · ${c.nominal}天<br>预算 · E$ ${lvBudgetFor(c.id, lvDifficultyKey)}</span>${stars}</div><small>${esc(c.hint)}</small></button>`;
   }).join("");
-  root.hidden=false;
-  root.querySelector(".lv-close")?.focus();
 }
 function lvClosePicker() { const root=document.getElementById("lvPicker"); if(root) root.hidden=true; }
 function lvChoose(id) {
@@ -647,7 +774,7 @@ function lvRenderOrder() {
   const view=filtered.slice(lvOrderPage*48,(lvOrderPage+1)*48);
   root.querySelector("#lvOrderGrid").innerHTML=view.map(it=>{
     const n=cart[it.id]||0;
-    const useText=it.desc||it.note||"日常物资 · 按包装说明使用";
+    const useText=it.desc||(it.gen&&typeof cgUse==="function"?cgUse(it):it.note)||"日常物资 · 按包装说明使用";
     return `<article class="lv-order-item"><div class="lv-order-art">${productArt(it)}</div><h3>${esc(it.name)}</h3><p>${esc(useText)}</p><div class="lv-order-meta"><span>${it.weight.toFixed(it.weight<1?2:1)} kg</span><b>E$ ${it.price.toFixed(2)}</b></div><div class="lv-order-qty"><button data-lv-cart="${it.id}" data-delta="-1" ${n?"":"disabled"}>−</button><span>${n}</span><button data-lv-cart="${it.id}" data-delta="1">加入篮子</button></div></article>`;
   }).join("");
 }
@@ -672,7 +799,7 @@ if(lvBaseRenderCatalog) renderCatalog=function(){
   const pageSize=60,pages=Math.max(1,Math.ceil(list.length/pageSize)); lvShopPage=Math.max(0,Math.min(pages-1,lvShopPage));
   const view=list.slice(lvShopPage*pageSize,(lvShopPage+1)*pageSize);
   $("#shopEmpty").hidden=!!list.length;
-  $("#catalogGrid").innerHTML=view.map(it=>{const q=cart[it.id]||0,meta=it.kind==="food"?`${it.servings}份 · ${it.kcal} kcal/份`:it.kind==="book"?`${it.pages}页 · 可重读`:it.levelClock?"计时设备":it.servings>1?`${it.servings}次用量`:"耐用物品";return `<article class="product-card ${q?"in-cart":""}" title="${esc(it.desc||it.name)}"><button class="product-art" data-product="${it.id}" aria-label="查看${esc(it.name)}详情">${productArt(it)}</button><h3>${esc(it.name)}</h3><div class="product-meta"><span>${it.weight.toFixed(it.weight<1?2:1)}kg</span><span>${meta}</span>${it.life<9999?`<span>${it.life}天${it.cook?" · 需烹煮":""}</span>`:""}</div><div class="product-footer"><span class="product-price"><small>E$</small>${it.price.toFixed(2)}</span><div class="qty-control"><button data-cart="${it.id}" data-delta="-1" aria-label="减少${esc(it.name)}">−</button><span>${q}</span><button data-cart="${it.id}" data-delta="1" aria-label="添加${esc(it.name)}">＋</button></div></div></article>`;}).join("");
+  $("#catalogGrid").innerHTML=view.map(it=>{const q=cart[it.id]||0,meta=it.kind==="food"?`${it.servings}份 · ${it.kcal} kcal/份`:it.kind==="book"?`${it.pages}页 · 可重读`:it.levelClock?"计时设备":it.servings>1?`${it.servings}次用量`:"耐用物品";return `<article class="product-card ${q?"in-cart":""}" title="${esc(it.desc||it.name)}"><button class="product-art" data-product="${it.id}" aria-label="查看${esc(it.name)}详情">${productArt(it)}</button><h3>${esc(it.name)}</h3><div class="product-meta"><span>${it.weight.toFixed(it.weight<1?2:1)}kg</span><span>${meta}</span>${it.life<9999?`<span>${expiryPublicLabel(it)}${it.cook?" · 需烹煮":""}</span>`:""}</div><div class="product-footer"><span class="product-price"><small>E$</small>${it.price.toFixed(2)}</span><div class="qty-control"><button data-cart="${it.id}" data-delta="-1" aria-label="减少${esc(it.name)}">−</button><span>${q}</span><button data-cart="${it.id}" data-delta="1" aria-label="添加${esc(it.name)}">＋</button></div></div></article>`;}).join("");
   let nav=document.getElementById("lvShopPager");if(!nav){nav=document.createElement("nav");nav.id="lvShopPager";nav.className="lv-shop-pager";$("#catalogGrid").after(nav);}
   nav.innerHTML=`<button data-lv-shop-page="-1" ${lvShopPage===0?"disabled":""}>← 上一页</button><span>${list.length.toLocaleString("zh-CN")}件 · ${lvShopPage+1}/${pages}</span><button data-lv-shop-page="1" ${lvShopPage>=pages-1?"disabled":""}>下一页 →</button>`;
 };
@@ -680,7 +807,9 @@ const lvBaseOpenShop=typeof openShop==="function"?openShop:null;
 if(lvBaseOpenShop) openShop=function(isRestock=false){
   const r=lvBaseOpenShop.apply(this,arguments);
   if(lvPending&&phase==="shop"&&!W.enabled){
-    $("#shopIntroText").textContent=`本章基础期限 ${lvGoalDays()} 天。房间里没有时钟；计时器需开局购买，机关是否生效不会提示。开局只采购一次。`;
+    const difficulty=lvDifficulty(lvDifficultyKey);
+    $("#shopBudgetLabel").textContent=`章节预算 · E$ ${lvBudget().toFixed(2)}`;
+    $("#shopIntroText").textContent=`本章期限 ${lvGoalDays()} 天 · ${difficulty.name}难度 · 预算 E$ ${lvBudget().toFixed(2)}。房间里没有时钟；计时器需开局购买，机关是否生效不会提示。开局只采购一次。`;
     $("#catalogCount").textContent=`${lvCatalogStock().length.toLocaleString("zh-CN")} 件 / 本章已开放 · 目录共 ${CATALOG.length.toLocaleString("zh-CN")} 种`;
     renderCatalog();
   }
@@ -769,7 +898,7 @@ if(lvBaseUpdatePhase) updatePhase=function(){const r=lvBaseUpdatePhase.apply(thi
 const lvBaseOpenHelp=typeof openHelp==="function"?openHelp:null;
 if(lvBaseOpenHelp) openHelp=function(){
   if(!lvMode()) return lvBaseOpenHelp.apply(this,arguments);
-  showPanel("help","没有钟的章节","CHAPTER RULES / TIME IS HIDDEN",`<p class="help-paragraph">本章没有常驻日期、钟点或剩余天数。身体仍会按原来的节奏消耗，睡觉和日常活动也会推进时间。窗外光线、广播、环境声和你自己买来的计时用品，是判断时刻的线索。</p><p class="help-paragraph">商品只在开局采购一次。机械钟需要上弦，石英钟需要自己装电池，插电钟会受停电影响；不同商品的误差和故障不一样。手记会隐藏时间戳。</p><p class="help-paragraph">每间房都有自己的线索和机关。按对或按错都不会马上告诉你，结局后才会显示哪些操作生效。机关装置是房间固定设施，不是商店商品。错误后果依关卡而异。</p><p class="help-paragraph">危险状态会打断长时间跳过，健康或精神耗尽仍会失败。结局评级看实际等待时间和误触次数。通关会开放新章节和更多订货品种。</p>`);
+  showPanel("help","没有钟的章节","CHAPTER RULES / TIME IS HIDDEN",`<p class="help-paragraph">本章没有常驻日期、钟点或剩余天数。身体仍会按原来的节奏消耗，睡觉和日常活动也会推进时间；主动生活时，房间里的时间也会自然流动。窗外光线、广播、环境声和你自己买来的计时用品，是判断时刻的线索。</p><p class="help-paragraph">商品只在开局采购一次。机械钟需要上弦，石英钟需要自己装电池，插电钟会受停电影响；不同商品的误差和故障不一样。手记会隐藏时间戳。</p><p class="help-paragraph">不同食物的风味、特征和厂牌会形成味觉记忆。相似口味反复出现会逐步积累腻度、压低精神；这种疲劳会随游戏时间缓慢消退。换着吃、留意商品词条，有助于稳定心情。</p><p class="help-paragraph">有些包装的保质日期没有印清或已经褪色，物品仍会按真实内部批次变质；冰箱和储存位置会改变实际变质速度。</p><p class="help-paragraph">每间房都有自己的线索和机关。按对或按错都不会马上告诉你，结局后才会显示哪些操作生效。机关装置是房间固定设施，不是商店商品。难度会改变预算、机关时窗、误触代价和味觉疲劳；经典365天玩法不受影响。</p><p class="help-paragraph">危险状态会打断长时间跳过，健康或精神耗尽仍会失败。结局评级看实际等待时间和误触次数。通关会开放新章节和更多订货品种。</p>`);
 };
 const lvBaseWorldFrame=typeof worldFrame==="function"?worldFrame:null;
 if(lvBaseWorldFrame) worldFrame=function(now,dt){
@@ -785,6 +914,8 @@ function lvEnsureStyles() {
   if(document.getElementById("lvRuntimeCss")) return;
   const s=document.createElement("style");s.id="lvRuntimeCss";s.textContent=`.lv-overlay{position:fixed;inset:0;z-index:1200;display:grid;place-items:center;padding:clamp(12px,3vw,42px);background:rgba(18,22,19,.72);backdrop-filter:blur(10px);color:#272a23}.lv-overlay[hidden]{display:none!important}.lv-picker-card,.lv-order-card{width:min(1160px,100%);max-height:min(92dvh,1000px);overflow:auto;background:#e7dfca;border:1px solid #c9b995;box-shadow:0 30px 90px #1119;padding:clamp(18px,3vw,38px);font-family:Georgia,'Noto Serif CJK SC',serif}.lv-picker-card>header,.lv-order-head{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;border-bottom:1px solid #b8ad94;padding-bottom:20px}.lv-kicker{font:700 11px/1.4 system-ui,sans-serif;letter-spacing:.18em;color:#73705e}.lv-picker-card h2,.lv-order-head h2{font-size:clamp(30px,5vw,50px);font-weight:500;margin:8px 0}.lv-picker-card header p,.lv-order-head p{font:15px/1.6 system-ui,sans-serif;color:#686656;margin:0;max-width:680px}.lv-close{font-size:28px;border:1px solid #a69c84;background:transparent;width:44px;height:44px;color:#4c4d42;cursor:pointer}.lv-chapter-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:22px 0}.lv-chapter{min-height:215px;text-align:left;padding:20px;background:#f1ead8;border:1px solid #c6baa0;color:#302f28;cursor:pointer;transition:transform .18s,background .18s,border .18s}.lv-chapter:hover:not(:disabled){transform:translateY(-3px);background:#f7f0df;border-color:#9e875d}.lv-chapter.locked{opacity:.52;cursor:not-allowed;background:#ded8ca}.lv-chapter-no,.lv-card-meta,.lv-chapter small{font:12px/1.5 system-ui,sans-serif;color:#82785f;letter-spacing:.08em}.lv-chapter h3{font-size:23px;font-weight:500;margin:9px 0}.lv-chapter p{font:14px/1.6 system-ui,sans-serif;color:#615f54;min-height:44px;margin:0 0 12px}.lv-card-meta{display:flex;justify-content:space-between;gap:10px;border-top:1px solid #d6cbb2;padding-top:10px}.lv-chapter small{display:block;margin-top:10px;letter-spacing:0;color:#6e6b5d}.lv-stars{color:#9b7735;font-size:17px}.lv-locked{color:#8a5247}.lv-picker-card footer,.lv-order-foot{display:flex;justify-content:space-between;align-items:center;gap:14px;padding-top:16px;border-top:1px solid #c5b89d;font:13px/1.5 system-ui,sans-serif;color:#77715f}.lv-order-card{width:min(1280px,100%)}.lv-order-tools{display:grid;grid-template-columns:minmax(190px,1fr) 220px 1.2fr;gap:12px;align-items:center;margin:18px 0}.lv-order-tools input,.lv-order-tools select{background:#f8f3e7;border:1px solid #b8ad94;padding:12px;font:15px system-ui,sans-serif;color:#35362f}.lv-order-tools span{font:13px/1.45 system-ui,sans-serif;color:#77715f}.lv-order-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.lv-order-grid:has(.lv-order-item:only-child){grid-template-columns:minmax(240px,420px);justify-content:center}.lv-order-item{border:1px solid #cfc3aa;background:#f4eddd;padding:12px;min-width:0}.lv-order-art{height:86px;display:grid;place-items:center;background:#e4dcc7}.lv-order-art svg{height:68px;width:68px}.lv-order-item h3{font:600 15px/1.35 system-ui,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:9px 0 4px}.lv-order-item p{font:12px/1.4 system-ui,sans-serif;height:35px;overflow:hidden;color:#716d5f;margin:0 0 7px}.lv-order-meta,.lv-order-qty{display:flex;align-items:center;justify-content:space-between;gap:6px;font:12px system-ui,sans-serif}.lv-order-meta b{color:#735b2f}.lv-order-qty{margin-top:8px}.lv-order-qty button,.lv-order-foot button,.lv-next-button,.lv-shop-pager button{border:1px solid #9c906f;background:#e3d7b9;color:#403c2e;padding:8px 12px;font:600 12px system-ui,sans-serif;cursor:pointer}.lv-order-qty button:disabled,.lv-order-foot button:disabled,.lv-shop-pager button:disabled{opacity:.4;cursor:not-allowed}.lv-order-qty span{min-width:25px;text-align:center}.lv-order-foot{margin-top:16px}.lv-checkout-mini{margin-left:auto;background:#535c48!important;color:#f3ebd8!important}.lv-shop-pager{display:flex;align-items:center;justify-content:center;gap:14px;padding:16px;font:13px system-ui,sans-serif;color:#635f53}.lv-next-button{display:block;width:min(420px,100%);margin:0 auto 10px;padding:13px}@media(max-width:780px){.lv-chapter-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.lv-order-tools{grid-template-columns:1fr 1fr}.lv-order-tools span{grid-column:1/-1}.lv-order-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.lv-picker-card footer{display:block}.lv-picker-card footer span{display:block;margin:6px 0}}@media(max-width:480px){.lv-overlay{padding:8px}.lv-picker-card,.lv-order-card{padding:16px;max-height:96dvh}.lv-chapter-grid{grid-template-columns:1fr}.lv-chapter{min-height:0}.lv-order-tools{grid-template-columns:1fr}.lv-order-tools span{grid-column:auto}.lv-order-grid{gap:7px}.lv-order-item{padding:8px}.lv-order-art{height:68px}.lv-order-item h3{font-size:13px}.lv-order-item p{font-size:11px;height:31px}.lv-order-foot{flex-wrap:wrap}.lv-order-foot>*{flex:1}.lv-order-foot span{order:-1;text-align:center;flex-basis:100%}}`;
   document.head.appendChild(s);
+  const difficultyStyle=document.createElement("style");difficultyStyle.id="lvDifficultyStyles";difficultyStyle.textContent=`.lv-difficulty-block{margin:18px 0 4px}.lv-difficulty-heading{display:flex;justify-content:space-between;align-items:baseline;gap:12px;color:#4e4d41;font:13px system-ui,sans-serif}.lv-difficulty-heading strong{font-size:15px;letter-spacing:.04em}.lv-difficulty-heading span{color:#817963;font-size:11px}.lv-difficulty-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:9px}.lv-difficulty-card{display:flex;flex-direction:column;gap:4px;min-height:68px;padding:11px 14px;text-align:left;border:1px solid #c6baa0;background:#f2ecdd;color:#38382f;cursor:pointer}.lv-difficulty-card:hover{border-color:#9d875e;background:#f8f2e3}.lv-difficulty-card.selected{border-color:#73764f;background:#e4e4cf;box-shadow:inset 0 0 0 1px #73764f}.lv-difficulty-card strong{font:600 15px system-ui,sans-serif}.lv-difficulty-card span{color:#77715f;font:11px/1.4 system-ui,sans-serif}@media(max-width:600px){.lv-difficulty-heading{display:block}.lv-difficulty-heading span{display:block;margin-top:4px}.lv-difficulty-grid{grid-template-columns:1fr}.lv-difficulty-card{min-height:0}}`;
+  document.head.appendChild(difficultyStyle);
   const premium=document.createElement("style");premium.id="lvPremiumStyles";premium.textContent=`.lv-order-card{width:min(1240px,100%);max-height:94dvh;overflow:auto;padding:0;background:#ede7d8;border:1px solid #c6b998;border-radius:4px;box-shadow:0 34px 100px #090b09a8;color:#292b25}.lv-order-hero{position:relative;min-height:clamp(150px,21vh,220px);display:flex;align-items:flex-end;overflow:hidden;padding:23px 30px;border-bottom:3px solid #9a4f3c;background:linear-gradient(135deg,#53614c,#9b805e)}.lv-order-hero-image{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 57%;filter:saturate(.82) contrast(1.02)}.lv-order-hero-shade{position:absolute;inset:0;background:linear-gradient(90deg,rgba(14,17,14,.82),rgba(20,18,14,.4) 56%,rgba(20,18,14,.1)),linear-gradient(0deg,rgba(12,14,11,.68),transparent 78%)}.lv-order-hero-copy{position:relative;z-index:1;color:#f6ead1;max-width:75%}.lv-order-hero-copy .lv-kicker{color:#e8d8b5;font-size:10px;letter-spacing:.2em}.lv-order-hero-copy h2{margin:5px 0 3px;font:500 clamp(30px,4vw,46px)/1.12 Georgia,'Noto Serif CJK SC','Songti SC',serif;letter-spacing:.06em;text-shadow:0 2px 12px #0009}.lv-order-hero-copy p{margin:0;color:#e4dac5;font:12px/1.4 system-ui,sans-serif;letter-spacing:.02em;text-shadow:0 1px 5px #0009}.lv-order-close{position:absolute;z-index:3;top:17px;right:18px;border-color:#f3e8ce88;background:#1e211bc9;color:#f4ead7;border-radius:3px}.lv-order-content{padding:18px clamp(16px,2.3vw,30px) 22px}.lv-order-tools{grid-template-columns:minmax(220px,1fr) minmax(165px,210px) minmax(180px,.9fr);gap:12px;margin:0 0 15px}.lv-search-wrap{display:flex;align-items:center;gap:8px;padding:0 12px;background:#f8f4ea;border:1px solid #b9aa88;box-shadow:inset 0 1px 2px #4036210d}.lv-search-wrap>span{font:24px/1 Georgia,serif;color:#806e4a}.lv-search-wrap input{min-width:0;width:100%;padding:11px 0;border:0;background:transparent;outline:0;color:#30322b;font:14px system-ui,sans-serif}.lv-order-tools select{min-width:0;background:#f8f4ea;border:1px solid #b9aa88;padding:11px 12px;color:#34362d;font:14px system-ui,sans-serif}.lv-order-tools>span{padding-left:12px;border-left:2px solid #b38f5d;color:#776c58;font:12px/1.5 system-ui,sans-serif}.lv-order-grid{max-height:min(48vh,470px);overflow:auto;padding:2px 3px 5px;grid-template-columns:repeat(auto-fill,minmax(205px,1fr));gap:12px}.lv-order-item{position:relative;border:1px solid #cfc3a9;border-radius:3px;background:linear-gradient(160deg,#faf6ec,#eee7d5);padding:10px;box-shadow:0 3px 11px #574a3010;transition:transform .16s,box-shadow .16s,border-color .16s}.lv-order-item:hover{transform:translateY(-2px);border-color:#a9966b;box-shadow:0 8px 20px #574a3020}.lv-order-art{height:92px;border:1px solid #d9cfb9;background:radial-gradient(ellipse at 50% 70%,#c9bd9e,#e5ddca 72%);overflow:hidden}.lv-order-art svg{height:88px;width:88px;filter:drop-shadow(0 5px 3px #342d1d22)}.lv-order-item h3{white-space:normal;min-height:38px;margin:9px 0 4px;color:#33342e;font:600 14px/1.35 'Noto Serif CJK SC','Songti SC',serif}.lv-order-item p{height:43px;margin:0 0 8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;color:#746d5e;font:11px/1.5 system-ui,sans-serif}.lv-order-meta{padding-top:7px;border-top:1px solid #dfd5c0;color:#766d5a;font:11px system-ui,sans-serif}.lv-order-meta b{color:#934f3c;font-size:13px}.lv-order-qty{margin-top:9px}.lv-order-qty button{border:1px solid #ab9a73;background:#e9dfc8;color:#3e3a2e;border-radius:2px;padding:7px 9px;font:600 11px system-ui,sans-serif}.lv-order-qty button:last-child{background:#59624a;border-color:#59624a;color:#fff6e2}.lv-order-qty button:disabled{opacity:.4}.lv-order-foot{margin-top:14px;padding-top:13px;border-top:1px solid #cfc3a8}.lv-order-foot button{border-radius:2px}.lv-checkout-mini{margin-left:auto;background:#4d5b45!important;border-color:#4d5b45!important;color:#f5eddc!important;min-height:38px}.lv-order-grid::-webkit-scrollbar{width:8px}.lv-order-grid::-webkit-scrollbar-thumb{background:#b8a987;border:2px solid #eee7d8;border-radius:6px}@media(max-width:760px){.lv-order-hero{min-height:150px;padding:18px}.lv-order-hero-copy{max-width:88%}.lv-order-content{padding:14px}.lv-order-tools{grid-template-columns:minmax(0,1fr) minmax(125px,.65fr)}.lv-order-tools>span{grid-column:1/-1;border-left:0;padding:0}.lv-order-grid{max-height:52vh;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.lv-order-item{padding:8px}.lv-order-art{height:72px}.lv-order-art svg{height:68px;width:68px}.lv-order-item h3{font-size:12px;min-height:34px}.lv-order-item p{font-size:10px;height:38px}.lv-order-qty button{padding:7px 6px}.lv-order-foot{flex-wrap:wrap}.lv-order-foot>*{flex:1}.lv-order-foot span{order:-1;text-align:center;flex-basis:100%}}`;
   document.head.appendChild(premium);
   const f=document.createElement("style");
@@ -821,6 +952,8 @@ if(typeof document!=="undefined"){
   const cta=document.getElementById("chapterButton");
   cta?.addEventListener("click",lvOpenPicker);
   document.addEventListener("click",e=>{
+    const diff=e.target.closest?.("[data-lv-difficulty]");
+    if(diff && LV_DIFFICULTIES[diff.dataset.lvDifficulty]){lvDifficultyKey=diff.dataset.lvDifficulty;lvSaveDifficultyKey();lvRenderPicker(document.getElementById("lvPicker"));return;}
     const b=e.target.closest?.("[data-level-select]"); if(b){lvChoose(b.dataset.levelSelect);return;}
     if(e.target.closest?.("[data-lv-close]")){lvClosePicker();return;}
     if(e.target.closest?.("[data-lv-picker]")){lvClosePicker();lvOpenPicker();return;}

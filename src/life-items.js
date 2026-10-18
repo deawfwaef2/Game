@@ -159,7 +159,7 @@ function itemFacts(it) {
   return out.join(" · ");
 }
 function itemUse(it) {
-  return (it && (ITEM_USE[it.id] || it.desc)) || "";
+  return (it && (ITEM_USE[it.id] || it.desc || (typeof cgUse === "function" ? cgUse(it) : ""))) || "";
 }
 
 /* ---------- Real effects ---------- */

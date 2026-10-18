@@ -1466,7 +1466,7 @@ function iLabel(it) {
     x.textAlign = "center";
     x.textBaseline = "middle";
     x.fillText(
-      medical ? "安德士国营制药厂" : it.category === "fresh" ? "国营农贸合作社" : "安德士国营食品厂",
+      it.maker || (medical ? "安德士国营制药厂" : it.category === "fresh" ? "国营农贸合作社" : "安德士国营食品厂"),
       w / 2,
       24,
     );
@@ -1534,7 +1534,7 @@ function iLathe(points, seg = 24) {
 }
 function iProduct(id, parent) {
   const it = DB[id],
-    spec = I_SPEC[id];
+    spec = I_SPEC[id] || (it?.look && I_SPEC[it.look]);
   if (!it || !spec || !R.ready) return null;
   const [shape, dims, color] = spec,
     g = new THREE.Group(),

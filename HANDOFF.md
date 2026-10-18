@@ -310,3 +310,24 @@
   - SR_EFFECT 给房间里对准家具时的提示加一行效果说明。
 - CSS：所有 px 字号按对照表放大（5–8→13，9→14，10→15，11→16，12→17，13→18，14→19，15–16→20，17–28 各加4）。world.css 末尾加了一层提高可读性的样式。#worldSubtitle 挪到了上方。
 - tools/qa-ui.cjs 已修好：货架和过道的镜头位置改对了；进入房间前先 reload 并等待袋子出现。新增 tools/qa-feedback.cjs。
+
+# v0.17.0-preview — 两万种商品，每局到货 1%（2026-10-18）
+- 新增 src/catalog-gen.js：在构建时拼接到 data.js 后面（DATA 标记）。simulation 也加载它。
+  - 用固定种子生成约 2 万种商品，生成的商品带 gen:true、line（产品线）、trait（特色）、maker（厂名，印在标签上）、look（借用哪件原版商品的外形）。功能性的变体还带 base（对应的原版 id）。
+  - shopStock(seed)：每个分类先放入 STARTER 和 YEAR_KIT 用到的商品，再按种子随机补到 20 种，共 200 种。种子用 currentSeed。
+  - cgUse(it) 生成用途说明。itemUse 的顺序是 ITEM_USE → desc → cgUse。
+- core.js 的 has、amount、use 改为用 isItem 匹配（b.id===id 或 DB[b.id].base===id）。use() 会把实际用掉的 id 记进 USED_LOG。
+- 新增 src/life-catalog.js（life-items 之后加载）：
+  - 食物的 health、thirst、warmth、energy 生效。
+  - lcSeason：煮饭时轮流使用调味料。
+  - 消耗品用掉时，bonus 生效一次；耐用工具取同类里最好的一件（lcBest）。
+  - 每小时的舒适度有上限 0.24。
+  - 暖水瓶：停电时每天可以冲一次热饮。
+  - doCare：自我照顾用品，有每日次数限制。
+  - 包装 worldUseHeld（kind care 和 seasoning）和 worldProduct（look 在 I_SPEC 里没有外形时，借用原版外形）。
+- 其他文件的改动：
+  - world.js：手持物品的动作表加上 acts[it.base] 回退。
+  - interior.js：iProduct 的外形回退到 I_SPEC[look]；标签上的厂名改用 it.maker。
+  - store.js 和 ui.js：货架和旧版商店列表都改为 shopStock()。左墙挂了一块到货牌（x −6.9）。
+- 有专门代码路径的商品没有做变体：origami、pots、种子、ducttape、radkey、radio、puzzle、notebook、tape。
+- tools/qa-catalog.cjs：截罐头货架、消遣货架和到货牌。

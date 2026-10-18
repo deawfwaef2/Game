@@ -94,7 +94,7 @@ function openShop(isRestock = false) {
     "这是本局唯一一次采购。确认入室后无法购买或补货；请用300纸币规划365天的存量、保质期和生活资源。";
   $("#checkoutButton").innerHTML =
     "<span>确认开局物资 · 此后不再购买</span><span>→</span>";
-  $("#catalogCount").textContent = CATALOG.length + "件";
+  $("#catalogCount").textContent = shopStock().length + "件 / 目录" + CATALOG.length + "种";
   renderCategories();
   renderCatalog();
   renderReceipt();
@@ -126,11 +126,11 @@ function showProduct(id) {
 function renderCategories() {
   $("#categoryList").innerHTML = CATEGORIES.map(
     ([id, name]) =>
-      `<button class="category-button ${id === shopCategory ? "active" : ""}" data-category="${id}">${name}<span>${id === "all" ? CATALOG.length : CATALOG.filter((i) => i.category === id).length}</span></button>`,
+      `<button class="category-button ${id === shopCategory ? "active" : ""}" data-category="${id}">${name}<span>${id === "all" ? shopStock().length : shopStock().filter((i) => i.category === id).length}</span></button>`,
   ).join("");
 }
 function renderCatalog() {
-  const list = CATALOG.filter(
+  const list = shopStock().filter(
     (it) =>
       (shopCategory === "all" || it.category === shopCategory) &&
       (!shopQuery ||

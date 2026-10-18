@@ -127,6 +127,18 @@ function worldBuildStore() {
     -5.91,
     { bg: "#476a60", fg: "#e9dfc2", size: 35, width: 1024, height: 180 },
   );
+  // v0.17: this shop only carries what the seed's delivery brought — about 1% of the national catalogue.
+  const stockSign = worldLabel(
+    roomRoot,
+    [`本期到货 ${shopStock().length} 种`, `全国商品目录共 ${CATALOG.length.toLocaleString("en-US")} 种 · 每家合作社进货都不一样`],
+    2.6,
+    0.42,
+    -6.9,
+    1.78,
+    1.45,
+    { bg: "#e1d6bc", fg: "#38574c", size: 30, width: 1024, height: 166 },
+  );
+  stockSign.rotation.y = Math.PI / 2;
   // Ten physical bays, one per category. The middle opening is a walkable aisle.
   const layout = [
     ["staple", -5.15, -5.35, 0],
@@ -158,7 +170,7 @@ function worldBuildStore() {
       height: 96,
     });
     colliders.push({ mesh: bay });
-    CATALOG.filter((it) => it.category === category).forEach((it, i) => {
+    shopStock().filter((it) => it.category === category).forEach((it, i) => {
       const row = Math.floor(i / 5),
         col = i % 5;
       const g = worldTag(

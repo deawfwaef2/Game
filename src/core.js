@@ -69,27 +69,34 @@ function day() {
 function hour() {
   return G ? (G.minute % 1440) / 60 : 8;
 }
+// v0.17: a catalogue variant (e.g. a sulphur soap) counts as its functional original ("soap").
+const USED_LOG = [];
+function isItem(b, id) {
+  return b.id === id || DB[b.id]?.base === id;
+}
 function has(id) {
-  return !!G?.inv.some((b) => b.id === id && !b.packed && b.units > 0);
+  return !!G?.inv.some((b) => isItem(b, id) && !b.packed && b.units > 0);
 }
 function amount(id) {
   return (
     G?.inv
-      .filter((b) => b.id === id && !b.packed)
+      .filter((b) => isItem(b, id) && !b.packed)
       .reduce((a, b) => a + b.units, 0) || 0
   );
 }
 function use(id, n = 1) {
   const batches = G.inv
-    .filter((b) => b.id === id && !b.packed && b.units > 0)
+    .filter((b) => isItem(b, id) && !b.packed && b.units > 0)
     .sort((a, b) => a.created - b.created);
   let remaining = n;
   for (const b of batches) {
     const take = Math.min(b.units, remaining);
     b.units -= take;
     remaining -= take;
+    if (take > 0) USED_LOG.push(b.id);
     if (remaining <= 0) break;
   }
+  if (USED_LOG.length > 40) USED_LOG.splice(0, USED_LOG.length - 40);
   G.inv = G.inv.filter((b) => b.units > 0.0001);
   return remaining <= 0.0001;
 }

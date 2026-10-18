@@ -1437,7 +1437,7 @@ function worldUseHeld() {
     bottle: ["fill", "接满储水容器", 3],
     canister: ["fill", "接满储水容器", 3],
   };
-  const a = acts[it.id];
+  const a = acts[it.id] || acts[it.base];
   if (a) return worldAction(a[0], a[1], a[2]);
   showToast("这件物资会在生活中自动发挥作用。R 放回，或对准平面放置。");
 }

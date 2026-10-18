@@ -39,17 +39,17 @@ const ctx = {
   },
 };
 vm.createContext(ctx);
-for (const f of ["src/data.js", "src/core.js", "src/life-text.js", "src/life.js", "src/life-more.js", "src/life-real.js", "src/life-home.js", "src/life-items.js"])
+for (const f of ["src/data.js", "src/catalog-gen.js", "src/core.js", "src/life-text.js", "src/life.js", "src/life-more.js", "src/life-real.js", "src/life-home.js", "src/life-items.js", "src/life-catalog.js"])
   vm.runInContext(fs.readFileSync(f, "utf8"), ctx);
 vm.runInContext(
   `
 let assertions=0;function ok(value,msg){assert.ok(value,msg);assertions++;}
 function reset(seed='ANDERS-1986',kit=STARTER){closePreparation();phase='title';currentSeed=seed;env=environment(seed);startPreparation();cart={...kit};beginGame();for(const b of G.inv){b.packed=false;b.location=DB[b.id].kind==='food'&&DB[b.id].life<60&&env.fridge?'fridge':'shelf';}G.bags.forEach(b=>b.opened=true);G.cooldowns={};}
 saveGame=()=>{};
-ok(CATALOG.length===133,'catalog count');ok(new Set(CATALOG.map(i=>i.id)).size===CATALOG.length,'unique ids');ok(CATALOG.every(i=>i.price>0&&i.weight>0&&Number.isInteger(i.servings)&&i.servings>0),'valid product data');
+ok(CATALOG.filter(i=>!i.gen).length===133,'original catalog count');ok(CATALOG.length>=15000,'vast generated catalogue');ok(CATALOG.filter(i=>i.gen).every(i=>!i.base||DB[i.base]),'variant bases exist');ok(new Set(CATALOG.map(i=>i.id)).size===CATALOG.length,'unique ids');ok(CATALOG.every(i=>i.price>0&&i.weight>0&&Number.isInteger(i.servings)&&i.servings>0),'valid product data');
 for(let i=0;i<100;i++){const seed='test-'+i;ok(JSON.stringify(environment(seed))===JSON.stringify(environment(seed)),'seed deterministic');}
 const envs=Array.from({length:100},(_,i)=>environment('t'+i));ok(envs.some(e=>!e.fridge)&&envs.some(e=>e.fridge),'fridge varies');ok(new Set(envs.map(e=>e.temp)).size>12,'temperature varies');
-for(const kit of [STARTER,YEAR_KIT,Object.fromEntries(CATALOG.map(i=>[i.id,3]))]){const p=packCart(kit);ok(p.bags.every(b=>b.weight<=8),'all bags <=8kg');ok(p.total.reduce((a,b)=>a+Object.values(b.items).reduce((a,n)=>a+n,0),0)===Object.values(kit).reduce((a,n)=>a+n,0),'no lost packages');}
+for(const kit of [STARTER,YEAR_KIT,Object.fromEntries(CATALOG.filter(i=>!i.gen).map(i=>[i.id,3])),Object.fromEntries(shopStock('pack-test').map(i=>[i.id,3]))]){const p=packCart(kit);ok(p.bags.every(b=>b.weight<=8),'all bags <=8kg');ok(p.total.reduce((a,b)=>a+Object.values(b.items).reduce((a,n)=>a+n,0),0)===Object.values(kit).reduce((a,n)=>a+n,0),'no lost packages');}
 ok(cartSummary(YEAR_KIT).cost<=300&&cartSummary(YEAR_KIT).days>=365,'365-day calories affordable');
 reset();ok(validateSave(JSON.parse(JSON.stringify(G))),'fresh save round trip');let bad=JSON.parse(JSON.stringify(G));bad.stats={};ok(!validateSave(bad),'reject missing stats');bad=JSON.parse(JSON.stringify(G));bad.hidden={cars:2,helis:0,balls:0};bad.pestTraces=['x'];ok(validateSave(bad),'old saves with pest fields still load');bad=JSON.parse(JSON.stringify(G));bad.inv[0].id='__proto__';ok(!validateSave(bad),'reject prototype id');bad=JSON.parse(JSON.stringify(G));bad.inv[0].uid='\\\" onclick=alert(1)';ok(!validateSave(bad),'reject injected uid');bad=JSON.parse(JSON.stringify(G));bad.env.w=999;ok(!validateSave(bad),'reject invalid world');
 reset();let physical=JSON.parse(JSON.stringify(G));physical.inv[0].pose=[0,.5,0,0];physical.inv[0].location='room';physical.heldUID=physical.inv[0].uid;ok(validateSave(physical),'valid physical placement and hand UID');
@@ -151,7 +151,7 @@ ok(G.ended&&G.win,'resource-aware 365-day policy can win');
 console.log('Year traces',G.life.tenant,G.life.tenantBits,'dreams',G.life.dreams.length);ok(G.life.tenantBits===6,'all six traces of the previous tenant turn up within a year of ordinary cleaning');ok(G.life.dreams.length>=8,'dreams on waking from proper sleeps');
 
 // v0.16: every product explains its use, and the explained effects are real.
-ok(CATALOG.every(i=>typeof ITEM_USE[i.id]==='string'&&ITEM_USE[i.id].length>=8),'every product has a use explanation');ok(CATALOG.every(i=>itemFacts(i).length>4),'every product has a facts line');
+ok(CATALOG.filter(i=>!i.gen).every(i=>typeof ITEM_USE[i.id]==='string'&&ITEM_USE[i.id].length>=8),'every original product has a use explanation');ok(CATALOG.every(i=>itemUse(i).length>=8),'every one of the '+CATALOG.length+' products has a use explanation');ok(CATALOG.every(i=>itemFacts(i).length>4),'every product has a facts line');
 {reset();const give=(id,n)=>G.inv.push({uid:uid(),id,units:n||DB[id].servings,packed:false,location:'shelf',created:G.minute,age:0,opened:false});
  G.inv=G.inv.filter(b=>!['soap','shampoo','towel','razor'].includes(b.id));G.waterOn=true;G.power=true;G.stats.hygiene=20;G.stats.morale=50;doAction('shower');const plain=[G.stats.hygiene,G.stats.morale];
  give('soap');give('shampoo');give('towel');give('razor');G.stats.hygiene=20;G.stats.morale=50;const sh=amount('shampoo');doAction('shower');ok(G.stats.hygiene>=plain[0]+27+6-0.5&&amount('shampoo')===sh-1,'shampoo adds to a shower and is used up');ok(G.stats.morale>=plain[1]+3+2+2-0.5,'towel and razor make a shower nicer');
@@ -160,8 +160,32 @@ ok(CATALOG.every(i=>typeof ITEM_USE[i.id]==='string'&&ITEM_USE[i.id].length>=8),
  const rice=()=>G.inv.find(b=>b.id==='rice'&&b.units>0&&!b.packed);G.inv=G.inv.filter(b=>!['salt','pepper','pan','bowl','spice','onion','greens','sprouts','cherrytom'].includes(b.id));G.foodHistory=[];G.stats.morale=40;consumeMeal(rice().uid,true,false);const m1=G.stats.morale-40;
  give('salt');give('pepper');give('pan');G.foodHistory=[];G.stats.morale=40;const salt=amount('salt');consumeMeal(rice().uid,true,false);ok(G.stats.morale-40>=m1+2.9&&amount('salt')===salt-1,'salt, pepper and a pan make a cooked meal nicer');
  give('jar');const jr=rice();jr.age=0;jr.location='shelf';for(let k=0;k<288;k++){G.stats.food=G.stats.water=G.stats.energy=G.stats.health=G.stats.morale=80;G.bladder=G.bowel=0;simulate(5,'idle');}ok(jr.age<0.8&&jr.age>0.7,'storage jars slow dry goods');}
+
+// v0.17: a vast catalogue, ~1% stocked per seed, every trait does something real.
+{const gen=CATALOG.filter(i=>i.gen);ok(gen.filter(i=>i.trait&&i.trait!=='std').every(i=>/：|。/.test(itemUse(i))&&itemUse(i).length>12),'every trait is explained');
+ const A=shopStock('S-A'),B=shopStock('S-B');ok(A.length>=180&&A.length<=220,'about 200 goods per shop');ok(A.length/CATALOG.length<0.015,'roughly 1% of the catalogue');
+ ok([...CATALOG_CORE].every(id=>A.some(i=>i.id===id)),'ration-kit basics always in stock');ok(JSON.stringify(shopStock('S-A').map(i=>i.id))===JSON.stringify(A.map(i=>i.id)),'stock is seed-deterministic');
+ const diff=A.filter(i=>!B.includes(i)).length;ok(diff>100,'different seeds stock different goods ('+diff+')');
+ ok(SHOP_CATS.every(c=>A.filter(i=>i.category===c).length<=SHOP_PER_CAT),'each bay holds at most 20');
+ const lines=new Set(A.map(i=>i.line||i.id));ok(lines.size>=A.length*0.9,'a shop rarely carries two variants of the same line');
+ reset();const give=(id,n)=>{const b={uid:uid(),id,units:n||DB[id].servings,packed:false,location:'shelf',created:G.minute,age:0,opened:false};G.inv.push(b);return b;};
+ const pick=(f)=>CATALOG.find(f);
+ const vs=pick(i=>i.gen&&i.base==='soap'&&i.bonus?.morale>=1);G.inv=G.inv.filter(b=>!isItem(b,'soap'));ok(!has('soap'),'no soap');give(vs.id);ok(has('soap')&&amount('soap')===vs.servings,'a variant soap counts as soap');
+ G.waterOn=true;G.power=true;G.stats.morale=50;G.stats.hygiene=20;doAction('shower');ok(G.stats.morale>=50+3+vs.bonus.morale-0.6,'a scented soap variant adds its bonus');
+ const br=pick(i=>i.gen&&i.base==='broom'&&i.bonus?.morale>=1);G.inv=G.inv.filter(b=>!isItem(b,'broom')&&!isItem(b,'mop')&&!isItem(b,'disinfect'));G.dirt=60;G.stats.morale=50;doAction('clean');const plainM=G.stats.morale;give(br.id);G.dirt=60;G.stats.morale=50;doAction('clean');ok(G.stats.morale>plainM+0.9,'a premium broom makes cleaning nicer');
+ const spicy=pick(i=>i.gen&&i.kind==='food'&&i.trait==='spicy'&&!i.cook&&i.thirst>=5);const sb=give(spicy.id);G.stats.water=60;consumeMeal(sb.uid,true,false);ok(G.stats.water<60,'spicy food makes you thirsty');
+ const fort=pick(i=>i.gen&&i.kind==='food'&&i.trait==='fortified'&&!i.cook);const fb=give(fort.id);G.stats.health=50;consumeMeal(fb.uid,true,false);ok(G.stats.health>=50+fort.health-0.3,'fortified food adds health');
+ const sea=CATALOG.filter(i=>i.gen&&i.kind==='seasoning'&&!i.thirst);const s1=give(sea[0].id),s2=give(sea.find(i=>i.line!==sea[0].line).id);G.life.lastSeason=null;
+ const rice=()=>G.inv.find(b=>b.id==='rice'&&b.units>0&&!b.packed);G.power=true;G.waterOn=true;const u1=s1.units+s2.units;consumeMeal(rice().uid,true,false);const l1=G.life.lastSeason;consumeMeal(rice().uid,true,false);ok(G.life.lastSeason!==l1&&s1.units+s2.units===u1-2,'seasonings rotate, one per cooked meal');
+ const cream=pick(i=>i.kind==='care'&&i.line==='xuehuagao');const cb=give(cream.id);G.stats.morale=40;const n0=cb.units;doCare(cb.uid);ok(G.stats.morale>40&&cb.units===n0-1,'cold cream is used from the hand');doCare(cb.uid);doCare(cb.uid);ok(cb.units===n0-2,'self-care goods have a daily limit');
+ const blanket=pick(i=>i.gen&&i.base==='blanket'&&i.comfort);G.inv=G.inv.filter(b=>!DB[b.id]?.gen);const tm=()=>{for(let k=0;k<12;k++){G.stats.food=G.stats.water=G.stats.energy=G.stats.health=80;G.bladder=G.bowel=0;simulate(5,'idle');}};
+ G.stats.morale=60;tm();const noC=G.stats.morale;give(blanket.id);for(const pl of CATALOG.filter(i=>i.base==='plant'&&i.gen).filter((i,k,a)=>a.findIndex(x=>x.line===i.line)===k).slice(0,3))give(pl.id);G.stats.morale=60;tm();ok(G.stats.morale>noC+0.05,'cosy furniture and different plants slow morale loss');
+ const book=pick(i=>i.gen&&i.kind==='book');give(book.id);G.stats.morale=40;doRead(book.id);ok(G.books[book.id]&&G.stats.morale>40,'generated books are readable');
+ const game=pick(i=>i.gen&&i.kind==='leisure'&&i.activity==='chess');give(game.id);G.stats.morale=40;doLeisure(game.id);ok(G.stats.morale>40,'generated games are playable');
+ ok(validateSave(JSON.parse(JSON.stringify(G))),'saves with generated goods validate');
+ console.log('Catalogue',CATALOG.length,'shop',A.length,(A.length/CATALOG.length*100).toFixed(2)+'%');}
 console.log('ALL SIMULATION TESTS PASSED');
 `,
   ctx,
-  { timeout: 25000 },
+  { timeout: 90000 },
 );

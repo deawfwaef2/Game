@@ -5755,7 +5755,7 @@ const OFFLINE_ROOM={"models":{"drawer_cabinet":"Z2xURgIAAABY5RAAuLQEAEpTT057ImFz
     </script>
     <script>
       /* 闭门365 — original game data, fictional 1980s subsidized prices. */
-const VERSION = "0.12.0-preview";
+const VERSION = "0.13.0-preview";
 const CATEGORIES = [
   ["all", "全部物资"],
   ["staple", "主食与干粮"],
@@ -19613,6 +19613,20 @@ const LR_WATCH = {
   overcast: ["天是灰的，对面的楼也是灰的，只有一家的红窗帘很显眼。", "云压得很低，楼顶的烟囱冒出的烟直直地往上走。"],
   alert: ["楼下停着一辆没熄火的黑色轿车，车里的人一直没下来。", "两个穿皮夹克的男人在街对面抽烟，时不时抬头数楼层。", "一个陌生人拿着一张纸，在楼门口问下棋的老头什么。老头摇了摇头。", "街角多了一个卖报的，他卖得很少，看得很多。"],
 };
+// Dated days of the year in the empire, plus the first snow when it really gets cold.
+const LR_DAYS = [
+  [30, "今天是发薪日。楼道里比平时热闹，有人提着整条的鱼上楼，有人在唱歌。"],
+  [45, "帝国建国日。傍晚，城中心放起了烟花，在对面楼的玻璃上映出一片一片的颜色。"],
+  [80, "夏天最热的几天。楼下的孩子们拿水管互相浇水，尖叫声一直传到你的窗口。"],
+  [120, "丰收节。电台里放了一整天的手风琴，楼上的人家在烤面包，香味顺着楼梯往上飘。"],
+  [150, "秋天了。对面楼下的白杨树一夜之间黄了一半。"],
+  [184, "今天是你的生日。没有人知道你在这里。你给自己多煮了一点，假装那是蛋糕。"],
+  [215, "新年夜。零点的时候整座城市都在放鞭炮，你在黑暗里对着窗户说了一声“新年好”。"],
+  [216, "新年第一天。楼道里家家户户互相拜年，有人在你门口停了一下，说了句“新年好”，又走了。"],
+  [262, "冬天最冷的几天。窗玻璃上结了冰花，像一片小小的森林。"],
+  [300, "早上第一次听见了鸟叫。春天要来了。"],
+  [330, "楼下的白杨树发芽了，远远看去像一层淡绿色的雾。"],
+];
 const LR = {};
 function lrRand(tag) {
   let s = lifeHash(String(G.seed) + "-" + tag) || 1;
@@ -19689,6 +19703,15 @@ dailyUpdate = function () {
   if (day() === 1 || day() === 2) {
     if (day() === 2) logEvent(`你一直是个${LR_TRAITS.filter((t) => L.traits.includes(t.id)).map((t) => t.t).join("、")}的人。${LR_TRAITS.filter((t) => L.traits.includes(t.id)).map((t) => t.d).join("")}`, "story");
     return;
+  }
+  for (const [d, t] of LR_DAYS) if (d === day()) {
+    logEvent(t, "story");
+    G.stats.morale = clamp(G.stats.morale + (d === 184 ? -1 : 3));
+  }
+  if (!L.snow && lrBase.temperature() < 6 && day() > 120) {
+    L.snow = day();
+    logEvent("下雪了。今年的第一场雪，窗外的屋顶一点一点白了。", "story");
+    G.stats.morale = clamp(G.stats.morale + 4);
   }
   // An old building: something gives out now and then. Cold-weather faults only when it is cold.
   const open = Object.keys(LR_FAULTS).filter((k) => !L.faults[k] && (!LR_FAULTS[k].cold || cold));
@@ -19852,6 +19875,180 @@ if (typeof worldInteract === "function") {
     if (free && id === "window" && shift) return worldStart(G.curtains ? "从窗帘缝往外看" : "在窗边看一会儿", 3, () => lrWatch(), "use");
     return lrWorld.worldInteract(shift);
   };
+}
+
+    </script>
+    <script>
+      /* 闭门365 · v0.13 the body speaks for itself. No meters on screen: when hunger, thirst, tiredness, low spirits,
+   sickness, cold or heat actually reach a threshold, you feel it — the picture changes (colour drains, edges darken,
+   eyelids droop, frost creeps in) and a short inner line appears once. Ordinary states show nothing at all. */
+const LB_LINES = {
+  food: [[30, "肚子咕咕叫了。该吃点东西。"], [15, "饿得发慌，手有点抖。"]],
+  water: [[30, "嘴唇发干。"], [15, "喉咙干得发疼，头有点晕。"]],
+  energy: [[25, "眼皮发沉。"], [10, "困得站都站不稳了。"]],
+  morale: [[35, "心里空落落的。"], [20, "什么都不想做。"]],
+  health: [[50, "身上不太对劲。"], [25, "浑身发冷，心跳很重。"]],
+  hygiene: [[30, "身上黏糊糊的，想洗个澡。"]],
+};
+const LB_HIGH = {
+  bladder: [[80, "得去趟厕所了。"], [92, "憋不住了。"]],
+  bowel: [[80, "肚子发胀，得去厕所。"], [92, "肚子绞着疼，快去厕所。"]],
+  dirt: [[55, "屋里乱得让人心烦。"]],
+  hair: [[24, "刘海扎眼睛了。"]],
+  nails: [[4, "指甲长得碍事了。"]],
+};
+const LB = { fx: {}, last: {}, el: null, lids: null, line: null, lineT: 0, blinkAt: 0, blinkEnd: 0 };
+function lbClamp(v) {
+  return Math.max(0, Math.min(1, v));
+}
+function lbSetup() {
+  if (LB.el || typeof document === "undefined") return;
+  const st = document.createElement("style");
+  st.textContent = `#bodyFx{position:fixed;inset:0;pointer-events:none;z-index:6;opacity:0;transition:opacity 1.2s}
+#bodyFx.on{opacity:1}#bodyFx i{position:absolute;inset:0;display:block}
+#bodyLids::before,#bodyLids::after{content:"";position:fixed;left:-5%;right:-5%;height:52%;background:#050403;pointer-events:none;z-index:7;transition:transform .22s ease-in}
+#bodyLids::before{top:0;border-radius:0 0 50% 50%/0 0 30% 30%;transform:translateY(-102%)}
+#bodyLids::after{bottom:0;border-radius:50% 50% 0 0/30% 30% 0 0;transform:translateY(102%)}
+#bodyLids.shut::before,#bodyLids.shut::after{transform:translateY(0);transition-duration:.35s}
+#bodyLids.half::before{transform:translateY(-62%)}#bodyLids.half::after{transform:translateY(62%)}
+#bodyLine{position:fixed;left:50%;top:62%;transform:translate(-50%,6px);color:#f1e9d8;font:italic 17px/1.6 'Noto Serif CJK SC','Songti SC',serif;letter-spacing:.06em;text-shadow:0 1px 6px rgba(0,0,0,.85);opacity:0;transition:opacity .8s,transform .8s;pointer-events:none;z-index:8;white-space:nowrap}
+#bodyLine.on{opacity:.95;transform:translate(-50%,0)}`;
+  document.head.appendChild(st);
+  LB.el = document.createElement("div");
+  LB.el.id = "bodyFx";
+  LB.el.innerHTML = "<i class='v'></i><i class='r'></i><i class='c'></i><i class='h'></i>";
+  LB.lids = document.createElement("div");
+  LB.lids.id = "bodyLids";
+  LB.line = document.createElement("div");
+  LB.line.id = "bodyLine";
+  document.body.append(LB.el, LB.lids, LB.line);
+}
+// Target strengths 0..1 for each felt state (pure; used by tests too).
+function lbTargets(s = G.stats) {
+  const t = typeof temperature === "function" ? temperature() : 20;
+  return {
+    hunger: lbClamp((30 - s.food) / 30),
+    thirst: lbClamp((30 - s.water) / 30),
+    tired: lbClamp((25 - s.energy) / 25),
+    sad: lbClamp((38 - s.morale) / 38),
+    sick: Math.max(lbClamp((55 - s.health) / 55), G.illness?.length ? 0.22 : 0),
+    cold: lbClamp((13 - t) / 8),
+    hot: lbClamp((t - 28) / 6),
+  };
+}
+function lbSay(text) {
+  if (!LB.line) return;
+  LB.line.textContent = text;
+  LB.line.classList.add("on");
+  clearTimeout(LB.lineT);
+  LB.lineT = setTimeout(() => LB.line.classList.remove("on"), 4200);
+}
+// One line when a threshold is first crossed (or deepened); repeats only after 3 game hours.
+function lbCheckLines() {
+  const s = G.stats,
+    now = G.minute,
+    cand = [];
+  const push = (key, level, text) => {
+    const prev = LB.last[key];
+    if (!prev || level > prev.level || now - prev.at > 180) cand.push([key, level, text]);
+  };
+  for (const [k, steps] of Object.entries(LB_LINES)) {
+    let lv = 0,
+      txt = "";
+    steps.forEach(([th, line], i) => {
+      if (s[k] < th) (lv = i + 1), (txt = line);
+    });
+    if (lv) push(k, lv, txt);
+    else delete LB.last[k];
+  }
+  for (const [k, steps] of Object.entries(LB_HIGH)) {
+    let lv = 0,
+      txt = "";
+    steps.forEach(([th, line], i) => {
+      if ((G[k] || 0) > th) (lv = i + 1), (txt = line);
+    });
+    if (lv) push(k, lv, txt);
+    else delete LB.last[k];
+  }
+  const t = temperature();
+  if (t < 12) push("cold", 1, "冷得直搓手。");
+  else if (t > 29) push("hot", 1, "闷热得喘不过气。");
+  else delete LB.last.cold, delete LB.last.hot;
+  if (!cand.length || (LB.line && LB.line.classList.contains("on"))) return;
+  cand.sort((a, b) => b[1] - a[1]);
+  const [key, level, text] = cand[0];
+  LB.last[key] = { level, at: now };
+  lbSay(text);
+}
+function lbActive() {
+  return G && phase === "playing" && !G.ended && typeof worldVisible === "function" && worldVisible() && !panelType;
+}
+function lbTick() {
+  lbSetup();
+  const canvas = typeof renderer !== "undefined" && renderer?.domElement;
+  if (!LB.el || !canvas) return;
+  if (!lbActive()) {
+    LB.el.classList.remove("on");
+    LB.lids.className = "";
+    canvas.style.filter = "";
+    return;
+  }
+  const T = lbTargets(),
+    F = LB.fx,
+    nowMs = performance.now();
+  for (const k of Object.keys(T)) F[k] = (F[k] ?? 0) + (T[k] - (F[k] ?? 0)) * 0.08;
+  const sleeping = G.activity === "sleep" || W.busy?.kind === "sleep";
+  const sat = Math.max(0.15, 1 - 0.65 * F.sad - 0.4 * F.hunger - 0.25 * F.sick),
+    blur = 1.8 * F.tired * F.tired + 2.2 * F.thirst * F.thirst + 0.9 * F.sick * F.sick,
+    bright = 1 - 0.12 * F.tired - 0.1 * F.hunger,
+    sepia = 0.45 * F.thirst + 0.25 * F.hot;
+  canvas.style.filter =
+    sat > 0.98 && blur < 0.05 && bright > 0.99 && sepia < 0.02
+      ? ""
+      : `saturate(${sat.toFixed(3)}) blur(${blur.toFixed(2)}px) brightness(${bright.toFixed(3)}) sepia(${sepia.toFixed(3)})`;
+  const beat = (Math.sin(nowMs / 160) > 0.92 ? 1 : 0) * 0.5 + 0.5 * Math.max(0, Math.sin(nowMs / 430));
+  const [v, r, c, h] = LB.el.children;
+  v.style.background = `radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,${Math.min(0.85, 0.55 * F.hunger + 0.35 * F.sad + 0.3 * F.tired + 0.2 * F.thirst).toFixed(3)}) 100%)`;
+  r.style.background = `radial-gradient(ellipse at center, transparent 50%, rgba(110,8,4,${(0.35 * F.sick * (0.55 + 0.45 * beat) + 0.12 * F.hunger * beat).toFixed(3)}) 100%)`;
+  c.style.background = `radial-gradient(ellipse at center, transparent 35%, rgba(205,228,245,${(0.6 * F.cold).toFixed(3)}) 100%)`;
+  h.style.background = `rgba(255,170,90,${(0.09 * F.hot).toFixed(3)})`;
+  const any = F.hunger + F.sad + F.tired + F.sick + F.cold + F.hot > 0.03;
+  LB.el.classList.toggle("on", any);
+  // Heavy eyelids: blinks get slower and longer the more tired you are.
+  if (!sleeping && F.tired > 0.3) {
+    if (nowMs > LB.blinkEnd && nowMs > LB.blinkAt) {
+      LB.blinkAt = nowMs + (7000 - 4500 * F.tired) * (0.7 + Math.random() * 0.6);
+      LB.blinkEnd = LB.blinkAt + 220 + 700 * F.tired;
+    }
+    const shut = nowMs > LB.blinkAt && nowMs < LB.blinkEnd;
+    LB.lids.className = shut ? "shut" : F.tired > 0.75 ? "half" : "";
+  } else LB.lids.className = "";
+  if (!sleeping) lbCheckLines();
+}
+if (typeof window !== "undefined" && typeof document !== "undefined") {
+  setInterval(() => {
+    try {
+      lbTick();
+    } catch (e) {}
+  }, 120);
+  // Body states no longer pile up as text at the bottom; only things outside you (a knock, the power) are written.
+  if (typeof worldRenderHUD === "function") {
+    const lbHud = worldRenderHUD;
+    worldRenderHUD = function () {
+      const r = lbHud.apply(this, arguments);
+      if (G && phase === "playing" && W.enabled && !(typeof worldIsShopping === "function" && worldIsShopping())) {
+        const el = document.getElementById("worldCondition");
+        if (el) {
+          const w = [];
+          if (G.pendingKnock) w.push("门外有敲门声");
+          if (!G.power) w.push("停电了");
+          if (!G.waterOn) w.push("暂时停水");
+          el.textContent = w.join(" · ");
+        }
+      }
+      return r;
+    };
+  }
 }
 
     </script>

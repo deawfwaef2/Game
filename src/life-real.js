@@ -42,6 +42,20 @@ const LR_WATCH = {
   overcast: ["天是灰的，对面的楼也是灰的，只有一家的红窗帘很显眼。", "云压得很低，楼顶的烟囱冒出的烟直直地往上走。"],
   alert: ["楼下停着一辆没熄火的黑色轿车，车里的人一直没下来。", "两个穿皮夹克的男人在街对面抽烟，时不时抬头数楼层。", "一个陌生人拿着一张纸，在楼门口问下棋的老头什么。老头摇了摇头。", "街角多了一个卖报的，他卖得很少，看得很多。"],
 };
+// Dated days of the year in the empire, plus the first snow when it really gets cold.
+const LR_DAYS = [
+  [30, "今天是发薪日。楼道里比平时热闹，有人提着整条的鱼上楼，有人在唱歌。"],
+  [45, "帝国建国日。傍晚，城中心放起了烟花，在对面楼的玻璃上映出一片一片的颜色。"],
+  [80, "夏天最热的几天。楼下的孩子们拿水管互相浇水，尖叫声一直传到你的窗口。"],
+  [120, "丰收节。电台里放了一整天的手风琴，楼上的人家在烤面包，香味顺着楼梯往上飘。"],
+  [150, "秋天了。对面楼下的白杨树一夜之间黄了一半。"],
+  [184, "今天是你的生日。没有人知道你在这里。你给自己多煮了一点，假装那是蛋糕。"],
+  [215, "新年夜。零点的时候整座城市都在放鞭炮，你在黑暗里对着窗户说了一声“新年好”。"],
+  [216, "新年第一天。楼道里家家户户互相拜年，有人在你门口停了一下，说了句“新年好”，又走了。"],
+  [262, "冬天最冷的几天。窗玻璃上结了冰花，像一片小小的森林。"],
+  [300, "早上第一次听见了鸟叫。春天要来了。"],
+  [330, "楼下的白杨树发芽了，远远看去像一层淡绿色的雾。"],
+];
 const LR = {};
 function lrRand(tag) {
   let s = lifeHash(String(G.seed) + "-" + tag) || 1;
@@ -118,6 +132,15 @@ dailyUpdate = function () {
   if (day() === 1 || day() === 2) {
     if (day() === 2) logEvent(`你一直是个${LR_TRAITS.filter((t) => L.traits.includes(t.id)).map((t) => t.t).join("、")}的人。${LR_TRAITS.filter((t) => L.traits.includes(t.id)).map((t) => t.d).join("")}`, "story");
     return;
+  }
+  for (const [d, t] of LR_DAYS) if (d === day()) {
+    logEvent(t, "story");
+    G.stats.morale = clamp(G.stats.morale + (d === 184 ? -1 : 3));
+  }
+  if (!L.snow && lrBase.temperature() < 6 && day() > 120) {
+    L.snow = day();
+    logEvent("下雪了。今年的第一场雪，窗外的屋顶一点一点白了。", "story");
+    G.stats.morale = clamp(G.stats.morale + 4);
   }
   // An old building: something gives out now and then. Cold-weather faults only when it is cold.
   const open = Object.keys(LR_FAULTS).filter((k) => !L.faults[k] && (!LR_FAULTS[k].cold || cold));

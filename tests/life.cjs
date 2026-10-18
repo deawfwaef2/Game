@@ -32,6 +32,10 @@ const { chromium } = require("playwright"), path = require("path"), assert = req
       const win = (() => { let f = null; roomRoot.traverse((x) => { if (!f && x.userData.interact === "window") f = x; }); return f; })();
       W.focus = win; o.winHint = worldTargetInfo(win)[1]; worldInteract(true); worldFinishAction(); o.watched = /往外看/.test(G.log[0]?.text || "");
       G.life.faults = { drip: 3 }; const sink = (() => { let f = null; roomRoot.traverse((x) => { if (!f && x.userData.interact === "sink") f = x; }); return f; })(); o.sinkHint = worldTargetInfo(sink)[1];
+      o.calmFilter = (LB.fx = lbTargets(), lbTick(), renderer.domElement.style.filter);
+      G.stats.food = 5; G.stats.water = 60; LB.last = {}; LB.fx = lbTargets(); lbTick(); worldRenderHUD();
+      o.hungryFilter = renderer.domElement.style.filter; o.hungryLine = document.getElementById("bodyLine").textContent; o.cond = document.getElementById("worldCondition").textContent;
+      G.stats.food = 80;
       G.life.harvests = 30; endGame(true, "test"); o.ending = G.life.ending; o.endBox = !!document.querySelector("#endScreen .life-ending") && /窗台上的春天/.test(document.querySelector("#endScreen .life-ending").textContent);
       o.records = lmRecords().endings.includes("garden");
       return o;
@@ -47,11 +51,12 @@ const { chromium } = require("playwright"), path = require("path"), assert = req
     assert.ok(out.closed && out.caption);
     assert.ok(/看看这一年/.test(out.calHint) && out.year === "year" && out.yearPaper);
     assert.strictEqual(out.cranes, 300);
+    assert.ok(out.calmFilter === "" && /saturate/.test(out.hungryFilter) && /饿/.test(out.hungryLine) && !/需要吃饭/.test(out.cond), "body feedback only when it happens");
     assert.ok(/看看窗外/.test(out.winHint) && out.watched, "window watching");
     assert.ok(/水龙头滴水/.test(out.sinkHint), "fault shown at the sink");
     assert.ok(out.ending === "garden" && out.endBox && out.records);
     assert.deepStrictEqual(errors, []);
     assert.deepStrictEqual(external, []);
-    console.log("LIFE PASS: watching the street / fault hints / year page on the wall calendar / hanging paper cranes / ending + cross-run records / windowsill garden sow/harvest-to-hand / letter bundle + letter page / radio caption / no pests / no external requests / JS errors 0");
+    console.log("LIFE PASS: felt hunger (screen effect + inner line, no meter) / watching the street / fault hints / year page on the wall calendar / hanging paper cranes / ending + cross-run records / windowsill garden sow/harvest-to-hand / letter bundle + letter page / radio caption / no pests / no external requests / JS errors 0");
   } finally { await b.close(); }
 })().catch((e) => { console.error(e); process.exitCode = 1; });

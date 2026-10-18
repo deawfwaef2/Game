@@ -240,3 +240,13 @@
   - lrWatch：窗户 Shift+E 看窗外。worldTargetInfo 会在对应物体的提示里附上故障说明。
 - core 里遗留的“几何污染”文案改成了“包装破损受潮”。注意：新商品 id 不能用 tape，已经被音乐磁带占用了。
 - 工作区容量：.git 每提交一次增加约3.5MB（index.html 的增量）。推送后在本地把仓库重新收缩成浅克隆（见下一条）。
+- （v0.12 发布后补记）本地已重新收缩成浅克隆：`git fetch --depth 1 origin main`，删掉本地标签，`git reflog expire --expire=now --all && git gc --prune=now`。.git 从48MB降到21MB，工作区约54MB。远端的完整历史和全部标签都还在。以后每次推送完都可以照做一遍。
+
+### 2026-10-18 / v0.13.0-preview 身体反馈
+- 用户要求：饿了、渴了最好是状态真的到了才有提示，并且要有画面效果；不要让游戏变得复杂繁琐；继续丰富内容、提高重复可玩性、保持真实、只能待在家里。
+- 新文件 `src/life-body.js`，最后加载，只在浏览器里运行：
+  - 每120ms执行一次 lbTick：在 renderer.domElement 上加 CSS 滤镜，叠加 #bodyFx 渐变层和 #bodyLids 眼皮，显示 #bodyLine 心里话。
+  - lbTargets() 返回各项强度（0到1）。LB_LINES / LB_HIGH 是各状态的阈值和对应的话。
+  - worldRenderHUD 已包装：#worldCondition 只显示敲门、停电、停水。
+  - 截图时 toDataURL 拿不到 CSS 效果，所以 qa-views 不受影响；要看效果用 tools/qa-body.cjs。
+- life-real.js 新增 LR_DAYS（固定日子的事件）和第一场雪（G.life.snow）。

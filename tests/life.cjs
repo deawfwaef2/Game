@@ -28,6 +28,10 @@ const { chromium } = require("playwright"), path = require("path"), assert = req
       W.focus = null; const cal = (() => { let f = null; roomRoot.traverse((x) => { if (!f && x.userData.interact === "journal") f = x; }); return f; })();
       W.focus = cal; o.calHint = worldTargetInfo(cal)[1]; worldInteract(false); o.year = W.glance; o.yearPaper = String(W.paperStamp).startsWith("year"); worldInteract(false);
       G.life.cranes = 300; LW.stamp = ""; syncWorldRoom(); o.cranes = 0; LW.root.traverse((x) => { if (x.isInstancedMesh && x.geometry === LW.craneGeo) o.cranes = x.count; });
+      W.held = null; G.heldUID = null; worldSetHand(); W.glance = "";
+      const win = (() => { let f = null; roomRoot.traverse((x) => { if (!f && x.userData.interact === "window") f = x; }); return f; })();
+      W.focus = win; o.winHint = worldTargetInfo(win)[1]; worldInteract(true); worldFinishAction(); o.watched = /往外看/.test(G.log[0]?.text || "");
+      G.life.faults = { drip: 3 }; const sink = (() => { let f = null; roomRoot.traverse((x) => { if (!f && x.userData.interact === "sink") f = x; }); return f; })(); o.sinkHint = worldTargetInfo(sink)[1];
       G.life.harvests = 30; endGame(true, "test"); o.ending = G.life.ending; o.endBox = !!document.querySelector("#endScreen .life-ending") && /窗台上的春天/.test(document.querySelector("#endScreen .life-ending").textContent);
       o.records = lmRecords().endings.includes("garden");
       return o;
@@ -43,9 +47,11 @@ const { chromium } = require("playwright"), path = require("path"), assert = req
     assert.ok(out.closed && out.caption);
     assert.ok(/看看这一年/.test(out.calHint) && out.year === "year" && out.yearPaper);
     assert.strictEqual(out.cranes, 300);
+    assert.ok(/看看窗外/.test(out.winHint) && out.watched, "window watching");
+    assert.ok(/水龙头滴水/.test(out.sinkHint), "fault shown at the sink");
     assert.ok(out.ending === "garden" && out.endBox && out.records);
     assert.deepStrictEqual(errors, []);
     assert.deepStrictEqual(external, []);
-    console.log("LIFE PASS: year page on the wall calendar / hanging paper cranes / ending + cross-run records / windowsill garden sow/harvest-to-hand / letter bundle + letter page / radio caption / no pests / no external requests / JS errors 0");
+    console.log("LIFE PASS: watching the street / fault hints / year page on the wall calendar / hanging paper cranes / ending + cross-run records / windowsill garden sow/harvest-to-hand / letter bundle + letter page / radio caption / no pests / no external requests / JS errors 0");
   } finally { await b.close(); }
 })().catch((e) => { console.error(e); process.exitCode = 1; });

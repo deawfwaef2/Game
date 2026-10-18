@@ -1,5 +1,5 @@
 /* 闭门365 — original game data, fictional 1980s subsidized prices. */
-const VERSION = "0.11.0-preview";
+const VERSION = "0.12.0-preview";
 const CATEGORIES = [
   ["all", "全部物资"],
   ["staple", "主食与干粮"],
@@ -379,7 +379,7 @@ item("stove", "便携燃料炉", 4.2, 1.3, "tool", 1, {
 item("fuel", "固体燃料 · 12块", 1.2, 0.5, "tool", 12, { kind: "consumable" });
 item("repair", "水电维修小套装", 2.1, 0.65, "tool", 5, {
   kind: "consumable",
-  desc: "可缩短一次停电或停水，不能取消所有随机故障。",
+  desc: "修水龙头滴水、马桶水箱漏水、门锁松动；没有这些问题时，可缩短一次停电或停水。",
 });
 item("notebook", "硬皮日记本", 0.55, 0.15, "leisure", 1, {
   kind: "leisure",
@@ -466,6 +466,13 @@ item("origami", "彩色折纸 · 300张", 0.55, 0.35, "leisure", 300, {
   activity: "craft",
   joy: 4,
   desc: "一小时能折六到十只纸鹤。每三十只串成一串，挂在窗边；折满一千只据说能许一个愿。",
+});
+item("ducttape", "布基胶带 · 1卷", 0.45, 0.2, "tool", 4, {
+  kind: "consumable",
+  desc: "冷天窗缝漏风时，手拿胶带对着窗户封好，室温回升约2°C。一卷能封四次。",
+});
+item("radkey", "暖气放气钥匙", 0.2, 0.03, "tool", 1, {
+  desc: "暖气片进了空气不热时，拿着它给暖气片放气。",
 });
 item("pots", "陶土花盆与培养土 · 3套", 1.6, 4.5, "furniture", 1, {
   kind: "furniture",

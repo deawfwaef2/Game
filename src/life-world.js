@@ -363,13 +363,16 @@ function lwYearPage(model) {
     `拼图 完成${L.puzzles}次 · 当前${L.pieces}/500`,
     `广播剧 听了${L.serial}集 · 新闻${L.news}条`,
     chains.length ? "邻居：" + chains.join("　") : "邻居：还没听见什么",
-  ].forEach((t, i) => text(t, 21, X, 112 + i * 40));
-  text("所有的生活", 24, X, 420, "#5a4a32");
-  text(`开始过 ${rec.runs} 次 · 撑满一年 ${rec.wins} 次 · 最长 ${rec.best} 天`, 20, X, 458);
-  text(`找到的结局 ${rec.endings.length}/${LM_ENDINGS.length}`, 20, X, 494);
-  LM_ENDINGS.forEach((e, i) => text(rec.endings.includes(e.id) ? "◆ " + e.t : "◇ ？？？", 19, X + (i % 2) * 210, 532 + Math.floor(i / 2) * 34, rec.endings.includes(e.id) ? "#4f6b3a" : "#8a806a", 200));
+    typeof LR_TRAITS !== "undefined" ? "性格：" + LR_TRAITS.filter((q) => (L.traits || []).includes(q.id)).map((q) => q.t).join("、") : "",
+    typeof LR_FAULTS !== "undefined" ? "家里的毛病：" + (Object.keys(L.faults || {}).map((k) => LR_FAULTS[k].t).join("、") || "暂时没有") : "",
+    `做过的菜 ${Object.keys(L.dishes || {}).length} 种`,
+  ].forEach((t, i) => text(t, 20, X, 108 + i * 34));
+  text("所有的生活", 24, X, 466, "#5a4a32");
+  text(`开始过 ${rec.runs} 次 · 撑满一年 ${rec.wins} 次 · 最长 ${rec.best} 天`, 19, X, 500);
+  text(`找到的结局 ${rec.endings.length}/${LM_ENDINGS.length}`, 19, X, 532);
+  LM_ENDINGS.forEach((e, i) => text(rec.endings.includes(e.id) ? "◆ " + e.t : "◇ ？？？", 18, X + (i % 2) * 210, 566 + Math.floor(i / 2) * 30, rec.endings.includes(e.id) ? "#4f6b3a" : "#8a806a", 200));
   const next = LM_ENDINGS.find((e) => !rec.endings.includes(e.id));
-  if (next) text("下一次也许可以：" + next.hint, 18, X, 680, "#7a5a3a");
+  if (next) text("下一次也许可以：" + next.hint, 17, X, 704, "#7a5a3a");
   text("Tab / R 合上", 17, X, ch - 30, "#8a806a");
   model.userData.page.material.map.needsUpdate = true;
 }

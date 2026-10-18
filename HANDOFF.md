@@ -229,3 +229,14 @@
   - 日历（"journal"）按 E 打开 glance "year" 页（lwYearPage）。
   - showEnd 包装：在结局页插入 .life-ending 结局块。
 - 新商品 origami（共131件）。life-text 中 LIFE_SERIAL_A 是《雾港旅馆》原文，LIFE_SERIAL 是本局播放顺序。
+
+### 2026-10-18 / v0.12.0-preview 日常真实感
+- 用户要求（重复并补充）：内容更丰富、不腻、能重复玩；要真实，不要有违和感；玩家只能待在家里。
+- 新文件 `src/life-real.js`，最后加载，simulation 也会加载它：
+  - LR_TRAITS：10种性格，每局抽两种，存在 G.life.traits。
+  - LR_FAULTS：drip / cistern / draft / radiator / lock，存在 G.life.faults。temperature 已包装，会扣掉漏风和暖气不热的温度。
+  - doAction 处理 repair（先修故障）、seal（用 ducttape）、bleed（用 radkey）。world.js 的手持动作表里已加入 ducttape 和 radkey。
+  - consumeMeal 加配菜：做法是临时改写 DB 里该主食的 flavor/name/joy，再调用原函数，finally 中复原。做过的菜存在 G.life.dishes。
+  - lrWatch：窗户 Shift+E 看窗外。worldTargetInfo 会在对应物体的提示里附上故障说明。
+- core 里遗留的“几何污染”文案改成了“包装破损受潮”。注意：新商品 id 不能用 tape，已经被音乐磁带占用了。
+- 工作区容量：.git 每提交一次增加约3.5MB（index.html 的增量）。推送后在本地把仓库重新收缩成浅克隆（见下一条）。

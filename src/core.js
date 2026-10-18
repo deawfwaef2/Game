@@ -599,7 +599,7 @@ function prepareFood(uidValue) {
   const it = DB[b.id];
   if (isSpoiled(b)) return notify("已经变质，不能食用。", "warn");
   if (b.contaminated)
-    return notify("这批物资出现了几何污染痕迹，请密封丢弃，不要冒险。", "warn");
+    return notify("这批物资包装破损、受了潮，最好密封丢弃，不要冒险。", "warn");
   if (it.ingredient) return notify("这是配料。烹调主食时会自动搭配使用。");
   if (it.cook) {
     if (!G.power && !(has("stove") && amount("fuel") >= 1))

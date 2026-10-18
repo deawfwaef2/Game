@@ -39,14 +39,14 @@ const ctx = {
   },
 };
 vm.createContext(ctx);
-for (const f of ["src/data.js", "src/core.js", "src/life-text.js", "src/life.js", "src/life-more.js"])
+for (const f of ["src/data.js", "src/core.js", "src/life-text.js", "src/life.js", "src/life-more.js", "src/life-real.js"])
   vm.runInContext(fs.readFileSync(f, "utf8"), ctx);
 vm.runInContext(
   `
 let assertions=0;function ok(value,msg){assert.ok(value,msg);assertions++;}
 function reset(seed='ANDERS-1986',kit=STARTER){closePreparation();phase='title';currentSeed=seed;env=environment(seed);startPreparation();cart={...kit};beginGame();for(const b of G.inv){b.packed=false;b.location=DB[b.id].kind==='food'&&DB[b.id].life<60&&env.fridge?'fridge':'shelf';}G.bags.forEach(b=>b.opened=true);G.cooldowns={};}
 saveGame=()=>{};
-ok(CATALOG.length===131,'catalog count');ok(new Set(CATALOG.map(i=>i.id)).size===CATALOG.length,'unique ids');ok(CATALOG.every(i=>i.price>0&&i.weight>0&&Number.isInteger(i.servings)&&i.servings>0),'valid product data');
+ok(CATALOG.length===133,'catalog count');ok(new Set(CATALOG.map(i=>i.id)).size===CATALOG.length,'unique ids');ok(CATALOG.every(i=>i.price>0&&i.weight>0&&Number.isInteger(i.servings)&&i.servings>0),'valid product data');
 for(let i=0;i<100;i++){const seed='test-'+i;ok(JSON.stringify(environment(seed))===JSON.stringify(environment(seed)),'seed deterministic');}
 const envs=Array.from({length:100},(_,i)=>environment('t'+i));ok(envs.some(e=>!e.fridge)&&envs.some(e=>e.fridge),'fridge varies');ok(new Set(envs.map(e=>e.temp)).size>12,'temperature varies');
 for(const kit of [STARTER,YEAR_KIT,Object.fromEntries(CATALOG.map(i=>[i.id,3]))]){const p=packCart(kit);ok(p.bags.every(b=>b.weight<=8),'all bags <=8kg');ok(p.total.reduce((a,b)=>a+Object.values(b.items).reduce((a,n)=>a+n,0),0)===Object.values(kit).reduce((a,n)=>a+n,0),'no lost packages');}
@@ -106,6 +106,19 @@ G.inv.push({uid:uid(),id:'origami',units:300,packed:false,location:'room',create
 let ev=0;for(let k=0;k<60;k++){const n=G.log.length;randomEvent();G.pendingKnock=false;if(G.log.length>n)ev++;}ok(ev>=50,'events keep coming');
 const steps=Object.values(G.life.chains).reduce((a,c)=>a+c.step,0);G.minute+=200*1440;while(lifeAlertActive())G.minute+=1440;for(let k=0;k<40;k++){randomEvent();G.pendingKnock=false;}ok(Object.values(G.life.chains).reduce((a,c)=>a+c.step,0)>steps,'neighbour stories advance');
 G.life.harvests=25;G.win=true;ok(lmEnding().id==='garden','gardener ending');G.life.harvests=0;G.life.cranes=1000;ok(lmEnding().id==='cranes','crane ending');G.life.cranes=0;ok(lmEnding().id==='home','default ending');
+
+
+// v0.12 everyday realism.
+reset('seed-A');lifeEnsure();ok(G.life.traits.length===2&&G.life.traits[0]!==G.life.traits[1]&&G.life.traits.every(t=>LR_TRAITS.some(x=>x.id===t)),'two distinct traits');
+let tset=new Set();for(const sd of ['a','b','c','d','e','f','g','h']){reset(sd);lifeEnsure();tset.add(G.life.traits.join());}ok(tset.size>=5,'traits vary by seed');
+reset('seed-A');lifeEnsure();const t0=temperature();G.life.faults.draft=1;G.life.faults.radiator=1;ok(temperature()===t0-5,'draught and cold radiator lower room temperature');
+G.inv.push({uid:uid(),id:'ducttape',units:4,packed:false,location:'room',created:0,age:0,opened:true,contaminated:false},{uid:uid(),id:'radkey',units:1,packed:false,location:'room',created:0,age:0,opened:true,contaminated:false},{uid:uid(),id:'repair',units:5,packed:false,location:'room',created:0,age:0,opened:true,contaminated:false});
+doAction('seal');doAction('bleed');ok(!G.life.faults.draft&&!G.life.faults.radiator&&amount('ducttape')===3&&has('radkey'),'tape seals the window, key bleeds the radiator');
+G.life.faults.drip=1;G.power=true;G.waterOn=true;doAction('repair');ok(!G.life.faults.drip&&amount('repair')===4,'repair kit fixes a dripping tap');
+G.life.faults={};G.minute=10*1440+600;let fl=0;for(let k=0;k<400;k++){dailyUpdate();if(Object.keys(G.life.faults).length)fl++;G.life.faults={};}ok(fl>4&&fl<60,'faults happen now and then, not constantly');
+reset('seed-A');lifeEnsure();G.inv.push({uid:uid(),id:'greens',units:2,packed:false,location:'room',created:0,age:0,opened:true,contaminated:false});const nb=G.inv.find(b=>b.id==='noodles'&&!b.packed)||(()=>{const b={uid:uid(),id:'noodles',units:4,packed:false,location:'room',created:G.minute,age:0,opened:true,contaminated:false};G.inv.push(b);return b;})();
+consumeMeal(nb.uid,true,false);ok(G.foodHistory.at(-1)===(DB.noodles.flavor||'noodles')+'+greens'&&G.life.dishes['葱花挂面']===1&&amount('greens')===1&&DB.noodles.name.includes('挂面')&&!DB.noodles.name.startsWith('葱花'),'cooked noodles with greens become a separate dish');
+G.minute=1440*3+8*60;const wt=lrWatch();ok(typeof wt==='string'&&wt.length>5,'watching the street gives a scene');
 
 reset('ANDERS-1986',YEAR_KIT);const actionCounts={eat:0,water:0,sleep:0,read:0};let loops=0,lastDay=day();
 while(!G.ended&&loops++<30000){

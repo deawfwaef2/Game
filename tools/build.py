@@ -7,7 +7,7 @@ import json
 import base64
 ROOT=Path(__file__).resolve().parents[1]
 SRC=ROOT/'src'
-for name in ['data.js','core.js','scene.js','ui.js','world.js','store.js','realism.js','navigation.js','city-film.js','interior.js','fixtures.js','lighting.js','life-text.js','life.js','life-more.js','life-world.js']:
+for name in ['data.js','core.js','scene.js','ui.js','world.js','store.js','realism.js','navigation.js','city-film.js','interior.js','fixtures.js','lighting.js','life-text.js','life.js','life-more.js','life-world.js','life-real.js']:
     subprocess.run(['node','--check',str(SRC/name)],check=True,capture_output=True)
 html=(SRC/'template.html').read_text()
 assets={'models':{},'textures':{}}
@@ -19,7 +19,7 @@ for p in sorted((SRC/'assets'/'textures').glob('*')):
     assets['textures'][p.stem]='data:'+mime+';base64,'+base64.b64encode(p.read_bytes()).decode()
 credits='/* Offline hand assets, MIT license:\n'+(SRC/'assets'/'WEBXR-HANDS-LICENSE.txt').read_text()+'\nThree.js and addons (MIT):\n'+(SRC/'vendor'/'THREE-LICENSE.txt').read_text()+'\nPoly Haven furniture and materials: CC0-1.0. See assets/manifest.json. */\n'
 html=html.replace('/* ROOM_ASSETS */',credits+'const OFFLINE_ROOM='+json.dumps(assets,separators=(',',':'))+';')
-for marker,file in [('STYLE','style.css'),('WORLD_STYLE','world.css'),('REALISM_STYLE','realism.css'),('NAV_STYLE','navigation.css'),('CITY_FILM_STYLE','city-film.css'),('ROOM_TOOLS','vendor/room-tools.min.js'),('ENGINE','vendor/three.min.js'),('DATA','data.js'),('CORE','core.js'),('SCENE','scene.js'),('UI','ui.js'),('WORLD','world.js'),('STORE','store.js'),('REALISM','realism.js'),('NAVIGATION','navigation.js'),('CITY_FILM','city-film.js'),('INTERIOR','interior.js'),('FIXTURES','fixtures.js'),('LIGHTING','lighting.js'),('LIFE_TEXT','life-text.js'),('LIFE','life.js'),('LIFE_MORE','life-more.js'),('LIFE_WORLD','life-world.js')]:
+for marker,file in [('STYLE','style.css'),('WORLD_STYLE','world.css'),('REALISM_STYLE','realism.css'),('NAV_STYLE','navigation.css'),('CITY_FILM_STYLE','city-film.css'),('ROOM_TOOLS','vendor/room-tools.min.js'),('ENGINE','vendor/three.min.js'),('DATA','data.js'),('CORE','core.js'),('SCENE','scene.js'),('UI','ui.js'),('WORLD','world.js'),('STORE','store.js'),('REALISM','realism.js'),('NAVIGATION','navigation.js'),('CITY_FILM','city-film.js'),('INTERIOR','interior.js'),('FIXTURES','fixtures.js'),('LIGHTING','lighting.js'),('LIFE_TEXT','life-text.js'),('LIFE','life.js'),('LIFE_MORE','life-more.js'),('LIFE_WORLD','life-world.js'),('LIFE_REAL','life-real.js')]:
     text=(SRC/file).read_text()
     if marker!='STYLE': text=text.replace('</script','<\\/script')
     html=html.replace('/* '+marker+' */',text)

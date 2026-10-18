@@ -336,3 +336,19 @@
 - Clocks have gameplay state and 3D item forms; labels are read via T. They are not individually animated to-the-second face hands.
 - Walkable shelves show up to 20 samples per category; all currently unlocked goods are searchable in the order book. Every generated product line is unlocked only by chapter progression.
 - Free furniture rearrangement, outside gameplay and gifts remain absent.
+
+# v0.19.1-preview — stocked chapter shop and upper-left needs HUD (2026-10-18)
+
+## Changes validated
+- Fixed the chapter shelf sampler: `SHOP_CATS` is a list of category strings, so destructuring each string had reduced categories to their first character and left all 3D shelves empty. The sampler now iterates category IDs directly; chapter one places **200 products across all ten bays**.
+- Added a persistent upper-left survival panel during play: six primary needs bars plus bladder, bowel, and room-cleanliness indicators. It does not reveal date, clock, or hidden remaining days; it is hidden while shopping.
+- Added a clearly labeled top-right **Browse all products** button to chapter shopping. It opens the searchable order book from anywhere in the shop; the initial chapter offers 3,066 products.
+- Added an AI-generated, locally embedded 1986 cooperative-shop hero image to the order book, restyled catalogue cards, and documented the asset in `src/assets/manifest.json`. No CDN/network dependency was introduced.
+
+## Regression results
+- `node tests/levels.cjs`: **60 chapter assertions pass**, including 200 starter shelf samples and all ten stocked categories.
+- `node tests/simulation.cjs`: **162 deterministic assertions pass**; classic 365-day strategy still wins on day 366.
+- `tests/levels-browser.cjs`: chapter shelves, browse button, populated order book, checkout, hidden clock and six needs bars pass; **0 external requests, 0 JS errors**.
+- `tests/browser.cjs`: all classic physical shop/room/purchase/save/touch/no-WebGL regressions pass; **0 external requests, 0 JS errors**.
+- `tests/realism.cjs`, `tests/navigation.cjs`, and `tests/audio.cjs`: pass; navigation audited 257 seeded routes, audio decoded **72/72** embedded clips; **0 external requests, 0 JS errors**.
+- Manually inspected `tests/artifacts/levels/05-shop-shelves.jpg` (200 physical samples), `03-order-book.jpg` (photo header and catalogue), and `04-hidden-clock-room.jpg` (upper-left needs panel). Overlay screenshots are opt-in with `QA_SCREENSHOTS=1`; the QA screenshot path disables backdrop blur only during capture to avoid software-GPU timeout.

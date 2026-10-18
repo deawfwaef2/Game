@@ -28,10 +28,15 @@ ok(firstA.length===firstB.length&&firstA.every((x,i)=>x.id===firstB[i].id),"chap
 ok(firstA.length>1000&&firstA.length<CATALOG.length+LV_PRODUCTS.length,"first chapter opens a large but progressive catalogue tranche");
 ok(CATALOG.filter(x=>!x.gen).every(x=>firstA.some(y=>y.id===x.id)),"all original products remain available");
 ok(LV_PRODUCTS.every(x=>firstA.some(y=>y.id===x.id)),"all timekeeping goods are purchasable in chapter mode");
+const starterSamples=lvPhysicalCatalog();
+ok(starterSamples.length===200,"the starter chapter stocks 20 physical samples in each of ten bays");
+ok(SHOP_CATS.every(cat=>starterSamples.some(x=>x.category===cat)),"the starter chapter has at least one physical product in every bay");
 lvProgress.unlocked=6;const full=lvCatalogStock();
 ok(full.length===CATALOG.length+LV_PRODUCTS.length,"last unlock exposes the entire catalogue");
 ok(new Set(full.map(x=>x.id)).size===full.length,"chapter catalogue IDs are unique");
+ok(lvPhysicalCatalog().length>0,"chapter shop shelves are populated with physical samples");
 ok(lvPhysicalCatalog().length<=200,"walkable shelf displays only a readable sample");
+ok(SHOP_CATS.every(cat=>lvPhysicalCatalog().some(x=>x.category===cat)),"each category receives visible shelf stock");
 lvProgress.unlocked=1;lvPending=null;phase="title";
 
 let g=startChapter("bellhouse");

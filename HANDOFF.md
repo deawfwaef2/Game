@@ -365,3 +365,14 @@
 - 已新增 `tests/levels.cjs`、`tests/levels-browser.cjs`。最近结果：levels 56断言通过；simulation 162断言与365天策略通过；browser/realism/navigation/audio/levels-browser均通过，外部请求0、JS错误0。截图人工查看路径 `tests/artifacts/levels/{01-title,02-chapter-book,03-order-book,04-hidden-clock-room}.jpg`。
 - `dist/`由构建生成，但不得留在Arena工作区快照；最终应删除dist和临时截图后核查总量≤128MB。根 `index.html` 必须保持最新可双击离线版本。
 - GitHub安全：用户在本轮对话再次粘贴了PAT。它未被写入任何文件、配置、命令历史或提交；**本轮未对GitHub推送**。交付时提醒用户立即撤销已贴出的PAT，如需发布请用新凭据/安全连接方式。
+
+
+## v0.19.1-preview — 修复空货架、重做订货簿、需求条回左上角（2026-10-18）
+- 用户反馈章节商店没有物品、UI不好看，并要求加入图片与更真实的呈现；需求条应继续显示且放在左上角。
+- 根因：`SHOP_CATS` 实际为分类字符串数组，旧代码 `for (const [category] of SHOP_CATS)` 每次只取首字符，导致关卡实体货架过滤不到任何产品。已改成直接遍历分类ID。第一关现在实体摆出**200个样品，十个分类各有货**；浏览器确认 `lvPhysicalCatalog().length === W.shopProducts.length === 200`。
+- 章节供销社右上角新增「浏览全部商品」快捷入口，打开全国订货簿；开局第一章显示3,066件已开放商品，可搜索、加入采购篮并结账。
+- 订货簿重做为旧纸目录风格，加入本地嵌入的1986供销社生成图片和较清楚的商品卡；不调用外部图片/CDN。`src/assets/manifest.json`已登记该项目生成图。
+- 正常游戏HUD新增左上角生活状态卡：饱腹、饮水、体力、精神、清洁、健康六条动态需求条，并显示膀胱、肠道和房间整洁；购物时隐藏，关卡内仍不出现日期/钟点/剩余天数。
+- 版本号升级为`0.19.1-preview`。`node tests/levels.cjs` 60断言通过；经典模拟162断言和365天策略通过；levels-browser、browser、realism、navigation、audio全通过，外部请求0、JS错误0；音频72/72解码。
+- QA截图：`tests/artifacts/levels/05-shop-shelves.jpg`、`03-order-book.jpg`、`04-hidden-clock-room.jpg`。Screenshot overlay可用`QA_SCREENSHOTS=1`；为避开软件GPU截图超时，仅在截图时临时关闭backdrop blur。
+- 本地保持完全离线；本轮没有推送GitHub或发布ZIP。用户本轮再次粘贴了PAT，未使用、未保存到任何文件/配置/提交；交付时提醒用户立即撤销。

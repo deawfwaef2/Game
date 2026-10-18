@@ -1820,6 +1820,31 @@ function worldRenderHUD() {
   if (W.rig) W.rig.visible = visible;
   if (!visible) return;
   const shopping = worldIsShopping();
+  const vitals = $("#worldVitals");
+  const showVitals = !shopping && phase === "playing" && !!G;
+  if (vitals) {
+    vitals.hidden = !showVitals;
+    if (showVitals) {
+      const marks = { bowl: "◍", drop: "●", moon: "⌁", heart: "♡", spark: "✦", plus: "+" };
+      $("#worldVitalsGrid").innerHTML = NEEDS.map(([key, label, icon]) => {
+        const value = Math.round(clamp(G.stats[key]));
+        const urgency = value < 25 ? " critical" : value < 42 ? " low" : "";
+        return `<div class="world-vital${urgency}" title="${label}：${value}/100，越高越好"><span class="world-vital-mark" aria-hidden="true">${marks[icon] || "•"}</span><div class="world-vital-main"><div class="world-vital-label"><span>${label}</span><strong>${value}</strong></div><div class="world-vital-track" role="progressbar" aria-label="${label}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${value}"><i style="width:${value}%"></i></div></div></div>`;
+      }).join("");
+      const bladder = Math.round(G.bladder), bowel = Math.round(G.bowel);
+      const tidy = Math.round(100 - G.dirt);
+      $("#worldVitalsBody").innerHTML = `<span class="${bladder > 78 ? "urgent" : ""}">膀胱 <b>${bladder}%</b></span><span class="${bowel > 78 ? "urgent" : ""}">肠道 <b>${bowel}%</b></span><span class="${tidy < 40 ? "urgent" : ""}">整洁 <b>${tidy}%</b></span>`;
+    }
+  }
+  const catalogButton = $("#worldCatalogButton");
+  const hasChapterCatalog = shopping && typeof lvPending !== "undefined" && !!lvPending && typeof lvOpenOrder === "function";
+  if (catalogButton) {
+    catalogButton.hidden = !hasChapterCatalog;
+    if (hasChapterCatalog) {
+      const count = typeof lvCatalogStock === "function" ? lvCatalogStock().length : 0;
+      catalogButton.innerHTML = `<span class="world-catalog-icon" aria-hidden="true">▤</span><span class="world-catalog-copy"><strong>浏览全部商品</strong><small>全国订货簿 · ${count.toLocaleString("zh-CN")} 件可订</small></span><kbd>↵</kbd>`;
+    }
+  }
   $("#worldDay").textContent = shopping
     ? "唯一一次开局采购"
     : timeHidden()
@@ -2078,7 +2103,10 @@ function worldSfx(freq = 400, length = 0.05) {
 function initWorldDOM() {
   const html = `<div id="worldFade"></div><div id="worldHUD" hidden>
     <div class="world-corner"><strong id="worldDay"></strong><small id="worldPlace"></small></div>
-    <div id="worldTopRight"></div><div id="worldDot"></div><div id="worldBite"></div>
+    <aside id="worldVitals" class="world-vitals" aria-label="身体与生活需求" hidden><header><span><i class="vitals-live-dot"></i>生活状态</span><small>指标越高越好</small></header><div id="worldVitalsGrid" class="world-vitals-grid"></div><div id="worldVitalsBody" class="world-vitals-body"></div></aside>
+    <div id="worldTopRight"></div>
+    <button id="worldCatalogButton" class="world-catalog-button" hidden aria-label="打开全国订货簿"></button>
+    <div id="worldDot"></div><div id="worldBite"></div>
     <div id="worldFocus"><strong></strong><span></span></div>
     <div id="worldAction" hidden><span></span><div id="worldActionLine"><i></i></div><small></small></div>
     <div id="worldSubtitle" role="status" aria-live="polite"></div>
@@ -2109,6 +2137,9 @@ function initWorldDOM() {
   };
   $("#worldSound").onclick = toggleAudio;
   $("#worldPauseButton").onclick = () => worldPause();
+  $("#worldCatalogButton").onclick = () => {
+    if (typeof lvOpenOrder === "function") lvOpenOrder();
+  };
   $$("[data-world]").forEach(
     (b) =>
       (b.onclick = () => {

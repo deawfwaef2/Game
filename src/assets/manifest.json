@@ -211,5 +211,14 @@
     "license": "Project asset; no third-party source",
     "source": "src/assets/textures/walnut-veneer_diff.jpg",
     "processing": "walnut furniture veneer texture, generated in-session and embedded as data URI"
+  },
+  {
+    "name": "coop-shop-hero",
+    "author": {
+      "Generated for this project (Arena.ai image generation)": "All"
+    },
+    "license": "Project asset; no third-party source",
+    "source": "src/assets/textures/coop-shop-hero.jpg",
+    "processing": "AI-generated photo-style 1986 cooperative shop header for the in-game order-book UI; embedded as a data URI for offline play."
   }
 ]

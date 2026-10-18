@@ -396,3 +396,8 @@
 - 一次软件GPU浏览器重跑在主菜单按钮点击时超时，单独交互检查成功，整套复跑通过。货架保质期测试最初把5天保质的面包年龄设为6天，程序正确显示已变质；修正测试夹具至2天后完整回归通过。
 - 手动复核临时QA图`tests/artifacts/v021-products.png`及`v021-waste.png`：新包装轮廓可区分，垃圾袋位于垃圾桶附近；这些截图只用于本地QA，打包/提交前删除。`python3 tools/build.py`当前离线单文件为22,874,204字节，已生成临时`dist/Game-playable.zip`；最终重建并清除`dist/`与`tests/artifacts/`。
 - Git只读检查：`git ls-remote`显示GitHub `main`仍在公开v0.18提交`92bebdcd15749bfae9d452ca611256802323fdb7`，未见v0.20或v0.21标签；此时尚未推送。先完成本地检查点，再仅用无令牌的安全认证尝试推送；禁止使用用户粘贴的PAT、禁止放宽SSH host-key验证。提醒用户撤销此前贴出的PAT。
+
+### v0.21 publication outcome
+- Safe local checkpoint succeeded: release commit `d3ba4eefa35017a3296ade36452ba0a2d3cc2fab`, annotated tag `v0.21.0-preview`; working tree was clean at checkpoint. A prior safe-checkpoint attempt refused to exchange Git metadata because `/home/user/.npm` inflated the whole-home projection; moving that excluded generated cache temporarily out of the workspace allowed the safety-margin check to pass. The cache is retained under `/var/tmp/closed365-npm-cache` for restoration/cleanup.
+- Requested push was attempted **without any token**. Strict SSH correctly stopped at missing verified `github.com` host key; no host-key verification was bypassed or added blindly. A second HTTPS attempt used an empty HOME and disabled credential helpers, and failed because no username was available. No remote changes occurred; post-attempt `git ls-remote` still showed `main` at `92bebdcd15749bfae9d452ca611256802323fdb7` and no v0.21 tag.
+- No SSH key/agent or known GitHub host entry was present. Continue only after the user configures an authorized credential and verified host key; never use the pasted PAT. The PAT was not used, stored, or echoed; user should revoke it.

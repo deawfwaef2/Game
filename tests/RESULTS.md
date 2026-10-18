@@ -389,3 +389,7 @@
 ## Build / boundaries
 - `python3 tools/build.py`: self-contained offline `index.html`, **22,874,204 bytes**, with temporary ZIP under `dist/`. The final workspace cleanup removes `dist/` and `tests/artifacts/`; root `index.html` remains the deliverable.
 - No offline time progression, automatic inventory placement, additional pest/disgust mechanics, restocking, gifts, or purchasable chapter mechanisms were added. Chapter overflow penalty is exclusive to chapter mode; classic 365-day rules remain unchanged.
+
+## Publication check
+- Local checkpoint: `d3ba4eefa35017a3296ade36452ba0a2d3cc2fab`, annotated `v0.21.0-preview`.
+- No-token push attempts were safely blocked: strict SSH lacked a verified GitHub host key; HTTPS with credential helpers disabled had no username. No verification bypass, token use, or remote mutation. A read-only post-check confirmed remote `main` remains at v0.18 commit `92bebdcd15749bfae9d452ca611256802323fdb7` and v0.21 is not on the remote.

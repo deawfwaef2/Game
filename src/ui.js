@@ -440,7 +440,7 @@ function openInventory() {
         }
         if (!actions)
           actions =
-            '<span style="font-size:8px;color:#7f996d">解包后已就位 · 在对应家务中使用</span>';
+            '<span style="font-size:13px;color:#7f996d">解包后已就位 · 在对应家务中使用</span>';
       }
       return `<article class="inv-item ${spoiled ? "spoiled" : ""}"><span class="inv-art">${productArt(it)}</span><div class="inv-item-content"><h3>${it.name}</h3><p>${Math.floor(b.units)}${["food", "drink"].includes(it.kind) ? "份" : it.servings > 1 ? "次" : "件"} · ${location} · ${((it.weight / it.servings) * b.units).toFixed(2)}kg<br>${expiry}${it.cook ? " · 需热源和0.3L水" : ""}${it.ingredient ? " · 烹饪时自动搭配" : ""}${b.contaminated ? " · 可能受污染，请谨慎处理" : ""}</p><div class="inv-actions">${actions}</div></div></article>`;
     })

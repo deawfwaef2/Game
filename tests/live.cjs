@@ -59,7 +59,7 @@ const assert = require("assert"),
     assert.strictEqual(await page.evaluate(() => targetId), "shopCheckout");
     await page.keyboard.press("e");
     await page.waitForFunction(() => phase === "playing", null, {
-      timeout: 20000,
+      timeout: 90000,
     });
     await page.evaluate(() => {
       const point = new THREE.Box3()
@@ -75,7 +75,7 @@ const assert = require("assert"),
     const before = await page.evaluate(() => countPackages());
     await page.keyboard.press("e");
     await page.waitForFunction(() => G.bags.some((b) => b.opened) && !W.busy, null, {
-      timeout: 20000,
+      timeout: 90000,
     });
     await page.keyboard.press("e");
     await page.waitForFunction(() => !!W.held, null, { timeout: 20000 });

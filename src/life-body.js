@@ -71,8 +71,8 @@ function lbSetup() {
 #bodyLids::after{bottom:0;border-radius:50% 50% 0 0/30% 30% 0 0;transform:translateY(102%)}
 #bodyLids.shut::before,#bodyLids.shut::after{transform:translateY(0);transition-duration:.35s}
 #bodyLids.half::before{transform:translateY(-62%)}#bodyLids.half::after{transform:translateY(62%)}
-#bodyLine{position:fixed;left:50%;top:62%;transform:translate(-50%,6px);color:#f1e9d8;font:italic 17px/1.6 'Noto Serif CJK SC','Songti SC',serif;letter-spacing:.06em;text-shadow:0 1px 6px rgba(0,0,0,.85);opacity:0;transition:opacity .8s,transform .8s;pointer-events:none;z-index:8;white-space:nowrap}
-#bodyLine.on{opacity:.95;transform:translate(-50%,0)}#bodyLine.soft.on{opacity:.72;font-size:16px}
+#bodyLine{position:fixed;left:50%;top:62%;transform:translate(-50%,6px);color:#f1e9d8;font:italic 23px/1.6 'Noto Serif CJK SC','Songti SC',serif;letter-spacing:.06em;text-shadow:0 1px 6px rgba(0,0,0,.85);opacity:0;transition:opacity .8s,transform .8s;pointer-events:none;z-index:8;white-space:nowrap}
+#bodyLine.on{opacity:.95;transform:translate(-50%,0)}#bodyLine.soft.on{opacity:.72;font-size:21px}
 #bodyFx i.g{background:radial-gradient(ellipse at center,rgba(255,226,170,.16),rgba(255,214,150,.05) 60%,transparent 85%);opacity:0}`;
   document.head.appendChild(st);
   LB.el = document.createElement("div");

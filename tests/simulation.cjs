@@ -39,7 +39,7 @@ const ctx = {
   },
 };
 vm.createContext(ctx);
-for (const f of ["src/data.js", "src/core.js", "src/life-text.js", "src/life.js", "src/life-more.js", "src/life-real.js", "src/life-home.js"])
+for (const f of ["src/data.js", "src/core.js", "src/life-text.js", "src/life.js", "src/life-more.js", "src/life-real.js", "src/life-home.js", "src/life-items.js"])
   vm.runInContext(fs.readFileSync(f, "utf8"), ctx);
 vm.runInContext(
   `
@@ -149,6 +149,17 @@ while(!G.ended&&loops++<30000){
 console.log('365-day policy result:',JSON.stringify({day:day(),win:G.win,ended:G.ended,loops,stats:G.stats,remainingFoodPortions:availableFood().reduce((a,b)=>a+b.units,0),actions:actionCounts}));
 ok(G.ended&&G.win,'resource-aware 365-day policy can win');
 console.log('Year traces',G.life.tenant,G.life.tenantBits,'dreams',G.life.dreams.length);ok(G.life.tenantBits===6,'all six traces of the previous tenant turn up within a year of ordinary cleaning');ok(G.life.dreams.length>=8,'dreams on waking from proper sleeps');
+
+// v0.16: every product explains its use, and the explained effects are real.
+ok(CATALOG.every(i=>typeof ITEM_USE[i.id]==='string'&&ITEM_USE[i.id].length>=8),'every product has a use explanation');ok(CATALOG.every(i=>itemFacts(i).length>4),'every product has a facts line');
+{reset();const give=(id,n)=>G.inv.push({uid:uid(),id,units:n||DB[id].servings,packed:false,location:'shelf',created:G.minute,age:0,opened:false});
+ G.inv=G.inv.filter(b=>!['soap','shampoo','towel','razor'].includes(b.id));G.waterOn=true;G.power=true;G.stats.hygiene=20;G.stats.morale=50;doAction('shower');const plain=[G.stats.hygiene,G.stats.morale];
+ give('soap');give('shampoo');give('towel');give('razor');G.stats.hygiene=20;G.stats.morale=50;const sh=amount('shampoo');doAction('shower');ok(G.stats.hygiene>=plain[0]+27+6-0.5&&amount('shampoo')===sh-1,'shampoo adds to a shower and is used up');ok(G.stats.morale>=plain[1]+3+2+2-0.5,'towel and razor make a shower nicer');
+ G.stats.morale=50;doAction('shower');const second=G.stats.morale;ok(second<plain[1]+3+2+2+1-0.5,'shaving counts once a day');
+ G.dirt=60;G.inv=G.inv.filter(b=>!['disinfect','broom','mop'].includes(b.id));doAction('clean');const noDis=60-G.dirt;give('disinfect');G.dirt=60;doAction('clean');ok(60-G.dirt>=noDis+9.9,'disinfectant cleans more');
+ const rice=()=>G.inv.find(b=>b.id==='rice'&&b.units>0&&!b.packed);G.inv=G.inv.filter(b=>!['salt','pepper','pan','bowl','spice','onion','greens','sprouts','cherrytom'].includes(b.id));G.foodHistory=[];G.stats.morale=40;consumeMeal(rice().uid,true,false);const m1=G.stats.morale-40;
+ give('salt');give('pepper');give('pan');G.foodHistory=[];G.stats.morale=40;const salt=amount('salt');consumeMeal(rice().uid,true,false);ok(G.stats.morale-40>=m1+2.9&&amount('salt')===salt-1,'salt, pepper and a pan make a cooked meal nicer');
+ give('jar');const jr=rice();jr.age=0;jr.location='shelf';for(let k=0;k<288;k++){G.stats.food=G.stats.water=G.stats.energy=G.stats.health=G.stats.morale=80;G.bladder=G.bowel=0;simulate(5,'idle');}ok(jr.age<0.8&&jr.age>0.7,'storage jars slow dry goods');}
 console.log('ALL SIMULATION TESTS PASSED');
 `,
   ctx,

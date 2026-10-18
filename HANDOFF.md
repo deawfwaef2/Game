@@ -282,3 +282,31 @@
 - life-body.js：lbFrostGlass/lbFrost 在外层玻璃内侧（z=back-0.198）画冰花。
 - tools/qa-weather.cjs 的参数可以是 rain、snow 或 frost。
 - /var/tmp 被清空过一次，已按记录重新安装 QA 环境（npm、chromium 和 install-deps）。
+
+### 2026-10-18 / v0.16.0-preview 声音、大字、动作反馈、物品用途、供销社重做
+- 声音素材在 src/audio/*.mp3（72个，单声道，共约3.6MB）。
+  - 用 tools/encode-audio.py 从 /var/tmp/snd 里的 CC0 原始素材包重新生成，来源见 src/audio/CREDITS.md。
+  - build.py 会把它们编码成 base64，写成 `const AUDIO_DATA`。
+  - HTML 的体积上限已提高到 32MB，当前约 22.4MB。
+- src/audio.js（最后加载），主要内容：
+  - AU 对象；auPlay 播放一次性音效；auLoop 播放可调音量的循环音。
+  - 配乐由 auMusicTick 控制：标题页、供销社、房间各有一组曲子，曲子之间安静90–240秒。
+  - auRadio 播放收音机音乐。
+  - AU_ACTIONS 把动作的 label/kind 对应到开始、循环、节奏和结束时的声音，通过包装 worldStart 和 worldFinishAction 实现。
+  - 原来的 worldSfx 蜂鸣改为按频率对应到真实录音。
+  - 包装 logEvent，让敲门和打雷发出声音。
+  - 在 worldFrame 里处理脚步声和屋里的环境音（钟声、街道、雨），lbRainSound 改为空函数。
+  - auFeedback：在 worldFinishAction 前后比较各项状态，显示结果提示（#auChips）。
+  - 设置存在 localStorage 的 closed365-audio-v1 里；暂停菜单里的音量滑条用 MutationObserver 插进去。
+- src/life-items.js（life-home 之后加载，simulation 也加载它）：
+  - ITEM_USE 是133件商品的用途说明；itemFacts、itemUse 生成显示用的文字。
+  - 通过包装 simulate、doAction、consumeMeal、actDrink、takeMedicine、doRead，给原来只是摆设的物品加上真实效果。
+  - **改动任何效果时，要同时改 ITEM_USE 里对应的说明。**
+- src/store-real.js（audio 之前加载）：
+  - 包装 worldBuildStore：先把商品放进 SR.pending，等合批（worldBatchShop）结束后，再用 srModel 生成精细模型。必须这样做，因为 RoundedBox 不能参与合批。
+  - 小件商品用 InstancedMesh 并排摆2–3件。
+  - srTags 生成价签，srLight 调灯光（envMapIntensity 改为原来的三成，曝光0.9）。
+  - #shopCard 是商品卡片。
+  - SR_EFFECT 给房间里对准家具时的提示加一行效果说明。
+- CSS：所有 px 字号按对照表放大（5–8→13，9→14，10→15，11→16，12→17，13→18，14→19，15–16→20，17–28 各加4）。world.css 末尾加了一层提高可读性的样式。#worldSubtitle 挪到了上方。
+- tools/qa-ui.cjs 已修好：货架和过道的镜头位置改对了；进入房间前先 reload 并等待袋子出现。新增 tools/qa-feedback.cjs。

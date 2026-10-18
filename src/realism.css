@@ -52,14 +52,14 @@
 }
 .realistic-room #worldFocus strong {
   text-shadow: 0 2px 9px #000a;
-  font-size: 21px;
+  font-size: 25px;
   font-weight: 500;
   letter-spacing: 0.05em;
 }
 .realistic-room #worldFocus span {
   color: #e5e4dd;
   text-shadow: 0 1px 7px #000;
-  font-size: 12px;
+  font-size: 17px;
   line-height: 1.8;
   max-width: 600px;
 }
@@ -79,16 +79,16 @@
   background: none;
   color: #ddd9ce;
   font: inherit;
-  font-size: 13px;
+  font-size: 18px;
   letter-spacing: 0.08em;
   cursor: pointer;
 }
 #roomSampleNotice {
   position: fixed;
-  top: 74px;
+  top: 128px;
   left: 28px;
   color: #ece9dfb3;
-  font-size: 11px;
+  font-size: 16px;
   letter-spacing: 0.06em;
   pointer-events: none;
   z-index: 11;
@@ -102,7 +102,7 @@
     background: linear-gradient(90deg, #11191be0, #11191b77);
   }
   #roomSampleNotice {
-    top: 100px;
+    top: 140px;
     left: 18px;
     max-width: 210px;
     line-height: 1.6;

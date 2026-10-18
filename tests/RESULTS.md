@@ -316,3 +316,23 @@
 
 ### 降级复验
 强制让Canvas拒绝所有WebGL上下文后，游戏正确显示降级场景；实际采购、结账、房间面板、全部拆袋均可运行，未捕获JS错误为0。源码格式化后也重新通过模拟与浏览器回归。
+
+
+# v0.19.0-preview — hidden-clock chapter mode (2026-10-18)
+
+## Chapter regression
+- `node tests/levels.cjs`: **56 assertions pass**. Covers deterministic progressive catalogue, original goods, all chapter clocks, nightly one-press rule across midnight, wrong-action penalties, each level's distinct correct trigger/reward, timepiece/battery/drift/outage behavior, save validation, chapter completion, star and unlock persistence.
+- `node tests/simulation.cjs`: **162 assertions pass**; the existing 365-day resource policy still wins at day 366. Classic catalogue remains 19,788 goods / 200 seed-stock goods (1.01%).
+- `tests/levels-browser.cjs`: **pass** in actual WebGL/file:// Chromium. Chapter picker shows six rooms, only the first locked-state opens; chapter shop order book searches the 1/6 starter tranche and sells a wristwatch and battery; checkout returns to the room; HUD has no date, clock or remaining-day value; physical bell fixture exists. External requests 0, JavaScript errors 0.
+
+## Existing browser regressions
+- `tests/browser.cjs`: all physical shop/room controls, single purchase, old-v3 save compatibility, no-WebGL fallback, and 390×844 touch route passed; external requests 0, JavaScript errors 0.
+- `tests/realism.cjs`: offline model/hand/action/placement and sample return/import/opaque iframe passed.
+- `tests/navigation.cjs`: 14 waypoints, touch arrows, movement-mode switch, pause/load, 257 seeded routes (no missing routes), external requests 0, JavaScript errors 0.
+- `tests/audio.cjs`: 72/72 embedded clips decode; action feedback, room clock ambience, triple knocks, and sound controls pass.
+
+## Boundaries
+- The 1,000-day chapter is a hidden nominal countdown; successful chapter-specific actions shorten it. It is not a claim that 1,000 real-world days pass.
+- Clocks have gameplay state and 3D item forms; labels are read via T. They are not individually animated to-the-second face hands.
+- Walkable shelves show up to 20 samples per category; all currently unlocked goods are searchable in the order book. Every generated product line is unlocked only by chapter progression.
+- Free furniture rearrangement, outside gameplay and gifts remain absent.

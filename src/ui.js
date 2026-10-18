@@ -39,7 +39,20 @@ function productArt(it) {
   };
   const [a, b] = palette[it.category] || palette.tool;
   let shape = "";
-  if (it.kind === "book")
+  if (it.levelClock) {
+    if (it.levelClock === "hourglass")
+      shape = `<path d="M27 10h26v7L44 34l12 24v12H24V58l12-24L24 17v-7Z" fill="${a}" stroke="${b}" stroke-width="3"/><path d="M29 14h22M28 63h24M32 18l8 12 8-12m-16 39 8-12 8 12" fill="none" stroke="${b}" stroke-width="3"/><path d="M36 52h8l-4 5Z" fill="#c4a96e"/>`;
+    else if (it.levelClock === "digital" || it.levelClock === "mains")
+      shape = `<rect x="13" y="22" width="54" height="40" rx="5" fill="${b}"/><rect x="19" y="28" width="42" height="19" rx="2" fill="#29332e"/><path d="M26 33h8v9h-8zm15 0h8v9h-8z" fill="${a}"/><path d="M54 33v9" stroke="${a}" stroke-width="3"/><path d="M33 54h14" stroke="${a}" stroke-width="3"/>`;
+    else if (it.levelClock === "calendar")
+      shape = `<path d="M20 14h40v56H20z" fill="#ded4bb" stroke="${b}" stroke-width="3"/><path d="M20 14h40v14H20z" fill="${b}"/><path d="M29 10v10m22-10v10" stroke="${a}" stroke-width="4"/><path d="M27 37h6m6 0h6m6 0h6M27 47h6m6 0h6m6 0h6M27 57h6m6 0h6m6 0h6" stroke="${b}" stroke-width="3"/>`;
+    else {
+      const wrist=/腕表/.test(it.name), r=wrist?15:21;
+      shape = wrist
+        ? `<path d="M33 8h14l4 16v16l-4 22H33l-4-22V24z" fill="${b}"/><circle cx="40" cy="34" r="${r}" fill="${a}" stroke="${b}" stroke-width="4"/><path d="M40 22v12l8 5M40 14v4m0 32v4m-18-20h4m28 0h4" fill="none" stroke="${b}" stroke-width="3" stroke-linecap="round"/>`
+        : `<rect x="22" y="12" width="36" height="56" rx="10" fill="${b}"/><circle cx="40" cy="32" r="${r}" fill="${a}" stroke="#dbcfb2" stroke-width="3"/><path d="M40 18v4m0 20v4m-14-14h4m20 0h4M40 32V22m0 10 9 5" fill="none" stroke="${b}" stroke-width="3" stroke-linecap="round"/>`;
+    }
+  } else if (it.kind === "book")
     shape = `<path d="M19 9h40v61H19z" fill="${b}"/><path d="M23 9h3v61h-3z" fill="${a}"/><path d="M29 15h25v48H29z" fill="${a}" opacity=".35"/><path d="M32 28h19m-19 5h16m-16 5h17" stroke="${a}" stroke-width="1"/><path d="M20 65h38v4H20z" fill="#d0c8a6"/>`;
   else if (it.category === "canned")
     shape = `<ellipse cx="40" cy="19" rx="21" ry="7" fill="${a}"/><path d="M19 19v43c0 9 42 9 42 0V19" fill="${b}"/><path d="M20 31h40v23H20z" fill="${a}"/><ellipse cx="40" cy="19" rx="21" ry="7" fill="${a}" stroke="${b}"/><path d="M36 16h9v4h-9z" fill="${b}"/><path d="M28 41h24m-20 5h15" stroke="${b}" stroke-width="1.5"/>`;
@@ -155,7 +168,7 @@ function renderCatalog() {
 }
 function renderReceipt() {
   const s = cartSummary(cart),
-    budget = 300;
+    budget = gameBudget();
   $("#shopBudget").innerHTML =
     Math.floor(budget - s.cost) +
     `<small>.${Math.round((budget - s.cost - Math.floor(budget - s.cost)) * 100)
@@ -193,7 +206,7 @@ function applyKit(which) {
   if (!canPurchase()) return blockPurchase();
   if (Object.keys(cart).length && !confirmInline("replace-kit", which)) return;
   cart = { ...(which === "year" ? YEAR_KIT : STARTER) };
-  const budget = 300;
+  const budget = gameBudget();
   // Never create an unpayable automatic recommendation. Trim bulk first, not essential tools.
   let safety = 0;
   while (cartSummary(cart).cost > budget && safety++ < 1500) {
@@ -227,10 +240,12 @@ function confirmInline(type, value) {
 }
 function renderHUD() {
   if (!G) return;
-  $("#hudDay").textContent = String(Math.min(365, day())).padStart(3, "0");
+  $("#hudDay").textContent = timeHidden() ? "—" : String(Math.min(365, day())).padStart(3, "0");
+  if ($("#hudDay").nextElementSibling)
+    $("#hudDay").nextElementSibling.textContent = timeHidden() ? "/ 无日期" : "/ 365 DAYS";
   const h = Math.floor(hour()),
     m = Math.floor(G.minute % 60);
-  $("#hudClock").textContent =
+  $("#hudClock").textContent = timeHidden() ? lvChapterLabel() :
     `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")} · ${["初春", "暮春", "盛夏", "晚夏", "初秋", "深秋", "入冬", "严冬"][Math.floor((day() - 1) / 46) % 8]}`;
   $("#hudCash").textContent = money(G.cash);
   $("#hudRoomNumber").textContent = "APT. " + env.number;
@@ -525,7 +540,7 @@ function openJournal() {
     "journal",
     "把今天，写进手记。",
     "JOURNAL / EVERY DAY YOU ARE STILL HERE",
-    `<p class="panel-intro">已隐匿${Math.max(0, day() - 1)}个完整日夜。还有${Math.max(0, 365 - day())}天。<br>种子 ${esc(G.seed)} · 安德士帝国，1986年</p>${G.log.map((l) => `<article class="journal-entry ${esc(l.type)}"><time>第${Math.floor(l.minute / 1440) + 1}天<br>${String(Math.floor((l.minute % 1440) / 60)).padStart(2, "0")}:${String(Math.floor(l.minute % 60)).padStart(2, "0")}</time><p>${esc(l.text)}</p></article>`).join("")}`,
+    `<p class="panel-intro">${timeHidden() ? "没有日期的日子。你只记得发生过什么。" : `已隐匿${Math.max(0, day() - 1)}个完整日夜。还有${Math.max(0, 365 - day())}天。`}<br>种子 ${esc(G.seed)} · 安德士帝国，1986年</p>${G.log.map((l) => `<article class="journal-entry ${esc(l.type)}"><time>${timeHidden() ? "·" : `第${Math.floor(l.minute / 1440) + 1}天<br>${String(Math.floor((l.minute % 1440) / 60)).padStart(2, "0")}:${String(Math.floor(l.minute % 60)).padStart(2, "0")}`}</time><p>${esc(l.text)}</p></article>`).join("")}`,
   );
 }
 function openSave() {

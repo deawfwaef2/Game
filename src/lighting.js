@@ -191,6 +191,7 @@ function lightingWindow() {
   const state = G && phase !== "title" ? G : null,
     night = state && (hour() < 6 || hour() > 18),
     closed = !!state?.curtains,
+    blocked = typeof lvWindowBlocked === "function" && lvWindowBlocked(),
     back = -env.d / 2;
   // Area lights evaluate one-sided in world space; a mirrored (scale.x = -1) room would flip the emitter,
   // so the light lives in the scene and is positioned from the room's world transform.
@@ -219,7 +220,7 @@ function lightingWindow() {
   );
   area.color.copy(closed ? skyCol.clone().lerp(new THREE.Color("#f2dcc0"), 0.7) : skyCol);
   const skyLum = S.overcast ? 6.2 : 4 + 5 * Math.sin(Math.min(1, S.elev / 0.72) * Math.PI / 2);
-  area.intensity = (0.25 + (skyLum - 0.25) * L) * (closed ? 0.3 : 1);
+  area.intensity = (0.25 + (skyLum - 0.25) * L) * (closed ? 0.3 : 1) * (blocked ? 0.035 : 1);
   // Direct sun: follows the arc, long low beams early and late, none on grey days.
   const mirror = env.mirror ? -1 : 1,
     dist = 7,
@@ -232,7 +233,7 @@ function lightingWindow() {
   sunLight.target.position.copy(roomRoot.localToWorld(new THREE.Vector3(0, 0.4, 0.6)));
   sunLight.target.updateMatrixWorld();
   sunLight.color.copy(new THREE.Color("#fff0da").lerp(new THREE.Color("#ffad66"), S.low * 0.85));
-  if (!night) sunLight.intensity = (closed ? 0.18 : 3.3) * sunScale * L * (0.55 + 0.45 * (1 - S.low * 0.6));
+  if (!night) sunLight.intensity = (closed ? 0.18 : 3.3) * sunScale * L * (0.55 + 0.45 * (1 - S.low * 0.6)) * (blocked ? 0.02 : 1);
   if (R.city?.material) R.city.material.color.copy(new THREE.Color("#34445c").lerp(new THREE.Color(S.overcast ? "#dde0e2" : "#f3f5f9").lerp(new THREE.Color("#f2c9a0"), S.overcast ? 0 : S.low * 0.4), L));
   if (scene.background?.isColor) {
     scene.background.copy(new THREE.Color("#222c37").lerp(new THREE.Color(S.overcast ? "#c9cdcf" : "#c5ccd0"), L));
@@ -244,9 +245,9 @@ function lightingWindow() {
   if (R.windowBounce) {
     R.windowBounce.position.set(0, 2.35, back + 1.5);
     R.windowBounce.distance = 7;
-    R.windowBounce.intensity = (0.3 + 1.3 * L) * (closed ? 0.4 : 1);
+    R.windowBounce.intensity = (0.3 + 1.3 * L) * (closed ? 0.4 : 1) * (blocked ? 0.035 : 1);
   }
-  LQ.envScale = (0.1 + 0.2 * L) * (closed ? 0.55 : 1);
+  LQ.envScale = (0.1 + 0.2 * L) * (closed ? 0.55 : 1) * (blocked ? 0.25 : 1);
   lightingApplyEnv(true);
   skyLight.intensity = 0.1 + 0.1 * L;
 }

@@ -2,6 +2,7 @@
 const storeLegacyBegin = beginGame;
 const storeApartmentInfo = worldTargetInfo;
 function worldBuildStore() {
+  const shelfStock = lvPending && typeof lvPhysicalCatalog === "function" ? lvPhysicalCatalog() : shopStock();
   roomReady = false;
   if (roomRoot) {
     scene.remove(roomRoot);
@@ -127,10 +128,11 @@ function worldBuildStore() {
     -5.91,
     { bg: "#476a60", fg: "#e9dfc2", size: 35, width: 1024, height: 180 },
   );
-  // v0.17: this shop only carries what the seed's delivery brought — about 1% of the national catalogue.
   const stockSign = worldLabel(
     roomRoot,
-    [`本期到货 ${shopStock().length} 种`, `全国商品目录共 ${CATALOG.length.toLocaleString("en-US")} 种 · 每家合作社进货都不一样`],
+    lvPending
+      ? [`货架样品 ${shelfStock.length} 种`, `本章开放 ${lvCatalogStock().length.toLocaleString("zh-CN")} 种 · 可在柜台查全国订货簿`]
+      : [`本期到货 ${shelfStock.length} 种`, `全国商品目录共 ${CATALOG.length.toLocaleString("en-US")} 种 · 每家合作社进货都不一样`],
     2.6,
     0.42,
     -6.9,
@@ -170,7 +172,7 @@ function worldBuildStore() {
       height: 96,
     });
     colliders.push({ mesh: bay });
-    shopStock().filter((it) => it.category === category).forEach((it, i) => {
+    shelfStock.filter((it) => it.category === category).forEach((it, i) => {
       const row = Math.floor(i / 5),
         col = i % 5;
       const g = worldTag(
@@ -477,7 +479,7 @@ function worldMakeBasket() {
 function worldRefreshShop() {
   if (!worldIsShopping()) return;
   const sum = cartSummary(cart),
-    budget = 300;
+    budget = gameBudget();
   if (W.receiptBoard) {
     const lines = [
       "安德士 · 供销合作社",
@@ -485,7 +487,7 @@ function worldRefreshShop() {
       `登记 ${sum.count} 件 / ${sum.weight.toFixed(1)} kg`,
       `${sum.bags.length} 袋 / ${sum.crates.length} 独立箱`,
       `袋装费 E$ ${(sum.bags.length * 0.06).toFixed(2)}`,
-      `热量约${sum.days}天 / 目标365天`,
+      `热量约${sum.days}天 / ${gameGoalDays() === 365 ? "目标365天" : "本章至多约" + gameGoalDays() + "天"}`,
       "——————————",
       `应付 E$ ${sum.cost.toFixed(2)}`,
       `结余 E$ ${(budget - sum.cost).toFixed(2)}`,
@@ -542,7 +544,7 @@ function worldOpenShop(isRestock = false) {
   worldBuildStore();
   updatePhase();
   showToast(
-    "仅此一次开局采购：确认入室后不能再买、不能补货。请先检查能否支撑365天，短期样例不足一年。",
+    gameGoalDays() === 365 ? "仅此一次开局采购：确认入室后不能再买、不能补货。请先检查能否支撑365天，短期样例不足一年。" : `仅此一次开局采购：进门后不能再买。本章最长约${gameGoalDays()}天，做对机关能提前离开。屋里没有钟，要知道时间，得自己买。`,
     "warn",
   );
   return true;
@@ -554,7 +556,7 @@ function worldCartChange(id, delta = 1) {
   if (next === (cart[id] || 0)) return false;
   const draft = { ...cart, [id]: next };
   if (!next) delete draft[id];
-  const budget = 300;
+  const budget = gameBudget();
   if (delta > 0 && cartSummary(draft).cost > budget + 0.001) {
     showToast("纸币不够，先把篮子里的一些物资放回去。", "warn");
     return false;
@@ -569,7 +571,7 @@ function worldKit(which) {
   if (!canPurchase()) return blockPurchase();
   const kit = which === "year" ? YEAR_KIT : STARTER,
     sum = cartSummary(kit),
-    budget = 300;
+    budget = gameBudget();
   if (sum.cost > budget + 0.001)
     return showToast("这份整套配给超过了当前预算。可以按件挑选。", "warn");
   if (
@@ -621,7 +623,7 @@ function worldCommitCheckout() {
 function worldCheckout() {
   if (!canPurchase() || !worldIsShopping()) return blockPurchase();
   const s = cartSummary(cart),
-    budget = 300;
+    budget = gameBudget();
   if (!s.count)
     return showToast(
       "篮子里还没有东西，先去货架前挑选，或者看看门边的配给箱。",
@@ -720,7 +722,7 @@ if (W.enabled) {
       const s = cartSummary(cart);
       return [
         "机械收银台",
-        `E 确认本局唯一采购 · E$ ${s.cost.toFixed(2)} · 热量约${s.days}/365天 · 入室后不能补货`,
+        `E 确认本局唯一采购 · E$ ${s.cost.toFixed(2)} · 热量约${s.days}/${gameGoalDays()}天 · 入室后不能补货`,
       ];
     }
     if (id === "shopReceipt" || id === "shopBasket")

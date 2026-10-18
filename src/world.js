@@ -204,7 +204,8 @@ function worldProduct(id, parent = null) {
   const g = new THREE.Group();
   if (parent) parent.add(g);
   const label = worldProductMaterial(it),
-    metal = worldMat("#9da69c", { metalness: 0.5, roughness: 0.45 });
+    metal = worldMat("#9da69c", { metalness: 0.5, roughness: 0.45 }),
+    ink = worldMat("#3d4038");
   const palette = {
     staple: "#c8b18a",
     canned: "#8d9c83",
@@ -222,7 +223,46 @@ function worldProduct(id, parent = null) {
     w = 0.15,
     d = 0.1;
   let bare = false;
-  if (id === "cup") {
+  if (it.levelClock) {
+    bare = true;
+    if (it.levelClock === "mechanical" && /腕表/.test(it.name)) {
+      h = 0.24; w = 0.12; d = 0.055;
+      worldBox(g, 0.038, 0.105, 0.018, 0, 0.04, 0, base);
+      worldBox(g, 0.038, 0.105, 0.018, 0, 0.2, 0, base);
+      worldBox(g, 0.092, 0.09, 0.035, 0, 0.12, 0, metal);
+      const dial=worldCylinder(g,0.041,0.041,0.014,0,0.12,0.022,worldMat("#d7ceb7")); dial.rotation.x=Math.PI/2;
+      worldBox(g,0.004,0.052,0.006,0,0.132,0.033,ink);
+      worldBox(g,0.031,0.004,0.006,-0.013,0.11,0.034,ink);
+    } else if (it.levelClock === "hourglass") {
+      h=0.22;w=0.09;d=0.09;
+      worldBox(g,0.09,0.018,0.09,0,0.01,0,base);
+      worldBox(g,0.09,0.018,0.09,0,0.21,0,base);
+      const glass=worldMat("#d9d0b9",{transparent:true,opacity:0.55,roughness:0.18});
+      worldCylinder(g,0.034,0.052,0.075,0,0.065,0,glass);
+      worldCylinder(g,0.052,0.034,0.075,0,0.145,0,glass);
+      worldCylinder(g,0.008,0.008,0.008,0,0.107,0,worldMat("#b59a61"));
+    } else if (it.levelClock === "calendar") {
+      h=0.26;w=0.18;d=0.035;
+      worldBox(g,w,h,d,0,h/2,0,worldMat("#e5dcc5"));
+      worldBox(g,w*0.9,0.045,d+0.006,0,h*0.78,0.018,worldMat("#8c5245"));
+      for(let r=0;r<4;r++) for(let c=0;c<4;c++) worldBox(g,0.012,0.012,0.003,-0.05+c*0.032,0.115+r*0.027,0.022,ink);
+    } else if (it.levelClock === "digital" || it.levelClock === "mains") {
+      h=0.14;w=0.28;d=0.11;
+      worldBox(g,w,h,d,0,h/2,0,base);
+      worldBox(g,0.21,0.062,0.009,0,0.085,d/2+0.007,worldMat("#25332d"));
+      worldBox(g,0.17,0.008,0.003,0,0.086,d/2+0.013,worldMat(it.levelClock==="mains"?"#8e3c2f":"#79927b",{emissive:it.levelClock==="mains"?"#36110b":"#202e20"}));
+      worldBox(g,0.055,0.016,0.005,0,0.02,d/2+0.008,metal);
+    } else {
+      const wall=it.name.includes("挂钟"), wrist=/腕表/.test(it.name);
+      h=wall?0.36:wrist?0.24:0.2; w=wall?0.27:wrist?0.12:0.23; d=wall?0.11:0.12;
+      worldBox(g,w,h,d,0,h/2,0,base);
+      const r=wall?0.095:wrist?0.043:0.07;
+      const dial=worldCylinder(g,r,r,0.018,0,h*0.62,d/2+0.01,worldMat("#d9ceb0")); dial.rotation.x=Math.PI/2;
+      for(let i=0;i<4;i++){const a=i*Math.PI/2;worldBox(g,0.004,r*1.5,0.004,Math.sin(a)*r*0.65,h*0.62+Math.cos(a)*r*0.65,d/2+0.025,ink).rotation.z=-a;}
+      worldBox(g,0.005,r*0.75,0.004,0,h*0.62+r*0.18,d/2+0.028,ink);
+      worldBox(g,r*0.65,0.004,0.004,r*0.25,h*0.62,d/2+0.028,ink);
+    }
+  } else if (id === "cup") {
     h = 0.12;
     w = 0.14;
     d = 0.11;
@@ -926,12 +966,14 @@ function worldUpdatePaper(force = false) {
   const model = W.handModel;
   if (!model) return;
   if (W.glance === "watch") {
-    const t = `${String(Math.floor(hour())).padStart(2, "0")}:${String(Math.floor(G.minute % 60)).padStart(2, "0")}`;
+    const t = timeHidden()
+      ? lvWristText()
+      : `${String(Math.floor(hour())).padStart(2, "0")}:${String(Math.floor(G.minute % 60)).padStart(2, "0")}`;
     if (force || W.paperStamp !== t) {
       const m = model.userData.watch;
       m.material.map.dispose();
       m.material.map = worldTextTexture(
-        [t, `DAY ${String(day()).padStart(3, "0")}`],
+        timeHidden() ? lvWristLines() : [t, `DAY ${String(day()).padStart(3, "0")}`],
         { bg: "#d7d3b7", fg: "#3c453a", size: 48, width: 512, height: 384 },
       );
       W.paperStamp = t;
@@ -978,7 +1020,9 @@ function worldUpdatePaper(force = false) {
     title = "生活手记",
     sub = worldIsShopping()
       ? "ANDERS / 1986"
-      : `第 ${day()} 天  ·  ${temperature()}°C`;
+      : timeHidden()
+        ? lvChapterLabel()
+        : `第 ${day()} 天  ·  ${temperature()}°C`;
   if (W.held?.type === "book" && !W.glance) {
     const it = DB[W.held.id],
       p = G.books[it.id]?.pages || 0;
@@ -1778,20 +1822,25 @@ function worldRenderHUD() {
   const shopping = worldIsShopping();
   $("#worldDay").textContent = shopping
     ? "唯一一次开局采购"
-    : `第 ${String(Math.min(day(), 365)).padStart(3, "0")} 天`;
+    : timeHidden()
+      ? lvChapterLabel()
+      : `第 ${String(Math.min(day(), 365)).padStart(3, "0")} 天`;
   $("#worldPlace").textContent = shopping
     ? "安德士 · 街角供销社"
-    : `北区旧公寓 / ${env.number}`;
+    : timeHidden()
+      ? lvDef(G.level.id).place
+      : `北区旧公寓 / ${env.number}`;
   if (shopping) {
     const s = cartSummary(cart),
-      budget = 300;
+      budget = gameBudget();
     $("#worldTopRight").textContent =
       `余 E$ ${(budget - s.cost).toFixed(2)}  ·  篮中 ${s.count} 件`;
     $("#worldCondition").textContent =
-      `只此一次 · 理论热量${s.days}/365天 · 进房后不能补货`;
+      `只此一次 · 理论热量${s.days}/${gameGoalDays()}天 · 进房后不能补货`;
   } else if (G) {
-    $("#worldTopRight").textContent =
-      `${String(Math.floor(hour())).padStart(2, "0")}:${String(Math.floor(G.minute % 60)).padStart(2, "0")}`;
+    $("#worldTopRight").textContent = timeHidden()
+      ? ""
+      : `${String(Math.floor(hour())).padStart(2, "0")}:${String(Math.floor(G.minute % 60)).padStart(2, "0")}`;
     const warnings = getWarnings();
     if (G.pendingKnock) warnings.unshift("门外有敲门声");
     if (!G.power) warnings.unshift("停电了");

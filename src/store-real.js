@@ -223,7 +223,7 @@ function srUpdateCard() {
     key = id + ":" + inCart + ":" + spent.toFixed(2);
   if (key !== SR.cardKey) {
     SR.cardKey = key;
-    card.innerHTML = `<div class="cat">${srEsc(SR_CAT[it.category] || "")}</div><h2>${srEsc(it.name)}</h2><div class="price"><b>E$ ${it.price.toFixed(2)}</b><span>篮中 ×${inCart}</span></div>${srUseRows(it)}<p class="facts">${srEsc(itemFacts(it))}</p><div class="keys"><span><kbd>E</kbd>放进篮子</span><span><kbd>Shift</kbd>+<kbd>E</kbd>拿5件</span><span><kbd>R</kbd>放回一件</span></div><div class="budget">已花 E$ ${spent.toFixed(2)} · 还剩 E$ ${(300 - spent).toFixed(2)} · 进门后不能再买</div>`;
+    card.innerHTML = `<div class="cat">${srEsc(SR_CAT[it.category] || "")}</div><h2>${srEsc(it.name)}</h2><div class="price"><b>E$ ${it.price.toFixed(2)}</b><span>篮中 ×${inCart}</span></div>${srUseRows(it)}<p class="facts">${srEsc(itemFacts(it))}</p><div class="keys"><span><kbd>E</kbd>放进篮子</span><span><kbd>Shift</kbd>+<kbd>E</kbd>拿5件</span><span><kbd>R</kbd>放回一件</span></div><div class="budget">已花 E$ ${spent.toFixed(2)} · 还剩 E$ ${(gameBudget() - spent).toFixed(2)} · 进门后不能再买</div>`;
   }
   card.classList.add("on");
 }

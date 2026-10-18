@@ -244,7 +244,7 @@ worldTargetInfo = function (o) {
   if (G && !(typeof worldIsShopping === "function" && worldIsShopping())) {
     if (id === "letters" || id === "inspect") return ["家里的信 · " + (LIFE_LETTERS.length - G.life.letters) + "封未拆", lifeLetterHint()];
     if (id.startsWith("garden:")) return lifeGardenHint(Number(id.slice(7)));
-    if (id === "journal") return ["墙上的旧日历", `第${day()}天 · 还有${Math.max(0, 365 - day())}天  ·  E 看看这一年`];
+    if (id === "journal") return ["墙上的旧日历", timeHidden() ? "一张印着 1986 的年历，不知道今天是哪一格  ·  E 看看手记" : `第${day()}天 · 还有${Math.max(0, 365 - day())}天  ·  E 看看这一年`];
     if (id === "radio") {
       const [n, h] = lwBase.worldTargetInfo(o);
       return [n, h + "  ·  " + lifeRadioHint()];
@@ -337,8 +337,8 @@ function lwYearPage(model) {
     x.fillText(t, X, Y, w);
   };
   x.textAlign = "left";
-  text(`第 ${day()} 天`, 44, 40, 70, "#2b3326");
-  text(`还有 ${Math.max(0, 365 - day())} 天 · 你在躲：${LM.gang.g}`, 21, 40, 106, "#6d6450");
+  text(timeHidden() ? lvChapterLabel() : `第 ${day()} 天`, 44, 40, 70, "#2b3326");
+  text(timeHidden() ? `不知道过了多少天 · 你在躲：${LM.gang.g}` : `还有 ${Math.max(0, 365 - day())} 天 · 你在躲：${LM.gang.g}`, 21, 40, 106, "#6d6450");
   text("今年的小目标", 24, 40, 160, "#5a4a32");
   lmGoalRows().forEach((g, i) => {
     const y = 205 + i * 70;

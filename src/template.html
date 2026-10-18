@@ -9,7 +9,7 @@
     <meta name="theme-color" content="#19211c" />
     <meta
       name="description"
-      content="闭门365：异世界1980年代，第一人称公寓生存游戏。完全离线，存活365天。"
+      content="闭门365：安德士帝国1980年代公寓生存游戏。可选经典365天或六间隐藏时间章节，完全离线。"
     />
     <title>闭门365 — THE LAST TENANT</title>
     <style>
@@ -61,8 +61,8 @@
         <div class="title-story">
           <span class="story-rule"></span>
           <p>
-            你招惹了不该招惹的人。<br />告别家人，关上门，成为这座城市里消失的人。<br /><strong
-              >用三百纸币，换一整年的明天。</strong
+            你招惹了不该招惹的人，告别家人，藏进旧公寓。<br /><strong
+              >用有限的纸币，守住一扇不开的门。</strong
             >
           </p>
         </div>
@@ -86,14 +86,17 @@
           </div>
           <div class="seed-facts" id="seedFacts"></div>
         </div>
-        <button class="start-button" id="newGameButton">
+        <button class="start-button chapter-mode-button" id="chapterButton">
           <span
-            >准备我的隐匿生活<small
-              >进入物资采购 · 初始 300 帝国纸币</small
+            >选择隐匿章节<small
+              >六间房 · 六段故事 · 时间不会主动告诉你</small
             ></span
           ><span class="large-arrow">↗</span>
         </button>
         <div class="title-secondary">
+          <button class="classic-mode-link" id="newGameButton">
+            经典365天<small>开局300纸币 · 自由种子</small>
+          </button>
           <button id="continueButton" disabled>
             继续上次的生活<span>↗</span></button
           ><button data-ui="help">游玩指南<span>↗</span></button
@@ -109,13 +112,13 @@
       <aside class="room-caption">
         <span class="caption-cross">+</span
         ><span id="roomCaption">北区旧公寓 / 18层</span
-        ><small>不要开门。<br />活过365天。</small>
+        ><small>不要开门。<br />等门外的声音。</small>
       </aside>
       <footer class="title-footer">
         <span
           ><kbd>W A S D</kbd> 移动 <i>·</i> 拖动鼠标观察 <i>·</i>
           <kbd>E</kbd> 交互</span
-        ><span>一间房，一个人，一整年。 <b>01 — 365</b></span>
+        ><span>一间房，一个人，等门外的声音。</span>
       </footer>
     </section>
     <section id="shopScreen" class="screen shop-screen" hidden>
@@ -381,6 +384,9 @@
     <script>
       /* AUDIO_DATA */
       /* AUDIO */
+    </script>
+    <script>
+      /* LEVELS */
     </script>
   </body>
 </html>

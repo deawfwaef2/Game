@@ -95,7 +95,7 @@ function lifeOpenLetter(early = false) {
   const L = lifeNextLetter();
   if (!L) return false;
   const due = day() >= L.d;
-  if (!due && !early) return false;
+  if (!due && !early && !timeHidden()) return false;
   G.life.letters++;
   if (!due) G.life.early++;
   G.stats.morale = clamp(G.stats.morale + (due ? 12 : 3));
@@ -112,6 +112,7 @@ function lifeLetterHint() {
   const L = lifeNextLetter();
   if (!L) return `十六封都拆完了  ·  E 重读`;
   const left = L.d - day();
+  if (timeHidden()) return `下一封写着“第${L.d}天再拆”  ·  E 拆开（不知道日子到没到）`;
   if (left <= 0) return `E 拆开第${G.life.letters + 1}封（${L.from}）· 今天可以拆了`;
   return `下一封写着“第${L.d}天再拆”，还有${left}天${G.life.letters ? "  ·  E 重读旧信" : ""}  ·  Shift+E 偷偷提前拆`;
 }
@@ -156,7 +157,7 @@ function lifeProgramme(peek = false) {
     }
     const lines = [item ? item.t : LIFE_FILLER[(d * 7 + Math.floor(h)) % LIFE_FILLER.length]];
     if (lifeAlertActive(d)) lines.push("播音员提醒：这几天楼里如有陌生人敲门，请勿开门。");
-    lines.push(`天气预报：明天，第${d + 1}天，${lifeForecast(d + 1)}。`);
+    lines.push(timeHidden() ? `天气预报：明天，${lifeForecast(d + 1)}。` : `天气预报：明天，第${d + 1}天，${lifeForecast(d + 1)}。`);
     if ((d + 1) % 7 === 6) lines.push(`明晚八点，广播剧《${(LIFE_SERIAL_META[L.serial % LIFE_SERIAL_META.length] || {}).name || "雾港旅馆"}》继续播出。`);
     else if (d % 7 === 6 && h < 19.5) lines.push(`今晚八点，广播剧《${(LIFE_SERIAL_META[L.serial % LIFE_SERIAL_META.length] || {}).name || "雾港旅馆"}》，敬请收听。`);
     return { kind: "news", joy: item ? 6 : 3, title: h < 10 ? "早间新闻" : h < 14 ? "午间新闻" : "晚间新闻", lines };
@@ -322,7 +323,7 @@ dailyUpdate = function () {
   lifeBase.dailyUpdate();
   lifeEnsure();
   const L = lifeNextLetter();
-  if (L && L.d === day()) logEvent(`床头那叠信里，写着“第${L.d}天”的那一封今天可以拆了。`, "story");
+  if (L && L.d === day() && !timeHidden()) logEvent(`床头那叠信里，写着“第${L.d}天”的那一封今天可以拆了。`, "story");
   const p = G.life.garden.find((x) => lifeReady(x));
   if (p) logEvent(`窗台上的${LIFE_CROPS[p.crop].name}可以收了。`, "good");
 };

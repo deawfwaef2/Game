@@ -14,6 +14,16 @@ let G = null,
 // A preparation session exists only before a new run. It is never restored from saves.
 let preparationOpen = false,
   purchasingNow = false;
+// Chapter mode hides the clock and the calendar; only bought timepieces and outside cues tell the time.
+function timeHidden() {
+  return !!(G && G.level && !G.ended);
+}
+function gameBudget() {
+  return typeof lvBudget === "function" ? lvBudget() : 300;
+}
+function gameGoalDays() {
+  return typeof lvGoalDays === "function" ? lvGoalDays() : 365;
+}
 function canPurchase() {
   return phase === "shop" && preparationOpen && !purchasingNow;
 }
@@ -168,7 +178,7 @@ function freshState(seed) {
     env: e,
     rng: hashSeed(seed + "events"),
     minute: 8 * 60 + 10,
-    cash: 300,
+    cash: gameBudget(),
     stats: {
       food: 85,
       water: 85,
@@ -248,7 +258,7 @@ function putCartIntoState(summary) {
 function beginGame() {
   if (!canPurchase()) return blockPurchase();
   const s = cartSummary(cart);
-  if (s.cost > 300.001) {
+  if (s.cost > gameBudget() + 0.001) {
     notify("纸币不够。请调整开局清单。", "warn");
     return false;
   }
@@ -261,7 +271,7 @@ function beginGame() {
   try {
     G = freshState(currentSeed);
     env = G.env;
-    G.cash = Math.round((300 - s.cost) * 100) / 100;
+    G.cash = Math.round((gameBudget() - s.cost) * 100) / 100;
     putCartIntoState(s);
   } finally {
     purchasingNow = false;
@@ -373,13 +383,17 @@ function advanceTime(minutes, context = "idle", safe = true) {
       );
       break;
     }
+    if (G.lvBreak) {
+      G.lvBreak = false;
+      if (intended > 20) break;
+    }
     if (G.pendingKnock && intended > 20) {
       logEvent("门外响起敲门声，时间推进中断。", "warn");
       break;
     }
   }
   G.activity = "idle";
-  if (day() !== startDay) notify(`第 ${day()} 天。你还在这里。`);
+  if (day() !== startDay && !timeHidden()) notify(`第 ${day()} 天。你还在这里。`);
   renderHUD();
   syncRoom();
   saveGame(false);
@@ -495,7 +509,7 @@ function simulate(minutes, context) {
     endGame(false, "身体已无法继续支撑。你没能等到街头平静的那一天。");
   else if (s.morale <= 0)
     endGame(false, "漫长的孤独压垮了你的精神。这一次，你没能完成隐匿计划。");
-  else if (G.minute >= 365 * 1440)
+  else if (!G.level && G.minute >= 365 * 1440)
     endGame(
       true,
       "整整365天过去了。通缉画像褪色，街头换了新的秩序。你还活着。",
@@ -525,7 +539,7 @@ function dailyUpdate() {
       "warn",
     );
   }
-  if (day() % 7 === 0)
+  if (!G.level && day() % 7 === 0)
     logEvent(
       `第${day()}天。你把新的刻痕留在日历上。还有${365 - day()}天。`,
       "story",
@@ -1024,7 +1038,7 @@ function validateSave(s) {
       typeof s.seed !== "string" ||
       !s.seed.length ||
       s.seed.length > 100 ||
-      !num(s.minute, 0, 365 * 1440 + 1440) ||
+      !num(s.minute, 0, 2000 * 1440) ||
       !num(s.cash, 0, 10000)
     )
       return false;
@@ -1251,7 +1265,7 @@ function endGame(win, reason) {
   G.ended = true;
   G.win = win;
   G.endReason = reason;
-  G.minute = win ? 365 * 1440 : G.minute;
+  G.minute = win && !G.level ? 365 * 1440 : G.minute;
   phase = "end";
   saveGame(false);
   closePanel();

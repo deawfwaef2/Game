@@ -943,8 +943,10 @@ async function initRealisticRoom() {
     return;
   }
   const button = $("#newGameButton"),
+    chapterButton = $("#chapterButton"),
     small = $("#newGameButton small");
   button.disabled = true;
+  if (chapterButton) chapterButton.disabled = true;
   document.body.classList.add("room-assets-loading");
   const loader = new ROOM_TOOLS.GLTFLoader();
   loader.register((parser) => {
@@ -1007,6 +1009,7 @@ async function initRealisticRoom() {
     small.textContent = "规则版仍可游玩 · 写实资源载入失败";
   } finally {
     button.disabled = false;
+    if (chapterButton) chapterButton.disabled = false;
     sceneDirty = true;
   }
 }
@@ -1074,9 +1077,10 @@ function roomInstallSample() {
   if ($("#roomSampleButton")) return;
   const button = document.createElement("button");
   button.id = "roomSampleButton";
+  button.className = "sample-mode-link";
   button.textContent = "先看写实房间样片　→";
   button.onclick = roomStartSample;
-  $("#titleScreen .title-content").append(button);
+  $("#titleScreen .title-secondary").append(button);
   document.body.insertAdjacentHTML(
     "beforeend",
     '<div id="roomSampleNotice" hidden>独立房间样片 · 一次采购后封闭生存 · 不覆盖正式存档</div>',

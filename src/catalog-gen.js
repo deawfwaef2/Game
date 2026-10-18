@@ -1361,18 +1361,18 @@ cgFinish();
 /* Distinct local foods with different preparation, mood, hydration and health uses.
    Appended after the generated lines so existing catalogue IDs and their seeded traits stay stable. */
 const CG_EXTRA_PRODUCTS = [
-  { id:"x_sour_plum", name:"南港老铺 · 酸梅汤粉", category:"drink", kind:"drink", look:"juice", price:1.05, weight:0.24, servings:8, life:540, water:22, brew:true, joy:3, fx:["cool"], flavor:"sour-plum", trait:"sweet", tasteTags:["sour","sweet","fruit"], desc:"酸梅与陈皮冲成一杯。热天喝，补水之外也会让人舒服些；要用热水冲泡。", note:"酸甜清爽，解暑。" },
-  { id:"x_barley_tea", name:"麦香焙茶 · 大麦茶", category:"drink", kind:"drink", look:"tea", price:0.82, weight:0.28, servings:10, life:730, water:20, brew:true, joy:1, fx:["cool"], flavor:"roasted-barley", trait:"light", tasteTags:["grain","toasted","mild"], desc:"烘焙麦粒冲泡，味道轻，不太甜。炎热时能带来一点清爽；需要热水。", note:"朴素的烘麦香。" },
-  { id:"x_ginger_tea", name:"姜枣茶砖", category:"drink", kind:"drink", look:"herbal", price:1.25, weight:0.3, servings:8, life:540, water:18, brew:true, joy:1, warmth:2, health:0.4, fx:["warm","cureCold"], flavor:"ginger-date", trait:"warm", tasteTags:["spicy","sweet","herbal"], desc:"姜片和红枣压成茶砖。冷天喝更舒服；有感冒时也能帮助恢复。需要热水冲泡。", note:"姜香浓，枣甜收尾。" },
-  { id:"x_fresh_soymilk", name:"清晨现磨 · 鲜豆浆", category:"fresh", kind:"drink", look:"milk", price:0.72, weight:1, servings:4, life:3, water:18, joy:1, health:0.6, fx:["pure"], flavor:"fresh-soy", trait:"light", tasteTags:["soy","fresh","mild"], desc:"当天现磨，蛋白质和水分都不错，但没有防腐处理，必须优先喝完。", note:"淡淡豆香，不能久放。" },
-  { id:"x_tangyuan", name:"手包芝麻汤圆", category:"fresh", kind:"food", look:"bread", price:1.18, weight:0.7, servings:6, kcal:255, life:45, cook:true, joy:3, warmth:1, fx:["festive","warm"], flavor:"sesame-glutinous", trait:"sweet", tasteTags:["sweet","glutinous","nutty"], desc:"糯米皮裹芝麻馅，煮熟后是一顿暖甜的安慰。耗水、需要热源，晚饭时更像过节。", note:"黑芝麻馅，煮熟后趁热吃。" },
-  { id:"x_smoked_squid", name:"海港风干鱿鱼丝", category:"canned", kind:"food", look:"fish", price:1.6, weight:0.18, servings:6, kcal:145, life:420, protein:true, joy:1, thirst:2, fx:["full"], flavor:"smoked-squid", trait:"smoky", tasteTags:["sea","smoky","chewy","salty"], desc:"耐放、高蛋白的咸鲜零嘴；嚼起来费劲，吃多了会口渴。免煮。", note:"海风吹干，带一点烟熏味。" },
-  { id:"x_dried_shiitake", name:"山地晒干香菇", category:"staple", kind:"food", look:"mushroom", price:1.35, weight:0.2, servings:6, kcal:95, life:900, cook:true, vegetable:true, health:0.8, fx:["focus"], flavor:"dried-shiitake", trait:"umami", tasteTags:["umami","earthy","woodsy"], desc:"干香菇需要煮开才好入口。耐放，补一点健康；煮饭时也能让清淡的主食有鲜味。", note:"山坡背阴处慢慢晒干，香味很深。" },
-  { id:"x_tofu_skin", name:"油豆皮 · 薄片装", category:"staple", kind:"food", look:"cheese", price:1.05, weight:0.32, servings:7, kcal:225, life:300, cook:true, protein:true, health:0.5, energy:2, fx:["strength"], flavor:"soy-sheet", trait:"bean", tasteTags:["soy","savory","chewy"], desc:"豆香浓、蛋白质较多，煮软后能让一碗主食更顶饱。需要热源和水。", note:"豆浆上层凝结的薄皮，晒干保存。" },
-  { id:"x_seaweed_crisp", name:"盐烤海苔脆片", category:"staple", kind:"food", look:"crackers", price:0.88, weight:0.12, servings:8, kcal:72, life:420, vegetable:true, health:0.5, thirst:1, fx:["pure"], flavor:"toasted-seaweed", trait:"crunchy", tasteTags:["sea","crunchy","salty"], desc:"轻便免煮，补一点蔬菜类营养；咸口吃多了会增加口渴。", note:"薄脆海苔，带着一点炭火香。" },
-  { id:"x_ginger_candy", name:"老姜糖 · 玻璃纸包", category:"staple", kind:"food", look:"chocolate", price:0.68, weight:0.18, servings:10, kcal:78, life:365, joy:1.5, energy:2, warmth:1, fx:["warm","sugar"], flavor:"ginger-candy", trait:"sweet", tasteTags:["sweet","spicy","ginger"], desc:"甜味能短暂提神，冷天含一颗也暖和些。热量不高，不能代替正餐。", note:"甜里带辣，含一会儿才化。" },
-  { id:"x_fermented_tofu", name:"玫瑰红腐乳", category:"staple", kind:"seasoning", look:"jam", price:0.62, weight:0.32, servings:12, life:540, season:1.6, thirst:1, fx:["comfort"], flavor:"rose-ferment", trait:"fermented", tasteTags:["fermented","salty","umami"], desc:"发酵豆腐乳，煮主食时会和其他调味料轮换使用，明显提味；咸口会增加一点口渴。", note:"一小块就能把白粥变成一顿饭。" },
-  { id:"x_pickled_radish", name:"脆口酸萝卜", category:"canned", kind:"seasoning", look:"jam", price:0.55, weight:0.38, servings:10, life:360, season:1.2, thirst:0.5, fx:["comfort"], flavor:"sour-radish", trait:"sour", tasteTags:["sour","crunchy","salty"], desc:"酸脆下饭，煮主食时会和其他调味料轮换使用。盐分不低，别只靠它当菜。", note:"酸味清楚，咬起来脆。" },
+  { id:"x_sour_plum", name:"南港老铺 · 酸梅汤粉", category:"drink", kind:"drink", look:"juice", shape:["pouch",[0.12,0.16,0.045]], price:1.05, weight:0.24, servings:8, life:540, water:22, brew:true, joy:3, fx:["cool"], flavor:"sour-plum", trait:"sweet", tasteTags:["sour","sweet","fruit"], desc:"酸梅与陈皮冲成一杯。热天喝，补水之外也会让人舒服些；要用热水冲泡。", note:"酸甜清爽，解暑。" },
+  { id:"x_barley_tea", name:"麦香焙茶 · 大麦茶", category:"drink", kind:"drink", look:"tea", shape:["box",[0.13,0.09,0.07]], price:0.82, weight:0.28, servings:10, life:730, water:20, brew:true, joy:1, fx:["cool"], flavor:"roasted-barley", trait:"light", tasteTags:["grain","toasted","mild"], desc:"烘焙麦粒冲泡，味道轻，不太甜。炎热时能带来一点清爽；需要热水。", note:"朴素的烘麦香。" },
+  { id:"x_ginger_tea", name:"姜枣茶砖", category:"drink", kind:"drink", look:"herbal", shape:["paper",[0.12,0.05,0.09]], price:1.25, weight:0.3, servings:8, life:540, water:18, brew:true, joy:1, warmth:2, health:0.4, fx:["warm","cureCold"], flavor:"ginger-date", trait:"warm", tasteTags:["spicy","sweet","herbal"], desc:"姜片和红枣压成茶砖。冷天喝更舒服；有感冒时也能帮助恢复。需要热水冲泡。", note:"姜香浓，枣甜收尾。" },
+  { id:"x_fresh_soymilk", name:"清晨现磨 · 鲜豆浆", category:"fresh", kind:"drink", look:"milk", shape:["bottle",[0.052,0.2],"#eee5cf"], price:0.72, weight:1, servings:4, life:3, water:18, joy:1, health:0.6, fx:["pure"], flavor:"fresh-soy", trait:"light", tasteTags:["soy","fresh","mild"], desc:"当天现磨，蛋白质和水分都不错，但没有防腐处理，必须优先喝完。", note:"淡淡豆香，不能久放。" },
+  { id:"x_tangyuan", name:"手包芝麻汤圆", category:"fresh", kind:"food", look:"bread", shape:["frozenbag",[0.16,0.14,0.08]], price:1.18, weight:0.7, servings:6, kcal:255, life:45, cook:true, joy:3, warmth:1, fx:["festive","warm"], flavor:"sesame-glutinous", trait:"sweet", tasteTags:["sweet","glutinous","nutty"], desc:"糯米皮裹芝麻馅，煮熟后是一顿暖甜的安慰。耗水、需要热源，晚饭时更像过节。", note:"黑芝麻馅，煮熟后趁热吃。" },
+  { id:"x_smoked_squid", name:"海港风干鱿鱼丝", category:"canned", kind:"food", look:"fish", shape:["windowbag",[0.12,0.16,0.045]], price:1.6, weight:0.18, servings:6, kcal:145, life:420, protein:true, joy:1, thirst:2, fx:["full"], flavor:"smoked-squid", trait:"smoky", tasteTags:["sea","smoky","chewy","salty"], desc:"耐放、高蛋白的咸鲜零嘴；嚼起来费劲，吃多了会口渴。免煮。", note:"海风吹干，带一点烟熏味。" },
+  { id:"x_dried_shiitake", name:"山地晒干香菇", category:"staple", kind:"food", look:"mushroom", shape:["windowbag",[0.13,0.17,0.05]], price:1.35, weight:0.2, servings:6, kcal:95, life:900, cook:true, vegetable:true, health:0.8, fx:["focus"], flavor:"dried-shiitake", trait:"umami", tasteTags:["umami","earthy","woodsy"], desc:"干香菇需要煮开才好入口。耐放，补一点健康；煮饭时也能让清淡的主食有鲜味。", note:"山坡背阴处慢慢晒干，香味很深。" },
+  { id:"x_tofu_skin", name:"油豆皮 · 薄片装", category:"staple", kind:"food", look:"cheese", shape:["paper",[0.12,0.18,0.035]], price:1.05, weight:0.32, servings:7, kcal:225, life:300, cook:true, protein:true, health:0.5, energy:2, fx:["strength"], flavor:"soy-sheet", trait:"bean", tasteTags:["soy","savory","chewy"], desc:"豆香浓、蛋白质较多，煮软后能让一碗主食更顶饱。需要热源和水。", note:"豆浆上层凝结的薄皮，晒干保存。" },
+  { id:"x_seaweed_crisp", name:"盐烤海苔脆片", category:"staple", kind:"food", look:"crackers", shape:["windowbag",[0.12,0.16,0.035]], price:0.88, weight:0.12, servings:8, kcal:72, life:420, vegetable:true, health:0.5, thirst:1, fx:["pure"], flavor:"toasted-seaweed", trait:"crunchy", tasteTags:["sea","crunchy","salty"], desc:"轻便免煮，补一点蔬菜类营养；咸口吃多了会增加口渴。", note:"薄脆海苔，带着一点炭火香。" },
+  { id:"x_ginger_candy", name:"老姜糖 · 玻璃纸包", category:"staple", kind:"food", look:"chocolate", shape:["twist-pack",[0.14,0.05,0.04]], price:0.68, weight:0.18, servings:10, kcal:78, life:365, joy:1.5, energy:2, warmth:1, fx:["warm","sugar"], flavor:"ginger-candy", trait:"sweet", tasteTags:["sweet","spicy","ginger"], desc:"甜味能短暂提神，冷天含一颗也暖和些。热量不高，不能代替正餐。", note:"甜里带辣，含一会儿才化。" },
+  { id:"x_fermented_tofu", name:"玫瑰红腐乳", category:"staple", kind:"seasoning", look:"jam", shape:["jar",[0.05,0.12],"#a84d3f"], price:0.62, weight:0.32, servings:12, life:540, season:1.6, thirst:1, fx:["comfort"], flavor:"rose-ferment", trait:"fermented", tasteTags:["fermented","salty","umami"], desc:"发酵豆腐乳，煮主食时会和其他调味料轮换使用，明显提味；咸口会增加一点口渴。", note:"一小块就能把白粥变成一顿饭。" },
+  { id:"x_pickled_radish", name:"脆口酸萝卜", category:"canned", kind:"seasoning", look:"jam", shape:["jar",[0.052,0.13],"#c6a45f"], price:0.55, weight:0.38, servings:10, life:360, season:1.2, thirst:0.5, fx:["comfort"], flavor:"sour-radish", trait:"sour", tasteTags:["sour","crunchy","salty"], desc:"酸脆下饭，煮主食时会和其他调味料轮换使用。盐分不低，别只靠它当菜。", note:"酸味清楚，咬起来脆。" }
 ];
 for (const p of CG_EXTRA_PRODUCTS) {
   const it = { ...p, gen:true, line:p.id, brand:"地方小厂", maker:"供销社副食品组" };
@@ -1390,19 +1390,32 @@ function cgExpiryMark(it) {
   return "printed";
 }
 for (const it of CATALOG) it.expiryMark = cgExpiryMark(it);
+function expiryRangeText(it) {
+  const life = Math.max(1, Math.round(it?.life || 1));
+  if (it?.expiryMark === "printed") return `${life}天`;
+  const low = Math.max(1, Math.floor(life * 0.85));
+  const high = Math.max(low + 1, Math.ceil(life * 1.15));
+  return `约${low}–${high}天`;
+}
 function expiryPublicLabel(it) {
   if (!it || it.life >= 9999) return "可长期保存";
-  if (it.expiryMark === "unmarked") return "包装未印日期";
-  if (it.expiryMark === "blurred") return "标签字迹模糊";
+  if (it.expiryMark === "unmarked")
+    return `常规保质期${expiryRangeText(it)} · 包装未印生产日期`;
+  if (it.expiryMark === "blurred")
+    return `常规保质期${expiryRangeText(it)} · 生产日期字迹模糊`;
   return `标示保质期${it.life}天`;
 }
 function expiryInventoryLabel(it, batch) {
   if (!it || it.life >= 9999) return "耐用 / 可长期存放";
-  if ((batch?.age || 0) >= it.life) return "已变质，不能食用";
-  if (it.expiryMark === "unmarked") return "包装未印日期 · 批次仍会变质";
-  if (it.expiryMark === "blurred") return "标期字迹模糊 · 余期不明";
+  const age = Math.max(0, Number(batch?.age) || 0);
+  if (age >= it.life) return `已变质，不能食用 · 入手后约${Math.floor(age)}天`;
   const chilled = batch?.location === "fridge" && env.fridge && G?.power;
-  return `剩余约${Math.max(0, Math.floor((it.life - (batch?.age || 0)) / (chilled ? 0.22 : 1)))}天`;
+  if (it.expiryMark === "unmarked")
+    return `常规保质期${expiryRangeText(it)} · 已存放约${Math.floor(age)}天 · 无生产日期，批次余期不明`;
+  if (it.expiryMark === "blurred")
+    return `常规保质期${expiryRangeText(it)} · 已存放约${Math.floor(age)}天 · 字迹模糊，批次余期不精确`;
+  const remaining = Math.max(0, Math.floor((it.life - age) / (chilled ? 0.22 : 1)));
+  return `保质期${it.life}天 · 剩余约${remaining}天 · ${chilled ? "通电冷藏" : "常温存放"}`;
 }
 const CATALOG_CORE = new Set([...Object.keys(STARTER), ...Object.keys(YEAR_KIT)]);
 

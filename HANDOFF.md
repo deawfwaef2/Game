@@ -386,3 +386,13 @@
 - 验证：`node tests/levels.cjs` 89断言通过；`node tests/simulation.cjs` 162断言通过，经典全年策略仍在第366日胜利。`tests/levels-browser.cjs`、`tests/browser.cjs`、`tests/realism.cjs`、`tests/navigation.cjs`、`tests/audio.cjs` 全通过：文件离线网络请求0、JS错误0；导航覆盖257种种子；72/72音频可解码。软件GPU截图临时人工检查了新的章节难度选择器，截图/测试产物已清理。
 - `python3 tools/build.py` 生成最新单文件 `index.html`（22,855,124字节）与临时`dist/Game-playable.zip`；QA后删除`dist/`和截图，保持根`index.html`为最新离线可玩版。构建前后源码通过语法与diff whitespace检查；工作区约71MB。
 - GitHub安全：不使用、不保存、不回显用户此前粘贴的PAT；应立即撤销该token。GitHub connector不可用，本版尚未推送或发布。若要尝试推送，必须使用不带该PAT的安全认证路径。
+
+## v0.21.0-preview — 商品模型、标期信息与垃圾循环（2026-10-18）
+- `src/catalog-gen.js` 给12条自定义食品/饮品/调味线补上专属包装规格；`src/interior.js` 为生成商品按产品线/厂牌/规格做确定性尺寸、封口、纸盒/袋装/玻璃罐/易拉罐/瓶盖变化，易拉罐有卷封与拉环；袋装鲜食展示内容轮廓。`src/ui.js` 的商品卡图标按产品形状/类别显示更多区别。均为离线程序化几何与Canvas纹理，不加外链。
+- `expiryPublicLabel` / `expiryInventoryLabel` 现在让玩家能看到清晰标期；无生产日期或字迹模糊批次显示名义保质期范围和已存放时间，但继续隐藏批次精确余期/日期。`isSpoiled(b)`仍使用`b.age >= DB[b.id].life`，冰箱年龄倍率、断电处理不变；货架准星文字也显示相同保质信息。
+- `G.waste`按包装、餐厨残渣、其他丢弃物计数。首次使用批次计一次包装；每顿饭产一份残渣；丢弃整批物资记为其他废弃物。家务页列出分项，浴室垃圾桶附近按总量出现扎口袋；垃圾动作统一清除垃圾与过期物资。章节每日超过12份逐渐降低整洁，经典模式只记录。无虫鼠、无恶心画面。
+- 旧v3存档允许缺少`waste`并把旧`trash`作为包装迁移；存档校验确保新分类和总数一致。经典365日、300纸币、单次采购、无补货、不自动摆放、机关固定与隐藏章节时间保持不变。
+- 回归结果：`tests/levels.cjs` 98断言；`tests/simulation.cjs` 165断言（经典全年资源策略仍于第366日胜利）。浏览器 `levels-browser`、`browser`、`realism`、`navigation`、`audio` 全通过；`browser`含商品图标差异、第一次吃饭即生成包装/残渣与可见垃圾袋、模糊批次货架提示；导航257种种子、`liveClock:true`；外部请求0、JS错误0；音频72/72解码。
+- 一次软件GPU浏览器重跑在主菜单按钮点击时超时，单独交互检查成功，整套复跑通过。货架保质期测试最初把5天保质的面包年龄设为6天，程序正确显示已变质；修正测试夹具至2天后完整回归通过。
+- 手动复核临时QA图`tests/artifacts/v021-products.png`及`v021-waste.png`：新包装轮廓可区分，垃圾袋位于垃圾桶附近；这些截图只用于本地QA，打包/提交前删除。`python3 tools/build.py`当前离线单文件为22,874,204字节，已生成临时`dist/Game-playable.zip`；最终重建并清除`dist/`与`tests/artifacts/`。
+- Git只读检查：`git ls-remote`显示GitHub `main`仍在公开v0.18提交`92bebdcd15749bfae9d452ca611256802323fdb7`，未见v0.20或v0.21标签；此时尚未推送。先完成本地检查点，再仅用无令牌的安全认证尝试推送；禁止使用用户粘贴的PAT、禁止放宽SSH host-key验证。提醒用户撤销此前贴出的PAT。

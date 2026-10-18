@@ -268,8 +268,10 @@ worldTargetInfo = function (o) {
   try {
     if (id.startsWith("stock:")) {
       const b = G?.inv.find((x) => x.uid === o.userData.uid),
-        use = b && itemUse(DB[b.id]);
-      if (use) return [r[0], r[1] + "\n用途：" + use];
+        it = b && DB[b.id],
+        use = it && itemUse(it),
+        expiry = it?.life < 9999 ? "\n保质期：" + expiryInventoryLabel(it, b) : "";
+      if (use || expiry) return [r[0], r[1] + (use ? "\n用途：" + use : "") + expiry];
     }
     if (SR_EFFECT[id] && !(id === "kitchen" && W.held)) return [r[0], r[1] + "\n" + SR_EFFECT[id]];
   } catch (e) {}

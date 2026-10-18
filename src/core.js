@@ -79,6 +79,48 @@ function day() {
 function hour() {
   return G ? (G.minute % 1440) / 60 : 8;
 }
+function freshWaste() {
+  return { packaging: 0, scraps: 0, discarded: 0, items: [], warnedFull: false };
+}
+function ensureWaste() {
+  if (!G) return null;
+  if (!G.waste || typeof G.waste !== "object" || Array.isArray(G.waste)) {
+    G.waste = freshWaste();
+    G.waste.packaging = Math.max(0, Math.floor(Number(G.trash) || 0));
+  }
+  G.waste.packaging ??= 0;
+  G.waste.scraps ??= 0;
+  G.waste.discarded ??= 0;
+  G.waste.items ??= [];
+  G.waste.warnedFull ??= false;
+  return G.waste;
+}
+function addWaste(kind, id = null, count = 1) {
+  if (!G) return 0;
+  const waste = ensureWaste(),
+    amount = Math.max(0, Math.floor(Number(count) || 0));
+  if (!["packaging", "scraps", "discarded"].includes(kind)) kind = "discarded";
+  const total = waste.packaging + waste.scraps + waste.discarded,
+    added = Math.min(amount, Math.max(0, 2e7 - total));
+  waste[kind] += added;
+  for (let i = 0; i < Math.min(added, 48); i++) {
+    waste.items.push({ kind, id: typeof id === "string" && Object.hasOwn(DB, id) ? id : null });
+    if (waste.items.length > 48) waste.items.shift();
+  }
+  G.trash = total + added;
+  return G.trash;
+}
+function markPackageOpened(batch) {
+  if (!G || !batch || batch.opened) return false;
+  batch.opened = true;
+  addWaste("packaging", batch.id);
+  return true;
+}
+function clearWaste() {
+  if (!G) return;
+  G.waste = freshWaste();
+  G.trash = 0;
+}
 // v0.17: a catalogue variant (e.g. a sulphur soap) counts as its functional original ("soap").
 const USED_LOG = [];
 function isItem(b, id) {
@@ -101,6 +143,7 @@ function use(id, n = 1) {
   let remaining = n;
   for (const b of batches) {
     const take = Math.min(b.units, remaining);
+    if (take > 0) markPackageOpened(b);
     b.units -= take;
     remaining -= take;
     if (take > 0) USED_LOG.push(b.id);
@@ -192,6 +235,7 @@ function freshState(seed) {
     dirt: 12 + e.wear * 5,
     dishes: 0,
     trash: 0,
+    waste: freshWaste(),
     hair: 8,
     nails: 1,
     clothes: 90,
@@ -539,6 +583,14 @@ function dailyUpdate() {
       "warn",
     );
   }
+  const waste = ensureWaste();
+  if (G.level && G.trash >= 12) {
+    G.dirt = clamp(G.dirt + Math.min(0.8, 0.25 + (G.trash - 12) * 0.025));
+    if (!waste.warnedFull) {
+      logEvent("垃圾桶已经满了。包装和残渣堆在旁边，房间整洁会慢慢下降。", "warn");
+      waste.warnedFull = true;
+    }
+  } else if (G.trash < 6) waste.warnedFull = false;
   if (!G.level && day() % 7 === 0)
     logEvent(
       `第${day()}天。你把新的刻痕留在日历上。还有${365 - day()}天。`,
@@ -607,6 +659,7 @@ function actDrink(uidValue) {
     if (it.brew && !G.power && !has("stove"))
       return notify("冲泡需要电力，或便携炉。", "warn");
     if (isSpoiled(b)) return notify("饮品已过期。请丢弃。", "warn");
+    markPackageOpened(b);
     b.units--;
     G.inv = G.inv.filter((x) => x.units > 0);
     G.stats.water = clamp(G.stats.water + it.water);
@@ -644,6 +697,7 @@ function consumeMeal(uidValue, success = true, slow = false) {
   const flavor = it.flavor || it.id;
   const repeats = G.foodHistory.slice(-5).filter((f) => f === flavor).length;
   const wasContaminated = b.contaminated;
+  markPackageOpened(b);
   b.units--;
   b.opened = true;
   G.foodHistory.push(flavor);
@@ -669,7 +723,7 @@ function consumeMeal(uidValue, success = true, slow = false) {
   G.bowel = clamp(G.bowel + 8 + kcal / 160);
   G.dishes += 1;
   G.dirt += success ? 1 : 4;
-  G.trash += b.units <= 0 ? 1 : 0;
+  addWaste("scraps", it.id);
   if (wasContaminated) addDisease("stomach");
   if (!success)
     logEvent("没能稳稳吃完，桌上多了一点残渣。没有令人不适的画面。", "warn");
@@ -805,14 +859,18 @@ function doAction(action, value) {
       if (!G.trash && !G.inv.some((b) => isSpoiled(b)))
         return notify("现在没有需要处理的垃圾。");
       {
-        const spoiled = G.inv.filter((b) => isSpoiled(b));
+        const waste = ensureWaste(),
+          packaging = waste.packaging,
+          scraps = waste.scraps,
+          discarded = waste.discarded,
+          spoiled = G.inv.filter((b) => isSpoiled(b));
         G.inv = G.inv.filter((b) => !isSpoiled(b));
-        G.trash = 0;
         if (has("trashbag")) use("trashbag");
+        clearWaste();
         G.dirt = Math.max(0, G.dirt - 8);
         advanceTime(10, "clean");
         logEvent(
-          `垃圾已密封。处理掉${spoiled.length}批变质物资，没有恶心画面。`,
+          `密封带走包装${packaging}份、餐厨残渣${scraps}份、其他废弃物${discarded}份和变质物资${spoiled.length}批。没有恶心画面。`,
           "good",
         );
         break;
@@ -1063,6 +1121,12 @@ function validateSave(s) {
       "candleUntil",
     ])
       if (!num(s[k], 0, 2e7)) return false;
+    if (s.waste !== undefined) {
+      const w = s.waste,
+        validItem = (x) => obj(x) && ["packaging", "scraps", "discarded"].includes(x.kind) && (x.id === null || Object.hasOwn(DB, x.id));
+      if (!obj(w) || !num(w.packaging, 0, 2e7) || !num(w.scraps, 0, 2e7) || !num(w.discarded, 0, 2e7) || typeof w.warnedFull !== "boolean" || !Array.isArray(w.items) || w.items.length > 48 || !w.items.every(validItem)) return false;
+      if (Math.abs(s.trash - w.packaging - w.scraps - w.discarded) > 0.001) return false;
+    }
     if (!num(s.rng, 0, 4294967295) || !obj(s.env)) return false;
     const expected = environment(s.seed);
     for (const k of [
@@ -1212,6 +1276,7 @@ function loadState(s) {
   if (!validateSave(s)) return notify("存档格式不兼容或已损坏。", "warn");
   closePreparation();
   G = s;
+  ensureWaste();
   G.tradeLocked = true;
   paused = false;
   G.cooldowns ??= {};

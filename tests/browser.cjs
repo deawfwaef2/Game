@@ -132,6 +132,12 @@ fs.mkdirSync(artifacts, { recursive: true });
     await helpers(page);
     assert.strictEqual(await page.evaluate(() => W.shopProducts.length), await page.evaluate(() => shopStock().length));
     assert.ok(await page.evaluate(() => CATALOG.length >= 15000 && shopStock().length <= 220));
+    const artAudit = await page.evaluate(() => ({
+      count: CG_EXTRA_PRODUCTS.length,
+      unique: new Set(CG_EXTRA_PRODUCTS.map((it) => productArt(DB[it.id]))).size,
+      allSvg: CG_EXTRA_PRODUCTS.every((it) => productArt(DB[it.id]).startsWith("<svg")),
+    }));
+    assert.ok(artAudit.count >= 10 && artAudit.unique >= 10 && artAudit.allSvg, "curated food lines render distinct offline product art");
     assert.strictEqual(await page.locator("#shopScreen").isVisible(), false);
     // Real key handlers drive the same production movement used by the RAF loop.
     const z = await page.evaluate(() => camera.position.z);
@@ -265,6 +271,23 @@ fs.mkdirSync(artifacts, { recursive: true });
         .evaluate((e) => e.classList.contains("visible")),
       false,
     );
+    const generatedWaste = await page.evaluate(() => ({
+      packaging: G.waste.packaging,
+      scraps: G.waste.scraps,
+      discarded: G.waste.discarded,
+      total: G.trash,
+      visibleBags: I.wasteDisplay?.bags.filter((bag) => bag.visible).length || 0,
+    }));
+    assert.deepStrictEqual(generatedWaste, { packaging: 1, scraps: 1, discarded: 0, total: 2, visibleBags: 1 }, "first meal creates package+scrap waste and visible tied bag");
+    const focusExpiry = await page.evaluate(() => {
+      const it = CATALOG.find((x) => x.life < 9999 && x.expiryMark === "unmarked"),
+        b = { uid: "qa-expiry-focus", id: it.id, units: 1, packed: false, opened: false, bag: 0, created: G.minute, age: 2, location: "shelf", contaminated: false };
+      G.inv.push(b);
+      const text = worldTargetInfo({ userData: { interact: "stock:" + b.uid, uid: b.uid } })[1];
+      G.inv = G.inv.filter((x) => x !== b);
+      return text;
+    });
+    assert.match(focusExpiry, /保质期：.*常规保质期.*已存放约2天.*批次余期不明/, "looking at shelf stock exposes nominal life and stored age without exact batch expiry");
     await page.evaluate(() => qaDrop());
     await aim(page, "sink");
     await act(page);

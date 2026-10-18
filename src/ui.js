@@ -26,51 +26,100 @@ function showToast(text, type = "info") {
 }
 function productArt(it) {
   const palette = {
-    staple: ["#bbad79", "#6a6947"],
-    canned: ["#a8ad89", "#788163"],
-    fresh: ["#8f9b6a", "#5b7552"],
-    drink: ["#a8b3a0", "#617b68"],
-    hygiene: ["#c2c5a1", "#7b8e6a"],
-    clean: ["#a8bd9e", "#607953"],
-    medical: ["#c8bea1", "#9a8163"],
-    tool: ["#b1b5a1", "#6f7d69"],
-    leisure: ["#a4ad87", "#5d7053"],
-    furniture: ["#bdac86", "#7e7056"],
-  };
-  const [a, b] = palette[it.category] || palette.tool;
-  let shape = "";
+      staple: ["#c8ad74", "#aa6b45", "#ded0ab", "#5e7457"],
+      canned: ["#bd6a4c", "#3c6d79", "#bca051", "#8d3d36"],
+      fresh: ["#7e9b60", "#c05a3d", "#d9c384", "#467a55"],
+      drink: ["#5290a0", "#668451", "#b65341", "#d0aa4c"],
+      hygiene: ["#6d9b9a", "#d4cbb0", "#9a668a", "#53896b"],
+      clean: ["#d7462e", "#2f6ca6", "#e2bd2f", "#3d8a6d"],
+      medical: ["#f1efe8", "#e0d8c4"],
+      tool: ["#737c6d", "#b04a2e", "#4c6b7e"],
+      leisure: ["#3f5d55", "#8a3f33", "#b79b59"],
+      furniture: ["#8a7a5c", "#a88d68"],
+    },
+    colors = palette[it.category] || palette.tool;
+  let h = 2166136261;
+  for (const c of String(it.id || "")) h = Math.imul(h ^ c.charCodeAt(0), 16777619);
+  h >>>= 0;
+  const a = colors[h % colors.length],
+    b = colors[(h >>> 4) % colors.length],
+    look = it.look || it.base || it.id;
+  let form = "";
+  try {
+    form = it.shape?.[0] || (I_SPEC[it.id] || (it.look && I_SPEC[it.look]))?.[0] || "";
+  } catch {}
   if (it.levelClock) {
     if (it.levelClock === "hourglass")
-      shape = `<path d="M27 10h26v7L44 34l12 24v12H24V58l12-24L24 17v-7Z" fill="${a}" stroke="${b}" stroke-width="3"/><path d="M29 14h22M28 63h24M32 18l8 12 8-12m-16 39 8-12 8 12" fill="none" stroke="${b}" stroke-width="3"/><path d="M36 52h8l-4 5Z" fill="#c4a96e"/>`;
-    else if (it.levelClock === "digital" || it.levelClock === "mains")
-      shape = `<rect x="13" y="22" width="54" height="40" rx="5" fill="${b}"/><rect x="19" y="28" width="42" height="19" rx="2" fill="#29332e"/><path d="M26 33h8v9h-8zm15 0h8v9h-8z" fill="${a}"/><path d="M54 33v9" stroke="${a}" stroke-width="3"/><path d="M33 54h14" stroke="${a}" stroke-width="3"/>`;
-    else if (it.levelClock === "calendar")
-      shape = `<path d="M20 14h40v56H20z" fill="#ded4bb" stroke="${b}" stroke-width="3"/><path d="M20 14h40v14H20z" fill="${b}"/><path d="M29 10v10m22-10v10" stroke="${a}" stroke-width="4"/><path d="M27 37h6m6 0h6m6 0h6M27 47h6m6 0h6m6 0h6M27 57h6m6 0h6m6 0h6" stroke="${b}" stroke-width="3"/>`;
-    else {
-      const wrist=/腕表/.test(it.name), r=wrist?15:21;
-      shape = wrist
-        ? `<path d="M33 8h14l4 16v16l-4 22H33l-4-22V24z" fill="${b}"/><circle cx="40" cy="34" r="${r}" fill="${a}" stroke="${b}" stroke-width="4"/><path d="M40 22v12l8 5M40 14v4m0 32v4m-18-20h4m28 0h4" fill="none" stroke="${b}" stroke-width="3" stroke-linecap="round"/>`
-        : `<rect x="22" y="12" width="36" height="56" rx="10" fill="${b}"/><circle cx="40" cy="32" r="${r}" fill="${a}" stroke="#dbcfb2" stroke-width="3"/><path d="M40 18v4m0 20v4m-14-14h4m20 0h4M40 32V22m0 10 9 5" fill="none" stroke="${b}" stroke-width="3" stroke-linecap="round"/>`;
-    }
+      form = "hourglass";
+    else if (it.levelClock === "calendar") form = "calendar";
+    else if (it.levelClock === "digital" || it.levelClock === "mains") form = "digital";
+    else form = /腕表/.test(it.name) ? "wristwatch" : "clock";
+  }
+  let shape = "";
+  if (form === "hourglass")
+    shape = `<path d="M25 8h30v8L44 34l12 28v10H24V62l12-28L25 16Z" fill="${a}" stroke="${b}" stroke-width="3"/><path d="M29 13h22M29 67h22m-18-49 7 13 7-13m-14 40 7-13 7 13" fill="none" stroke="${b}" stroke-width="3"/><path d="M36 53h8l-4 6Z" fill="#c4a96e"/>`;
+  else if (form === "digital")
+    shape = `<rect x="12" y="22" width="56" height="42" rx="7" fill="${b}"/><rect x="18" y="28" width="44" height="20" rx="2" fill="#29332e"/><path d="M25 33h9v10h-9zm16 0h9v10h-9zm16 0v10" fill="${a}"/><path d="M31 55h18" stroke="${a}" stroke-width="3"/>`;
+  else if (form === "calendar")
+    shape = `<path d="M18 14h44v56H18z" fill="#ded4bb" stroke="${b}" stroke-width="3"/><path d="M18 14h44v14H18z" fill="${b}"/><path d="M29 10v10m22-10v10" stroke="${a}" stroke-width="4"/><path d="M25 38h7m7 0h7m7 0h7M25 49h7m7 0h7m7 0h7M25 60h7m7 0h7m7 0h7" stroke="${b}" stroke-width="3"/>`;
+  else if (form === "wristwatch" || form === "clock") {
+    const wrist = form === "wristwatch",
+      r = wrist ? 16 : 22;
+    shape = wrist
+      ? `<path d="M32 6h16l4 17v20l-4 22H32l-4-22V23z" fill="${b}"/><circle cx="40" cy="33" r="${r}" fill="${a}" stroke="#dbcfb2" stroke-width="3"/><path d="M40 21v12l8 5M40 14v4m0 32v4m-18-21h4m28 0h4" fill="none" stroke="${b}" stroke-width="3" stroke-linecap="round"/>`
+      : `<rect x="22" y="10" width="36" height="60" rx="10" fill="${b}"/><circle cx="40" cy="33" r="${r}" fill="${a}" stroke="#dbcfb2" stroke-width="3"/><path d="M40 19v4m0 20v4m-14-14h4m20 0h4M40 33V23m0 10 9 5" fill="none" stroke="${b}" stroke-width="3" stroke-linecap="round"/>`;
   } else if (it.kind === "book")
-    shape = `<path d="M19 9h40v61H19z" fill="${b}"/><path d="M23 9h3v61h-3z" fill="${a}"/><path d="M29 15h25v48H29z" fill="${a}" opacity=".35"/><path d="M32 28h19m-19 5h16m-16 5h17" stroke="${a}" stroke-width="1"/><path d="M20 65h38v4H20z" fill="#d0c8a6"/>`;
-  else if (it.category === "canned")
-    shape = `<ellipse cx="40" cy="19" rx="21" ry="7" fill="${a}"/><path d="M19 19v43c0 9 42 9 42 0V19" fill="${b}"/><path d="M20 31h40v23H20z" fill="${a}"/><ellipse cx="40" cy="19" rx="21" ry="7" fill="${a}" stroke="${b}"/><path d="M36 16h9v4h-9z" fill="${b}"/><path d="M28 41h24m-20 5h15" stroke="${b}" stroke-width="1.5"/>`;
-  else if (
-    it.category === "drink" ||
-    ["soap", "shampoo", "dishsoap", "disinfect"].includes(it.id)
-  )
-    shape = `<path d="M32 10h16v10l9 12v31q0 7-8 7H31q-8 0-8-7V32l9-12Z" fill="${a}"/><rect x="30" y="8" width="20" height="7" rx="2" fill="${b}"/><path d="M24 38h32v19H24z" fill="${b}"/><path d="M32 44h16m-16 5h11" stroke="${a}" stroke-width="1.4"/><path d="M27 30v30" stroke="#eceacb" stroke-width="2" opacity=".18"/>`;
-  else if (it.category === "fresh")
-    shape = `<ellipse cx="40" cy="46" rx="23" ry="22" fill="${b}"/><ellipse cx="31" cy="41" rx="13" ry="18" fill="${a}"/><path d="M40 25V13m0 5c13-12 19-7 14 1-5 4-11 0-14-1" fill="${a}" stroke="${b}" stroke-width="2"/>`;
-  else if (it.category === "medical")
-    shape = `<rect x="19" y="15" width="42" height="53" rx="3" fill="${a}"/><path d="M19 23h42" stroke="${b}"/><path d="M35 34h10v8h8v10h-8v8H35v-8h-8V42h8z" fill="${b}"/>`;
+    shape = `<path d="M16 9h48v62H16z" fill="${b}"/><path d="M21 9h4v62h-4z" fill="${a}"/><path d="M30 17h27v45H30z" fill="${a}" opacity=".34"/><path d="M34 30h20m-20 6h17m-17 6h18" stroke="${b}" stroke-width="1.5"/><path d="M17 65h46v4H17z" fill="#d0c8a6"/>`;
+  else if (form === "jar" || look === "jam" || look === "yogurt")
+    shape = `<path d="M25 20h30l4 8v34q0 7-8 7H29q-8 0-8-7V28z" fill="#d9d2b5" fill-opacity=".7" stroke="${b}" stroke-width="3"/><path d="M23 29h34v25H23z" fill="${a}"/><path d="M24 15h32v8H24z" fill="${b}"/><path d="M29 18h22m-16 21h12m-12 5h9" stroke="#eee5cc" stroke-width="2"/>`;
+  else if (form === "tin" || form === "can" || it.category === "canned")
+    shape = `<ellipse cx="40" cy="19" rx="21" ry="7" fill="#d1d4ca"/><path d="M19 19v43c0 9 42 9 42 0V19" fill="${b}"/><path d="M20 31h40v23H20z" fill="${a}"/><ellipse cx="40" cy="19" rx="21" ry="7" fill="#c8c9bd" stroke="${b}"/><path d="M34 16h12v4H34z" fill="${b}"/><path d="M28 41h24m-20 5h15" stroke="#f0e6cb" stroke-width="1.5"/>${form === "can" ? `<ellipse cx="40" cy="19" rx="5" ry="2" fill="none" stroke="${b}" stroke-width="2"/>` : ""}`;
+  else if (["bottle", "hdpe", "jug"].includes(form) || it.category === "drink" || ["soap", "shampoo", "dishsoap", "disinfect"].includes(it.id))
+    shape = form === "jug"
+      ? `<path d="M21 22h35v42H21z" rx="5" fill="#dce9df" stroke="${b}" stroke-width="3"/><path d="M49 26h12v21H49" fill="none" stroke="${b}" stroke-width="5"/><path d="M24 40h29v17H24z" fill="${a}"/><path d="M31 45h16m-16 5h11" stroke="#f4ead2" stroke-width="2"/><rect x="34" y="14" width="12" height="8" fill="${b}"/>`
+      : `<path d="M33 9h14v11l9 10v34q0 7-8 7H31q-8 0-8-7V30l10-10Z" fill="#dce9df" fill-opacity=".75" stroke="${b}" stroke-width="2.5"/><rect x="31" y="7" width="18" height="7" rx="2" fill="${b}"/><path d="M24 37h32v19H24z" fill="${a}"/><path d="M31 43h18m-18 5h13" stroke="#f1ead8" stroke-width="1.7"/>`;
+  else if (["carton", "box"].includes(form) && it.kind !== "book")
+    shape = form === "carton"
+      ? `<path d="M23 26h34v42H23z" fill="${a}" stroke="${b}" stroke-width="2"/><path d="m23 26 17-13 17 13M23 26l9 8h16l9-8" fill="${b}"/><path d="M37 12h7v6h-7z" fill="#e9e3d4"/><path d="M29 43h22v12H29z" fill="${b}"/><path d="M33 47h14m-14 4h10" stroke="${a}" stroke-width="1.5"/>`
+      : `<path d="M18 19h44v49H18z" fill="${a}" stroke="${b}" stroke-width="2"/><path d="M18 19l22-9 22 9v7H18z" fill="${b}"/><path d="M23 36h34v19H23z" fill="${b}"/><path d="M29 42h22m-22 6h16" stroke="${a}" stroke-width="1.5"/>`;
+  else if (["paper", "pouch", "sack", "windowbag", "frozenbag"].includes(form)) {
+    const bagPath = form === "sack"
+      ? "M24 14l8-5h16l8 5-3 12 6 34q0 8-9 8H30q-9 0-9-8l6-34z"
+      : form === "frozenbag" || form === "windowbag"
+        ? "M22 13h36v53H22z"
+        : form === "pouch"
+          ? "M25 10h30l4 9-3 9 5 34H19l5-34-3-9z"
+          : "M24 14h32v52H24z";
+    shape = `<path d="${bagPath}" fill="${a}" stroke="${b}" stroke-width="2.5"/><path d="M24 16h32v8H24z" fill="${b}"/><path d="M27 34h26v20H27z" fill="${b}"/><path d="M31 39h18m-18 5h14m-14 5h16" stroke="${a}" stroke-width="1.5"/>${form === "frozenbag" ? `<circle cx="31" cy="57" r="4" fill="#eee9dc"/><circle cx="40" cy="59" r="4" fill="#eee9dc"/><circle cx="49" cy="57" r="4" fill="#eee9dc"/>` : ""}${form === "windowbag" ? `<path d="M29 56h22" stroke="#e7e1d0" stroke-width="2"/>` : ""}`;
+  } else if (form === "pile" || form === "cabbage" || form === "banana" || it.category === "fresh") {
+    if (form === "banana" || look === "banana")
+      shape = `<path d="M17 49q6-31 23-35 14-2 22 10-7 20-18 27-15 11-27-2Z" fill="#dfc445" stroke="${b}" stroke-width="3"/><path d="M25 46q15 3 30-18" fill="none" stroke="#f3dfa0" stroke-width="3"/><path d="M38 14l3-6" stroke="${b}" stroke-width="4"/>`;
+    else if (form === "cabbage" || /cabbage|lettuce|vegetable/.test(look))
+      shape = `<circle cx="40" cy="43" r="27" fill="#72925a"/><path d="M20 39q17-18 39-1M22 52q18-15 36-3M40 17v49M28 22q22 20 24 40" fill="none" stroke="#c6d29b" stroke-width="3"/><path d="M39 19q9-13 18-8-5 11-17 13" fill="${a}"/>`;
+    else if (/egg/.test(look))
+      shape = `<path d="M15 44q25-12 50 0v20H15z" fill="#918b7c"/><path d="M19 43q4-18 9-14 4-3 7 14m1 0q3-21 9-18 5-1 8 18m0 0q4-17 9-14 5 0 6 14" fill="#ece3cf" stroke="${b}" stroke-width="2"/><path d="M19 54h42" stroke="#b7ad98" stroke-width="3"/>`;
+    else if (/bread|loaf|mantou/.test(look))
+      shape = `<path d="M15 55q0-28 15-31 5-12 14-5 16-7 21 8 8 5 5 28-2 9-10 9H24q-9 0-9-9Z" fill="#b87843" stroke="${b}" stroke-width="3"/><path d="M29 29q8 5 9 15m6-18q6 6 6 14" stroke="#e1b67e" stroke-width="3"/>`;
+    else if (form === "pile")
+      shape = `<ellipse cx="40" cy="58" rx="25" ry="8" fill="#e3d8bd"/>${[0,1,2,3,4].map((i)=>`<ellipse cx="${23+(i%3)*15}" cy="${40-Math.floor(i/3)*12}" rx="10" ry="12" fill="${[a,b,"#d78935","#7d9b52"][i%4]}"/>`).join("")}<path d="M37 25q9-13 17-7-5 9-16 10" fill="#66824d"/>`;
+    else
+      shape = `<ellipse cx="40" cy="48" rx="24" ry="22" fill="${b}"/><ellipse cx="31" cy="42" rx="13" ry="17" fill="${a}"/><path d="M40 26V13m0 5c13-12 19-7 14 1-5 4-11 0-14-1" fill="${a}" stroke="${b}" stroke-width="2"/>`;
+  } else if (form === "eggs")
+    shape = `<path d="M12 38h56v27H12z" fill="#99917e"/><path d="M16 39q4-21 9-14 4-2 7 14m1 0q4-24 10-18 5-1 8 18m1 0q3-20 9-14 5 0 6 14" fill="#eee5d1" stroke="${b}" stroke-width="2"/>`;
+  else if (form === "cheese")
+    shape = `<path d="M15 54 42 20l24 34v12H15z" fill="#e5c75a" stroke="${b}" stroke-width="3"/><circle cx="38" cy="51" r="4" fill="#bf9f36"/><circle cx="52" cy="58" r="3" fill="#bf9f36"/><path d="M15 54h51" stroke="#f3df8c" stroke-width="3"/>`;
+  else if (form === "sausage")
+    shape = `<path d="M18 50q4-17 18-11 14 5 24-5 10-5 8 9-4 17-18 12-14-5-24 6-10 5-8-11Z" fill="#9d4632" stroke="${b}" stroke-width="3"/><path d="m20 48-5-5m47 9 7 4" stroke="#e0b59a" stroke-width="4"/>`;
+  else if (form === "rolls")
+    shape = `<circle cx="27" cy="31" r="14" fill="#eee9db" stroke="${b}" stroke-width="2"/><circle cx="52" cy="31" r="14" fill="#eee9db" stroke="${b}" stroke-width="2"/><circle cx="27" cy="56" r="14" fill="#eee9db" stroke="${b}" stroke-width="2"/><circle cx="52" cy="56" r="14" fill="#eee9db" stroke="${b}" stroke-width="2"/><path d="M22 31h10m-10 25h10" stroke="#aaa18d"/>`;
+  else if (form === "cloth" || form === "sponge")
+    shape = `<path d="m19 22 40-6 4 39-42 8z" fill="${a}" stroke="${b}" stroke-width="3"/><path d="M24 28h28M25 35h30M26 42h29" stroke="#eee5ce" stroke-width="2" opacity=".55"/>`;
+  else if (it.category === "medical" || form === "med")
+    shape = `<rect x="18" y="14" width="44" height="54" rx="4" fill="#f1efe8" stroke="${b}" stroke-width="3"/><path d="M18 24h44" stroke="${b}"/><path d="M34 33h12v8h8v12h-8v8H34v-8h-8V41h8z" fill="#b3261e"/>`;
   else if (it.category === "furniture")
     shape = `<path d="M16 29h48v11H16zM21 40h5v28h-5zm33 0h5v28h-5z" fill="${b}"/><path d="M22 13h36v18H22z" fill="${a}"/><path d="M25 16h30v12H25z" fill="${b}" opacity=".25"/>`;
-  else if (it.category === "staple")
-    shape = `<path d="m22 13 8-4h21l8 4-2 11 7 40q0 7-8 7H24q-8 0-8-7l7-40Z" fill="${a}"/><path d="M22 13h37l-2 8H23z" fill="${b}"/><path d="M23 33h34v24H23z" fill="${b}"/><path d="M30 39h20m-20 6h16m-16 5h18" stroke="${a}" stroke-width="1"/><path d="m24 60 6 6m27-6-6 6" stroke="${b}" opacity=".5"/>`;
   else
-    shape = `<rect x="18" y="20" width="44" height="45" rx="3" fill="${b}"/><path d="M25 20V10h30v10" fill="none" stroke="${a}" stroke-width="4"/><rect x="23" y="27" width="34" height="29" rx="2" fill="${a}"/><path d="M32 36h16m-8-8v24" stroke="${b}" stroke-width="3"/>`;
+    shape = `<rect x="18" y="20" width="44" height="45" rx="3" fill="${b}"/><path d="M25 20V10h30v10" fill="none" stroke="${a}" stroke-width="4"/><rect x="23" y="27" width="34" height="29" rx="2" fill="${a}"/><path d="M32 36h16m-8-7v22" stroke="${b}" stroke-width="3"/>`;
   return `<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${shape}</svg>`;
 }
 function updateSeed() {
@@ -353,7 +402,8 @@ function openStation(id) {
   } else if (id === "trash" || id === "inspect") {
     title = "让房间仍像一个家。";
     subtitle = "HOUSEKEEPING";
-    html = `<div class="stat-grid"><div class="stat-tile"><span>房间整洁</span><strong>${Math.round(100 - G.dirt)}<small>%</small></strong><p>脏乱会影响精神</p></div><div class="stat-tile"><span>未洗餐具</span><strong>${G.dishes}<small>份</small></strong><p>清洗后更安心</p></div><div class="stat-tile"><span>待处理包装</span><strong>${G.trash}<small>份</small></strong><p>密封处理，无恶心画面</p></div></div><div class="action-grid">${action("清扫整理", "扫帚/拖把更有效 · 30–45分钟", "clean", "", "⌁")}${action("密封处理垃圾", "10分钟 · 一并丢弃过期物资", "trash", "", "▧")}${action("检查家具", "15分钟 · 概率发现，隐藏总数未知", "inspect", "", "⌕")}${action("清洗餐具", "12分钟 · 用水1L", "dishes", "", "◡")}</div><h3 class="section-label">房东的旧抽屉</h3><div class="action-grid">${action("检查旧抽屉", G.emergencyUsed ? "已经检查过，没有更多物资" : "房东遗留的小量应急品 · 仅一次", "emergency", "", "▣")}</div><p class="panel-note">脏乱只影响心情、卫生和健康，房间里不会出现任何虫鼠或替代物。</p>`;
+    const waste = G.waste || { packaging: G.trash, scraps: 0, discarded: 0 };
+    html = `<div class="stat-grid"><div class="stat-tile"><span>房间整洁</span><strong>${Math.round(100 - G.dirt)}<small>%</small></strong><p>脏乱会影响精神</p></div><div class="stat-tile"><span>未洗餐具</span><strong>${G.dishes}<small>份</small></strong><p>清洗后更安心</p></div><div class="stat-tile"><span>待处理废弃物</span><strong>${G.trash}<small>份</small></strong><p>包装 ${waste.packaging} · 餐厨残渣 ${waste.scraps} · 其他 ${waste.discarded}</p></div></div><div class="action-grid">${action("清扫整理", "扫帚/拖把更有效 · 30–45分钟", "clean", "", "⌁")}${action("密封处理垃圾", "10分钟 · 清走包装、餐厨残渣与过期物资", "trash", "", "▧")}${action("检查家具", "15分钟 · 概率发现，隐藏总数未知", "inspect", "", "⌕")}${action("清洗餐具", "12分钟 · 用水1L", "dishes", "", "◡")}</div><h3 class="section-label">房东的旧抽屉</h3><div class="action-grid">${action("检查旧抽屉", G.emergencyUsed ? "已经检查过，没有更多物资" : "房东遗留的小量应急品 · 仅一次", "emergency", "", "▣")}</div><p class="panel-note">开封包装和每顿餐厨残渣都会累积；章节模式垃圾桶满后会慢慢影响整洁，经典模式仅记录，不加新惩罚。可以用垃圾袋封口。没有虫鼠，也没有恶心画面。</p>`;
   } else if (id === "window") {
     title = "窗外，还是那座城市。";
     subtitle = "WINDOW / A VIEW WITH CONSEQUENCES";
@@ -845,8 +895,9 @@ function setupEvents() {
       return;
     }
     if ((b = e.target.closest("[data-drop]"))) {
+      const discarded = G.inv.find((x) => x.uid === b.dataset.drop);
       G.inv = G.inv.filter((x) => x.uid !== b.dataset.drop);
-      G.trash++;
+      if (discarded) addWaste("discarded", discarded.id);
       advanceTime(2, "clean");
       openInventory();
       return;

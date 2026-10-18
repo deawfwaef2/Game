@@ -8,6 +8,7 @@ const I = {
   labels: new Map(),
   mats: new Map(),
   geos: new Map(),
+  wasteDisplay: null,
 };
 function iTex(name, rx = 1, ry = 1) {
   const src = R.textures[name];
@@ -1139,7 +1140,50 @@ function iBathroom() {
     trash.add(rim);
     iBox(trash, [0.1, 0.012, 0.06], [0, 0.03, 0.16], chrome, 0.004);
     iBox(trash, [0.29, 0.02, 0.29], [0, 0.01, 0], iStd("#2e2a26", 0.7), 0.006);
+    iBuildWasteDisplay(trash);
   }
+}
+function iBuildWasteDisplay(bin) {
+  if (!bin) return;
+  const root = new THREE.Group();
+  root.name = "generated-waste";
+  const bags = [];
+  for (let i = 0; i < 3; i++) {
+    const bag = new THREE.Group(),
+      mat = new THREE.MeshPhysicalMaterial({ color: ["#4c504a", "#55574f", "#625d53"][i], roughness: 0.88, metalness: 0, transparent: true, opacity: 0.96, side: THREE.DoubleSide }),
+      tieMat = new THREE.MeshStandardMaterial({ color: "#30332e", roughness: 0.92 });
+    const spill = [[0.22, -0.3], [-0.25, -0.45], [-0.55, -0.18]][i];
+    bag.position.set(spill[0], 0.012, spill[1]);
+    bag.rotation.y = (i - 1) * 0.18;
+    const profile = [[0,0],[0.06,0],[0.088,0.014],[0.098,0.05],[0.09,0.11],[0.08,0.15],[0.056,0.17],[0.034,0.19],[0.028,0.205],[0,0.215]].map(([r,y]) => new THREE.Vector2(r,y));
+    const body = new THREE.Mesh(new THREE.LatheGeometry(profile, 12), mat);
+    body.position.y = 0.008;
+    body.castShadow = true;
+    bag.add(body);
+    const tie = new THREE.Mesh(new THREE.TorusGeometry(0.028, 0.006, 5, 14), tieMat);
+    tie.rotation.x = Math.PI / 2;
+    tie.position.y = 0.218;
+    bag.add(tie);
+    const knot = new THREE.Mesh(new THREE.SphereGeometry(0.012, 8, 6), mat);
+    knot.position.set(0, 0.224, 0);
+    bag.add(knot);
+    const loop = new THREE.Mesh(new THREE.TorusGeometry(0.018, 0.004, 5, 12), mat);
+    loop.scale.set(1.4, 0.8, 0.65);
+    loop.position.set(0.022, 0.229, 0);
+    bag.add(loop);
+    root.add(bag);
+    bags.push(bag);
+  }
+  bin.add(root);
+  I.wasteDisplay = { root, bags };
+  iUpdateWasteDisplay();
+}
+function iUpdateWasteDisplay() {
+  if (!I.wasteDisplay) return;
+  const trash = Math.max(0, Number(G?.trash) || 0),
+    count = trash > 0 ? Math.min(3, Math.ceil(trash / 4)) : 0;
+  I.wasteDisplay.bags.forEach((bag, i) => { bag.visible = i < count; });
+  I.wasteDisplay.root.visible = count > 0;
 }
 function iBroom() {
   const g = W.broomProp;
@@ -1452,15 +1496,30 @@ function iLabel(it) {
   const tex = iCanvas(384, 256, (x, w, hh) => {
     x.fillStyle = bg;
     x.fillRect(0, 0, w, hh);
+    const noise = iHash(`${it.id}|print`);
     for (let i = 0; i < 1600; i++) {
-      x.fillStyle = `rgba(255,255,255,${Math.random() * 0.05})`;
-      x.fillRect(Math.random() * w, Math.random() * hh, 2, 2);
+      const n = noise + i * 3;
+      x.fillStyle = `rgba(255,255,255,${iRand(n) * 0.05})`;
+      x.fillRect(iRand(n + 1) * w, iRand(n + 2) * hh, 2, 2);
     }
     const light = ["#e7e2d2", "#e6d7a8", "#d8c49a", "#f1efe8", "#e2c46a", "#e2bd2f"].includes(bg);
     const ink = light ? "#2b2a24" : "#f4eedd";
     // Period print: a band, an emblem, the product name in heavy type and a small standard code.
     x.fillStyle = medical ? "#b3261e" : light ? "#7d3a2a" : "rgba(0,0,0,.28)";
     x.fillRect(0, 0, w, 46);
+    const labelStyle = h % 4;
+    if (labelStyle === 1) {
+      x.fillStyle = light ? "#b83d2c" : "rgba(255,228,176,.28)";
+      x.fillRect(0, 46, 20, hh - 104);
+    } else if (labelStyle === 2) {
+      x.strokeStyle = light ? "#7d3a2a" : "rgba(244,238,221,.65)";
+      x.lineWidth = 3;
+      x.strokeRect(8, 54, w - 16, hh - 108);
+    } else if (labelStyle === 3) {
+      x.fillStyle = light ? "#d8c49a" : "rgba(255,255,255,.18)";
+      x.fillRect(w - 22, 46, 22, hh - 104);
+      x.fillRect(0, 46, w, 5);
+    }
     x.fillStyle = medical ? "#fff" : light ? "#f4eedd" : "#f4eedd";
     x.font = "bold 22px 'Noto Sans SC','PingFang SC','Microsoft YaHei',sans-serif";
     x.textAlign = "center";
@@ -1605,10 +1664,40 @@ function iBookSize(it) {
   if (/散文|传记|诗|历史|哲学/.test(it.genre || "")) return [0.14, 0.203, d];
   return [0.13, 0.184, d];
 }
+function iVisualSpec(it) {
+  const raw = I_SPEC[it.id] || it?.shape || (it?.kind === "book" ? ["book", iBookSize(it)] : null) || (it?.look && I_SPEC[it.look]);
+  if (!raw) return null;
+  let shape = raw[0], dims = Array.isArray(raw[1]) ? raw[1].slice() : [], color = raw[2];
+  if (!it.gen || it.kind === "book") return [shape, dims, color];
+  const seed = iHash(`${it.line || it.id}|${it.brand || it.maker || ""}|package`),
+    sizeFactor = it.name.includes("家庭装") ? 1.24 : it.name.includes("小包装") ? 0.8 : 1;
+  // Factory-specific paper, carton and cellophane choices make otherwise similar SKUs read differently.
+  if (!it.id.startsWith("x_") && ["box", "paper", "pouch"].includes(shape) && ["staple", "drink"].includes(it.category)) {
+    const forms = shape === "box" ? ["box", "box", "paper", "pouch"] : shape === "paper" ? ["paper", "paper", "pouch", "box"] : ["pouch", "pouch", "paper", "box"];
+    shape = forms[seed % forms.length];
+  }
+  if (shape === "bottle" && it.category === "drink" && seed % 5 === 0) shape = "hdpe";
+  if (dims.length === 3) {
+    const fw = 0.9 + ((seed >>> 4) % 6) * 0.04,
+      fd = 0.9 + ((seed >>> 9) % 6) * 0.04;
+    dims[0] *= sizeFactor * fw;
+    dims[1] *= sizeFactor / Math.sqrt(fw * fd);
+    dims[2] *= sizeFactor * fd;
+  } else if (dims.length === 2 && shape !== "pile") {
+    const fr = 0.9 + ((seed >>> 6) % 5) * 0.05;
+    dims[0] *= sizeFactor * fr;
+    dims[1] *= sizeFactor / (fr * fr);
+  } else if (dims.length === 1) {
+    dims[0] *= sizeFactor;
+  }
+  if (shape === "jar" && !color) color = ["#b98752", "#98633b", "#c29e62", "#8b7150"][seed % 4];
+  return [shape, dims, color];
+}
 function iProduct(id, parent) {
-  const it = DB[id],
-    spec = I_SPEC[id] || it?.shape || (it?.kind === "book" ? ["book", iBookSize(it)] : null) || (it?.look && I_SPEC[it.look]);
-  if (!it || !spec || !R.ready) return null;
+  const it = DB[id];
+  if (!it || !R.ready) return null;
+  const spec = iVisualSpec(it);
+  if (!spec) return null;
   const [shape, dims, color] = spec,
     g = new THREE.Group(),
     label = () => iProductMat(it);
@@ -1637,18 +1726,88 @@ function iProduct(id, parent) {
   } else if (shape === "box" || shape === "med") {
     const [w, h, d] = dims;
     iBox(g, [w, h, d], [0, h / 2, 0], label(), Math.min(0.004, h * 0.15));
+    if (shape === "box") {
+      const seam = iSolid("#c9b99a", 0.85),
+        stripe = iSolid(["#a94332", "#47634a", "#2f5f7a", "#b28b3e"][iHash(it.brand || it.id) % 4], 0.7);
+      iBox(g, [w * 0.96, 0.004, d * 0.92], [0, h * 0.94, 0], seam, 0.001);
+      if (iHash(it.brand || it.id) % 2 === 0) iBox(g, [0.008, h * 0.88, d * 0.9], [-w * 0.47, h * 0.51, 0], stripe, 0.002);
+    }
     height = h;
   } else if (shape === "paper" || shape === "pouch" || shape === "sack") {
     const [w, h, d] = dims;
     const body = iBox(g, [w, h, d], [0, h / 2, 0], label(), Math.min(w, h, d) * 0.3);
     body.material = iProductMat(it, { key: shape, roughness: shape === "pouch" ? 0.35 : 0.85 });
-    if (shape === "paper") iBox(g, [w * 0.98, 0.03, d * 0.5], [0, h + 0.012, 0], iSolid("#d8cdb4", 0.9), 0.004);
-    if (shape === "pouch") iBox(g, [w * 1.02, 0.018, d * 0.25], [0, h + 0.004, 0], iSolid("#e8e4da", 0.3), 0.003);
+    const seal = iSolid(shape === "pouch" ? "#c6bba0" : "#d8cdb4", shape === "pouch" ? 0.36 : 0.9);
+    if (shape === "paper") {
+      iBox(g, [w * 0.96, 0.022, d * 0.52], [0, h + 0.008, 0], seal, 0.003);
+      iBox(g, [w * 0.88, 0.003, 0.003], [0, h * 0.93, d / 2 + 0.003], iSolid("#8a7558", 0.88), 0);
+    }
+    if (shape === "pouch") {
+      iBox(g, [w * 1.02, 0.014, d * 0.25], [0, h + 0.003, 0], seal, 0.003);
+      for (const side of [-1, 1]) iBox(g, [0.003, h * 0.88, d * 0.08], [side * w * 0.49, h * 0.47, 0], seal, 0.001);
+    }
     if (shape === "sack") {
       body.scale.set(1, 1, 1);
       for (const s of [-1, 1]) iBox(g, [w * 0.9, h * 0.6, 0.03], [0, h * 0.42, s * (d / 2 + 0.005)], iSolid("#d9d2bd", 0.95), 0.012);
+      iBox(g, [w * 0.9, 0.006, 0.008], [0, h * 0.94, 0], iSolid("#826e53", 0.95), 0.002);
     }
-    height = h;
+    height = h + (shape === "paper" ? 0.02 : 0.01);
+  } else if (["windowbag", "frozenbag", "twist-pack"].includes(shape)) {
+    const [w, h, d] = dims,
+      film = new THREE.MeshPhysicalMaterial({ color: shape === "frozenbag" ? "#e8e6dd" : "#d9d3bf", roughness: 0.28, transparent: true, opacity: 0.5, clearcoat: 0.8, side: THREE.DoubleSide }),
+      sticker = iProductMat(it, { key: "film-label", roughness: 0.7 });
+    const body = iBox(g, [w, h, d], [0, h / 2, 0], film, 0.012);
+    body.material = film;
+    if (shape === "frozenbag") {
+      for (let k = 0; k < 6; k++) {
+        const dumpling = add(new THREE.Mesh(new THREE.SphereGeometry(0.022, 14, 10), iSolid("#f1eee4", 0.58)));
+        dumpling.scale.set(1.05, 0.86, 1);
+        dumpling.position.set((k % 3 - 1) * 0.042, 0.035 + Math.floor(k / 3) * 0.045, (k % 2) * 0.025);
+        const sesame = add(new THREE.Mesh(new THREE.SphereGeometry(0.003, 6, 5), iSolid("#332820", 0.9)));
+        sesame.position.set(dumpling.position.x, dumpling.position.y, dumpling.position.z + 0.02);
+      }
+      iBox(g, [w * 0.84, h * 0.25, 0.004], [0, h * 0.78, d / 2 + 0.004], sticker, 0.003);
+    } else if (shape === "twist-pack") {
+      const sweet = iSolid("#a94a35", 0.55), wrapper = iSolid("#d8b66d", 0.55);
+      for (let k = 0; k < 5; k++) {
+        const x = (k - 2) * w * 0.17;
+        const piece = add(new THREE.Mesh(new THREE.SphereGeometry(0.019, 10, 8), sweet));
+        piece.scale.set(1.35, 0.85, 0.8);
+        piece.position.set(x, h * 0.46, 0);
+        for (const side of [-1, 1]) {
+          const twist = iBox(g, [0.028, 0.012, 0.024], [x + side * 0.025, h * 0.46, 0], wrapper, 0.004);
+          twist.rotation.z = side * 0.15;
+        }
+      }
+      iBox(g, [w * 0.38, h * 0.34, 0.004], [0, h * 0.82, d / 2 + 0.003], sticker, 0.003);
+    } else {
+      if (it.id === "x_smoked_squid") {
+        const strips = iSolid("#9c5436", 0.78);
+        for (let k = 0; k < 6; k++) {
+          const strip = iBox(g, [0.012, h * 0.43, 0.009], [(k - 2.5) * 0.014, h * 0.38, (k % 2) * 0.012], strips, 0.003);
+          strip.rotation.z = (k % 3 - 1) * 0.12;
+        }
+      } else if (it.id === "x_dried_shiitake") {
+        const capMat = iSolid("#765039", 0.82), stemMat = iSolid("#d3b78e", 0.9);
+        for (let k = 0; k < 5; k++) {
+          const x = (k - 2) * 0.023, z = (k % 2) * 0.018;
+          const cap = add(new THREE.Mesh(new THREE.SphereGeometry(0.022, 10, 7), capMat));
+          cap.scale.set(1.15, 0.42, 0.95);
+          cap.position.set(x, h * 0.24 + (k % 3) * 0.012, z);
+          const stem = add(new THREE.Mesh(new THREE.CylinderGeometry(0.004, 0.006, 0.018, 7), stemMat));
+          stem.position.set(x, cap.position.y - 0.008, z);
+        }
+      } else {
+        const leaf = iSolid("#263f34", 0.82);
+        for (let k = 0; k < 4; k++) {
+          const chip = iBox(g, [0.045, 0.009, 0.024], [(k - 1.5) * 0.025, h * 0.24, (k % 2) * 0.016], leaf, 0.002);
+          chip.rotation.y = k * 0.35;
+        }
+      }
+      iBox(g, [w * 0.82, h * 0.25, 0.004], [0, h * 0.78, d / 2 + 0.004], sticker, 0.003);
+    }
+    iBox(g, [w * 0.98, 0.014, d * 0.9], [0, h + 0.004, 0], iSolid("#d5cbb2", 0.5), 0.003);
+    height = h + 0.018;
   } else if (shape === "bottle") {
     const [r, h] = dims;
     const pet = new THREE.MeshPhysicalMaterial({
@@ -1667,7 +1826,9 @@ function iProduct(id, parent) {
     );
     const band = add(new THREE.Mesh(new THREE.CylinderGeometry(r * 1.01, r * 1.01, h * 0.28, 24, 1, true), label()));
     band.position.y = h * 0.36;
-    const cap = add(new THREE.Mesh(new THREE.CylinderGeometry(r * 0.36, r * 0.36, h * 0.07, 16), iSolid(id === "oil" ? "#c23a1e" : "#2f6aa6", 0.4)));
+    const caps = ["#2f6aa6", "#a64032", "#76813d", "#c19a3d"],
+      capColor = id === "oil" ? "#c23a1e" : caps[iHash(it.brand || it.id) % caps.length];
+    const cap = add(new THREE.Mesh(new THREE.CylinderGeometry(r * 0.36, r * 0.36, h * 0.07, 16), iSolid(capColor, 0.4)));
     cap.position.y = h * 0.965;
     height = h;
   } else if (shape === "hdpe") {
@@ -1682,7 +1843,8 @@ function iProduct(id, parent) {
     const band = add(new THREE.Mesh(new THREE.CylinderGeometry(r * 1.01, r * 1.01, h * 0.4, 24, 1, true), label()));
     band.scale.z = 0.7;
     band.position.y = h * 0.38;
-    const cap = add(new THREE.Mesh(new THREE.CylinderGeometry(r * 0.32, r * 0.34, h * 0.12, 14), iSolid("#efece4", 0.35)));
+    const caps = ["#efece4", "#b93e32", "#637d66", "#d3ad47"],
+      cap = add(new THREE.Mesh(new THREE.CylinderGeometry(r * 0.32, r * 0.34, h * 0.12, 14), iSolid(caps[iHash(it.brand || it.id) % caps.length], 0.35)));
     cap.position.y = h * 0.94;
     height = h;
   } else if (shape === "jar") {
@@ -1699,11 +1861,25 @@ function iProduct(id, parent) {
     lid.position.y = h * 0.93;
     height = h;
   } else if (shape === "tin" || shape === "can") {
-    const [r, h] = dims;
-    const metal = iSolid("#c5c9c6", 0.28, { metalness: 0.9 });
-    add(new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, 24), metal)).position.y = h / 2;
-    const band = add(new THREE.Mesh(new THREE.CylinderGeometry(r * 1.004, r * 1.004, h * 0.86, 24, 1, true), label()));
-    band.position.y = h / 2;
+    const [r, h] = dims,
+      metal = iSolid("#c5c9c6", 0.28, { metalness: 0.9 }),
+      rimMat = iSolid("#aeb4b1", 0.22, { metalness: 0.95 });
+    add(new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, 32), metal)).position.y = h / 2;
+    const band = add(new THREE.Mesh(new THREE.CylinderGeometry(r * 1.004, r * 1.004, h * 0.82, 32, 1, true), label()));
+    band.position.y = h * 0.49;
+    for (const y of [0.006, h - 0.006]) {
+      const seam = add(new THREE.Mesh(new THREE.TorusGeometry(r * 0.98, Math.max(0.0015, r * 0.055), 6, 28), rimMat));
+      seam.rotation.x = Math.PI / 2;
+      seam.position.y = y;
+    }
+    if (shape === "can") {
+      const tab = add(new THREE.Mesh(new THREE.TorusGeometry(r * 0.18, r * 0.055, 6, 14), rimMat));
+      tab.rotation.x = Math.PI / 2;
+      tab.position.set(0, h - 0.002, 0);
+      const score = add(new THREE.Mesh(new THREE.CircleGeometry(r * 0.34, 18), rimMat));
+      score.rotation.x = -Math.PI / 2;
+      score.position.set(-r * 0.22, h + 0.001, 0);
+    }
     height = h;
   } else if (shape === "carton") {
     const [w, h, d] = dims;
@@ -1878,11 +2054,13 @@ worldProduct = function (id, parent = null, bare = false) {
 };
 syncWorldRoom = function () {
   interiorPrevSyncWorld();
-  if (!W.props || W.store || !env?.mirror) return;
-  for (const o of W.props.children) if (!o.userData.mirrorFixed) {
-    o.scale.x *= -1;
-    o.userData.mirrorFixed = true;
+  if (W.props && !W.store && env?.mirror) {
+    for (const o of W.props.children) if (!o.userData.mirrorFixed) {
+      o.scale.x *= -1;
+      o.userData.mirrorFixed = true;
+    }
   }
+  iUpdateWasteDisplay();
 };
 roomLight = function () {
   interiorPrevLight();

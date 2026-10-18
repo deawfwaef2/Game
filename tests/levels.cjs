@@ -79,10 +79,25 @@ ok(validateSave(JSON.parse(JSON.stringify(G))),"trait exposure persists in valid
 bad=JSON.parse(JSON.stringify(G));bad.level.taste["flavor:plain-grain"]=101;ok(!validateSave(bad),"impossible palate exposure is rejected");
 const unmarked=CATALOG.find(i=>i.life<9999&&i.expiryMark==="unmarked"),blurred=CATALOG.find(i=>i.life<9999&&i.expiryMark==="blurred");
 ok(!!unmarked&&!!blurred,"catalogue contains both absent and smudged expiry labels");
-const labelBatch={age:0,location:"shelf"};ok(expiryPublicLabel(unmarked)==="包装未印日期"&&!expiryPublicLabel(unmarked).includes(String(unmarked.life)),"unmarked goods conceal exact shelf life in public labels");
-ok(expiryInventoryLabel(unmarked,labelBatch).includes("批次仍会变质"),"unknown expiry does not disable internal spoilage");
+const labelBatch={age:0,location:"shelf"}, publicExpiry=expiryPublicLabel(unmarked);
+ok(publicExpiry.includes("常规保质期")&&publicExpiry.includes(expiryRangeText(unmarked))&&publicExpiry.includes("包装未印生产日期")&&!publicExpiry.includes("标示保质期"+unmarked.life),"unmarked goods show a useful nominal range without claiming an exact batch date");
+ok(expiryPublicLabel(blurred).includes("生产日期字迹模糊")&&expiryPublicLabel(blurred).includes(expiryRangeText(blurred)),"blurred labels retain batch-date uncertainty while showing the nominal range");
+ok(expiryInventoryLabel(unmarked,labelBatch).includes("已存放约0天")&&expiryInventoryLabel(unmarked,labelBatch).includes("批次余期不明"),"inventory shows storage time without inventing a precise remaining life");
 labelBatch.age=unmarked.life;ok(isSpoiled({id:unmarked.id,age:unmarked.life})&&expiryInventoryLabel(unmarked,labelBatch).includes("已变质"),"spoilage still follows the exact internal shelf-life clock");
 ok(CG_EXTRA_PRODUCTS.length>=10&&CG_EXTRA_PRODUCTS.every(i=>DB[i.id]?.tasteTags?.length),"new foods add differentiated taste traits and descriptions");
+ok(new Set(CG_EXTRA_PRODUCTS.map(i=>i.shape?.[0]).filter(Boolean)).size>=7,"new catalogue products use distinct package and produce silhouettes");
+
+// Packaging and meal scraps accumulate separately; only chapter mode gets a full-bin tidiness effect.
+g=startChapter("bellhouse",{fish:2,water:1});clearWaste();
+const wasteFood=G.inv.find(i=>i.id==="fish");wasteFood.opened=false;
+ok(markPackageOpened(wasteFood)&&!markPackageOpened(wasteFood),"each package produces waste only on first opening");
+consumeMeal(wasteFood.uid,true,true);
+ok(G.waste.packaging===1&&G.waste.scraps===1&&G.trash===2,"opening and eating track packaging and meal scraps separately");
+G.dirt=0;addWaste("discarded","fish",10);dailyUpdate();
+ok(G.trash===12&&G.dirt>0&&G.waste.warnedFull,"chapter waste above capacity gradually affects tidiness");
+const chapterLevel=G.level;G.level=null;G.dirt=0;dailyUpdate();
+ok(G.dirt===0,"classic mode records waste without adding the chapter penalty");G.level=chapterLevel;
+doAction("trash");ok(G.trash===0&&G.waste.packaging===0&&G.waste.scraps===0&&G.waste.discarded===0,"the trash action clears categorized waste");
 
 // Each chapter has its own operational trigger, and no operation emits success/failure text.
 g=startChapter("sealed");

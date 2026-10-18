@@ -99,6 +99,7 @@ function lcSeason() {
   const last = G.life.lastSeason;
   const pick = opts.find((b) => DB[b.id].line !== last) || opts[0],
     it = DB[pick.id];
+  markPackageOpened(pick);
   pick.units--;
   G.inv = G.inv.filter((x) => x.units > 0.0001);
   G.life.lastSeason = it.line;

@@ -1099,7 +1099,7 @@ function worldUpdatePaper(force = false) {
       `储水 ${G.tank.toFixed(1)} / ${waterCapacity()} L`,
       `未拆 ${G.bags.filter((b) => !b.opened).length} 袋`,
       `现金 E$ ${G.cash.toFixed(2)}`,
-      `餐具 ${G.dishes} · 垃圾 ${G.trash}`,
+      `餐具 ${G.dishes} · 待处理废弃物 ${G.trash}`,
       `整洁 ${Math.round(100 - G.dirt)} / 100`,
       `衣物 ${Math.round(G.clothes)} / 100`,
       `头发 ${G.hair.toFixed(1)} · 指甲 ${G.nails.toFixed(1)}`,
@@ -1571,8 +1571,8 @@ function worldTargetInfo(o) {
     trash: [
       "垃圾桶",
       W.held
-        ? "R 丢弃手里的这一包  ·  E 密封并清走变质物资"
-        : "E 密封垃圾，清走变质物资",
+        ? "R 丢弃手里的物资  ·  E 清理包装、残渣与过期物资"
+        : "E 清理包装、餐厨残渣与过期物资",
     ],
     mirror: ["浴室镜子", "E 修剪指甲  ·  Shift+E 理发  ·  工具在镜子下方"],
     hands: ["盥洗位置", "E 洗手  ·  Shift+E 刷牙"],
@@ -1726,7 +1726,7 @@ function worldInteract(shift = false) {
     case "clean":
       return worldAction("clean", "扫净地板，收拾房间", 3.5);
     case "trash":
-      return worldAction("trash", "密封垃圾，清走变质物资", 2);
+      return worldAction("trash", "清理包装、餐厨残渣与过期物资", 2);
     case "mirror":
       return worldAction(
         shift ? "hair" : "nails",
@@ -1799,7 +1799,7 @@ function worldAlternate() {
     const b = G.inv.find((b) => b.uid === W.held.uid);
     if (b) {
       G.inv = G.inv.filter((x) => x !== b);
-      G.trash++;
+      addWaste("discarded", b.id);
       logEvent(`把${DB[b.id].name}丢进垃圾桶。`);
     }
     W.held = null;

@@ -5904,7 +5904,7 @@ const OFFLINE_ROOM={"models":{"drawer_cabinet":"Z2xURgIAAABY5RAAuLQEAEpTT057ImFz
     </script>
     <script>
       /* 闭门365 — original game data, fictional 1980s subsidized prices. */
-const VERSION = "0.20.0-preview";
+const VERSION = "0.21.0-preview";
 const CATEGORIES = [
   ["all", "全部物资"],
   ["staple", "主食与干粮"],
@@ -7965,18 +7965,18 @@ cgFinish();
 /* Distinct local foods with different preparation, mood, hydration and health uses.
    Appended after the generated lines so existing catalogue IDs and their seeded traits stay stable. */
 const CG_EXTRA_PRODUCTS = [
-  { id:"x_sour_plum", name:"南港老铺 · 酸梅汤粉", category:"drink", kind:"drink", look:"juice", price:1.05, weight:0.24, servings:8, life:540, water:22, brew:true, joy:3, fx:["cool"], flavor:"sour-plum", trait:"sweet", tasteTags:["sour","sweet","fruit"], desc:"酸梅与陈皮冲成一杯。热天喝，补水之外也会让人舒服些；要用热水冲泡。", note:"酸甜清爽，解暑。" },
-  { id:"x_barley_tea", name:"麦香焙茶 · 大麦茶", category:"drink", kind:"drink", look:"tea", price:0.82, weight:0.28, servings:10, life:730, water:20, brew:true, joy:1, fx:["cool"], flavor:"roasted-barley", trait:"light", tasteTags:["grain","toasted","mild"], desc:"烘焙麦粒冲泡，味道轻，不太甜。炎热时能带来一点清爽；需要热水。", note:"朴素的烘麦香。" },
-  { id:"x_ginger_tea", name:"姜枣茶砖", category:"drink", kind:"drink", look:"herbal", price:1.25, weight:0.3, servings:8, life:540, water:18, brew:true, joy:1, warmth:2, health:0.4, fx:["warm","cureCold"], flavor:"ginger-date", trait:"warm", tasteTags:["spicy","sweet","herbal"], desc:"姜片和红枣压成茶砖。冷天喝更舒服；有感冒时也能帮助恢复。需要热水冲泡。", note:"姜香浓，枣甜收尾。" },
-  { id:"x_fresh_soymilk", name:"清晨现磨 · 鲜豆浆", category:"fresh", kind:"drink", look:"milk", price:0.72, weight:1, servings:4, life:3, water:18, joy:1, health:0.6, fx:["pure"], flavor:"fresh-soy", trait:"light", tasteTags:["soy","fresh","mild"], desc:"当天现磨，蛋白质和水分都不错，但没有防腐处理，必须优先喝完。", note:"淡淡豆香，不能久放。" },
-  { id:"x_tangyuan", name:"手包芝麻汤圆", category:"fresh", kind:"food", look:"bread", price:1.18, weight:0.7, servings:6, kcal:255, life:45, cook:true, joy:3, warmth:1, fx:["festive","warm"], flavor:"sesame-glutinous", trait:"sweet", tasteTags:["sweet","glutinous","nutty"], desc:"糯米皮裹芝麻馅，煮熟后是一顿暖甜的安慰。耗水、需要热源，晚饭时更像过节。", note:"黑芝麻馅，煮熟后趁热吃。" },
-  { id:"x_smoked_squid", name:"海港风干鱿鱼丝", category:"canned", kind:"food", look:"fish", price:1.6, weight:0.18, servings:6, kcal:145, life:420, protein:true, joy:1, thirst:2, fx:["full"], flavor:"smoked-squid", trait:"smoky", tasteTags:["sea","smoky","chewy","salty"], desc:"耐放、高蛋白的咸鲜零嘴；嚼起来费劲，吃多了会口渴。免煮。", note:"海风吹干，带一点烟熏味。" },
-  { id:"x_dried_shiitake", name:"山地晒干香菇", category:"staple", kind:"food", look:"mushroom", price:1.35, weight:0.2, servings:6, kcal:95, life:900, cook:true, vegetable:true, health:0.8, fx:["focus"], flavor:"dried-shiitake", trait:"umami", tasteTags:["umami","earthy","woodsy"], desc:"干香菇需要煮开才好入口。耐放，补一点健康；煮饭时也能让清淡的主食有鲜味。", note:"山坡背阴处慢慢晒干，香味很深。" },
-  { id:"x_tofu_skin", name:"油豆皮 · 薄片装", category:"staple", kind:"food", look:"cheese", price:1.05, weight:0.32, servings:7, kcal:225, life:300, cook:true, protein:true, health:0.5, energy:2, fx:["strength"], flavor:"soy-sheet", trait:"bean", tasteTags:["soy","savory","chewy"], desc:"豆香浓、蛋白质较多，煮软后能让一碗主食更顶饱。需要热源和水。", note:"豆浆上层凝结的薄皮，晒干保存。" },
-  { id:"x_seaweed_crisp", name:"盐烤海苔脆片", category:"staple", kind:"food", look:"crackers", price:0.88, weight:0.12, servings:8, kcal:72, life:420, vegetable:true, health:0.5, thirst:1, fx:["pure"], flavor:"toasted-seaweed", trait:"crunchy", tasteTags:["sea","crunchy","salty"], desc:"轻便免煮，补一点蔬菜类营养；咸口吃多了会增加口渴。", note:"薄脆海苔，带着一点炭火香。" },
-  { id:"x_ginger_candy", name:"老姜糖 · 玻璃纸包", category:"staple", kind:"food", look:"chocolate", price:0.68, weight:0.18, servings:10, kcal:78, life:365, joy:1.5, energy:2, warmth:1, fx:["warm","sugar"], flavor:"ginger-candy", trait:"sweet", tasteTags:["sweet","spicy","ginger"], desc:"甜味能短暂提神，冷天含一颗也暖和些。热量不高，不能代替正餐。", note:"甜里带辣，含一会儿才化。" },
-  { id:"x_fermented_tofu", name:"玫瑰红腐乳", category:"staple", kind:"seasoning", look:"jam", price:0.62, weight:0.32, servings:12, life:540, season:1.6, thirst:1, fx:["comfort"], flavor:"rose-ferment", trait:"fermented", tasteTags:["fermented","salty","umami"], desc:"发酵豆腐乳，煮主食时会和其他调味料轮换使用，明显提味；咸口会增加一点口渴。", note:"一小块就能把白粥变成一顿饭。" },
-  { id:"x_pickled_radish", name:"脆口酸萝卜", category:"canned", kind:"seasoning", look:"jam", price:0.55, weight:0.38, servings:10, life:360, season:1.2, thirst:0.5, fx:["comfort"], flavor:"sour-radish", trait:"sour", tasteTags:["sour","crunchy","salty"], desc:"酸脆下饭，煮主食时会和其他调味料轮换使用。盐分不低，别只靠它当菜。", note:"酸味清楚，咬起来脆。" },
+  { id:"x_sour_plum", name:"南港老铺 · 酸梅汤粉", category:"drink", kind:"drink", look:"juice", shape:["pouch",[0.12,0.16,0.045]], price:1.05, weight:0.24, servings:8, life:540, water:22, brew:true, joy:3, fx:["cool"], flavor:"sour-plum", trait:"sweet", tasteTags:["sour","sweet","fruit"], desc:"酸梅与陈皮冲成一杯。热天喝，补水之外也会让人舒服些；要用热水冲泡。", note:"酸甜清爽，解暑。" },
+  { id:"x_barley_tea", name:"麦香焙茶 · 大麦茶", category:"drink", kind:"drink", look:"tea", shape:["box",[0.13,0.09,0.07]], price:0.82, weight:0.28, servings:10, life:730, water:20, brew:true, joy:1, fx:["cool"], flavor:"roasted-barley", trait:"light", tasteTags:["grain","toasted","mild"], desc:"烘焙麦粒冲泡，味道轻，不太甜。炎热时能带来一点清爽；需要热水。", note:"朴素的烘麦香。" },
+  { id:"x_ginger_tea", name:"姜枣茶砖", category:"drink", kind:"drink", look:"herbal", shape:["paper",[0.12,0.05,0.09]], price:1.25, weight:0.3, servings:8, life:540, water:18, brew:true, joy:1, warmth:2, health:0.4, fx:["warm","cureCold"], flavor:"ginger-date", trait:"warm", tasteTags:["spicy","sweet","herbal"], desc:"姜片和红枣压成茶砖。冷天喝更舒服；有感冒时也能帮助恢复。需要热水冲泡。", note:"姜香浓，枣甜收尾。" },
+  { id:"x_fresh_soymilk", name:"清晨现磨 · 鲜豆浆", category:"fresh", kind:"drink", look:"milk", shape:["bottle",[0.052,0.2],"#eee5cf"], price:0.72, weight:1, servings:4, life:3, water:18, joy:1, health:0.6, fx:["pure"], flavor:"fresh-soy", trait:"light", tasteTags:["soy","fresh","mild"], desc:"当天现磨，蛋白质和水分都不错，但没有防腐处理，必须优先喝完。", note:"淡淡豆香，不能久放。" },
+  { id:"x_tangyuan", name:"手包芝麻汤圆", category:"fresh", kind:"food", look:"bread", shape:["frozenbag",[0.16,0.14,0.08]], price:1.18, weight:0.7, servings:6, kcal:255, life:45, cook:true, joy:3, warmth:1, fx:["festive","warm"], flavor:"sesame-glutinous", trait:"sweet", tasteTags:["sweet","glutinous","nutty"], desc:"糯米皮裹芝麻馅，煮熟后是一顿暖甜的安慰。耗水、需要热源，晚饭时更像过节。", note:"黑芝麻馅，煮熟后趁热吃。" },
+  { id:"x_smoked_squid", name:"海港风干鱿鱼丝", category:"canned", kind:"food", look:"fish", shape:["windowbag",[0.12,0.16,0.045]], price:1.6, weight:0.18, servings:6, kcal:145, life:420, protein:true, joy:1, thirst:2, fx:["full"], flavor:"smoked-squid", trait:"smoky", tasteTags:["sea","smoky","chewy","salty"], desc:"耐放、高蛋白的咸鲜零嘴；嚼起来费劲，吃多了会口渴。免煮。", note:"海风吹干，带一点烟熏味。" },
+  { id:"x_dried_shiitake", name:"山地晒干香菇", category:"staple", kind:"food", look:"mushroom", shape:["windowbag",[0.13,0.17,0.05]], price:1.35, weight:0.2, servings:6, kcal:95, life:900, cook:true, vegetable:true, health:0.8, fx:["focus"], flavor:"dried-shiitake", trait:"umami", tasteTags:["umami","earthy","woodsy"], desc:"干香菇需要煮开才好入口。耐放，补一点健康；煮饭时也能让清淡的主食有鲜味。", note:"山坡背阴处慢慢晒干，香味很深。" },
+  { id:"x_tofu_skin", name:"油豆皮 · 薄片装", category:"staple", kind:"food", look:"cheese", shape:["paper",[0.12,0.18,0.035]], price:1.05, weight:0.32, servings:7, kcal:225, life:300, cook:true, protein:true, health:0.5, energy:2, fx:["strength"], flavor:"soy-sheet", trait:"bean", tasteTags:["soy","savory","chewy"], desc:"豆香浓、蛋白质较多，煮软后能让一碗主食更顶饱。需要热源和水。", note:"豆浆上层凝结的薄皮，晒干保存。" },
+  { id:"x_seaweed_crisp", name:"盐烤海苔脆片", category:"staple", kind:"food", look:"crackers", shape:["windowbag",[0.12,0.16,0.035]], price:0.88, weight:0.12, servings:8, kcal:72, life:420, vegetable:true, health:0.5, thirst:1, fx:["pure"], flavor:"toasted-seaweed", trait:"crunchy", tasteTags:["sea","crunchy","salty"], desc:"轻便免煮，补一点蔬菜类营养；咸口吃多了会增加口渴。", note:"薄脆海苔，带着一点炭火香。" },
+  { id:"x_ginger_candy", name:"老姜糖 · 玻璃纸包", category:"staple", kind:"food", look:"chocolate", shape:["twist-pack",[0.14,0.05,0.04]], price:0.68, weight:0.18, servings:10, kcal:78, life:365, joy:1.5, energy:2, warmth:1, fx:["warm","sugar"], flavor:"ginger-candy", trait:"sweet", tasteTags:["sweet","spicy","ginger"], desc:"甜味能短暂提神，冷天含一颗也暖和些。热量不高，不能代替正餐。", note:"甜里带辣，含一会儿才化。" },
+  { id:"x_fermented_tofu", name:"玫瑰红腐乳", category:"staple", kind:"seasoning", look:"jam", shape:["jar",[0.05,0.12],"#a84d3f"], price:0.62, weight:0.32, servings:12, life:540, season:1.6, thirst:1, fx:["comfort"], flavor:"rose-ferment", trait:"fermented", tasteTags:["fermented","salty","umami"], desc:"发酵豆腐乳，煮主食时会和其他调味料轮换使用，明显提味；咸口会增加一点口渴。", note:"一小块就能把白粥变成一顿饭。" },
+  { id:"x_pickled_radish", name:"脆口酸萝卜", category:"canned", kind:"seasoning", look:"jam", shape:["jar",[0.052,0.13],"#c6a45f"], price:0.55, weight:0.38, servings:10, life:360, season:1.2, thirst:0.5, fx:["comfort"], flavor:"sour-radish", trait:"sour", tasteTags:["sour","crunchy","salty"], desc:"酸脆下饭，煮主食时会和其他调味料轮换使用。盐分不低，别只靠它当菜。", note:"酸味清楚，咬起来脆。" }
 ];
 for (const p of CG_EXTRA_PRODUCTS) {
   const it = { ...p, gen:true, line:p.id, brand:"地方小厂", maker:"供销社副食品组" };
@@ -7994,19 +7994,32 @@ function cgExpiryMark(it) {
   return "printed";
 }
 for (const it of CATALOG) it.expiryMark = cgExpiryMark(it);
+function expiryRangeText(it) {
+  const life = Math.max(1, Math.round(it?.life || 1));
+  if (it?.expiryMark === "printed") return `${life}天`;
+  const low = Math.max(1, Math.floor(life * 0.85));
+  const high = Math.max(low + 1, Math.ceil(life * 1.15));
+  return `约${low}–${high}天`;
+}
 function expiryPublicLabel(it) {
   if (!it || it.life >= 9999) return "可长期保存";
-  if (it.expiryMark === "unmarked") return "包装未印日期";
-  if (it.expiryMark === "blurred") return "标签字迹模糊";
+  if (it.expiryMark === "unmarked")
+    return `常规保质期${expiryRangeText(it)} · 包装未印生产日期`;
+  if (it.expiryMark === "blurred")
+    return `常规保质期${expiryRangeText(it)} · 生产日期字迹模糊`;
   return `标示保质期${it.life}天`;
 }
 function expiryInventoryLabel(it, batch) {
   if (!it || it.life >= 9999) return "耐用 / 可长期存放";
-  if ((batch?.age || 0) >= it.life) return "已变质，不能食用";
-  if (it.expiryMark === "unmarked") return "包装未印日期 · 批次仍会变质";
-  if (it.expiryMark === "blurred") return "标期字迹模糊 · 余期不明";
+  const age = Math.max(0, Number(batch?.age) || 0);
+  if (age >= it.life) return `已变质，不能食用 · 入手后约${Math.floor(age)}天`;
   const chilled = batch?.location === "fridge" && env.fridge && G?.power;
-  return `剩余约${Math.max(0, Math.floor((it.life - (batch?.age || 0)) / (chilled ? 0.22 : 1)))}天`;
+  if (it.expiryMark === "unmarked")
+    return `常规保质期${expiryRangeText(it)} · 已存放约${Math.floor(age)}天 · 无生产日期，批次余期不明`;
+  if (it.expiryMark === "blurred")
+    return `常规保质期${expiryRangeText(it)} · 已存放约${Math.floor(age)}天 · 字迹模糊，批次余期不精确`;
+  const remaining = Math.max(0, Math.floor((it.life - age) / (chilled ? 0.22 : 1)));
+  return `保质期${it.life}天 · 剩余约${remaining}天 · ${chilled ? "通电冷藏" : "常温存放"}`;
 }
 const CATALOG_CORE = new Set([...Object.keys(STARTER), ...Object.keys(YEAR_KIT)]);
 
@@ -8204,6 +8217,48 @@ function day() {
 function hour() {
   return G ? (G.minute % 1440) / 60 : 8;
 }
+function freshWaste() {
+  return { packaging: 0, scraps: 0, discarded: 0, items: [], warnedFull: false };
+}
+function ensureWaste() {
+  if (!G) return null;
+  if (!G.waste || typeof G.waste !== "object" || Array.isArray(G.waste)) {
+    G.waste = freshWaste();
+    G.waste.packaging = Math.max(0, Math.floor(Number(G.trash) || 0));
+  }
+  G.waste.packaging ??= 0;
+  G.waste.scraps ??= 0;
+  G.waste.discarded ??= 0;
+  G.waste.items ??= [];
+  G.waste.warnedFull ??= false;
+  return G.waste;
+}
+function addWaste(kind, id = null, count = 1) {
+  if (!G) return 0;
+  const waste = ensureWaste(),
+    amount = Math.max(0, Math.floor(Number(count) || 0));
+  if (!["packaging", "scraps", "discarded"].includes(kind)) kind = "discarded";
+  const total = waste.packaging + waste.scraps + waste.discarded,
+    added = Math.min(amount, Math.max(0, 2e7 - total));
+  waste[kind] += added;
+  for (let i = 0; i < Math.min(added, 48); i++) {
+    waste.items.push({ kind, id: typeof id === "string" && Object.hasOwn(DB, id) ? id : null });
+    if (waste.items.length > 48) waste.items.shift();
+  }
+  G.trash = total + added;
+  return G.trash;
+}
+function markPackageOpened(batch) {
+  if (!G || !batch || batch.opened) return false;
+  batch.opened = true;
+  addWaste("packaging", batch.id);
+  return true;
+}
+function clearWaste() {
+  if (!G) return;
+  G.waste = freshWaste();
+  G.trash = 0;
+}
 // v0.17: a catalogue variant (e.g. a sulphur soap) counts as its functional original ("soap").
 const USED_LOG = [];
 function isItem(b, id) {
@@ -8226,6 +8281,7 @@ function use(id, n = 1) {
   let remaining = n;
   for (const b of batches) {
     const take = Math.min(b.units, remaining);
+    if (take > 0) markPackageOpened(b);
     b.units -= take;
     remaining -= take;
     if (take > 0) USED_LOG.push(b.id);
@@ -8317,6 +8373,7 @@ function freshState(seed) {
     dirt: 12 + e.wear * 5,
     dishes: 0,
     trash: 0,
+    waste: freshWaste(),
     hair: 8,
     nails: 1,
     clothes: 90,
@@ -8664,6 +8721,14 @@ function dailyUpdate() {
       "warn",
     );
   }
+  const waste = ensureWaste();
+  if (G.level && G.trash >= 12) {
+    G.dirt = clamp(G.dirt + Math.min(0.8, 0.25 + (G.trash - 12) * 0.025));
+    if (!waste.warnedFull) {
+      logEvent("垃圾桶已经满了。包装和残渣堆在旁边，房间整洁会慢慢下降。", "warn");
+      waste.warnedFull = true;
+    }
+  } else if (G.trash < 6) waste.warnedFull = false;
   if (!G.level && day() % 7 === 0)
     logEvent(
       `第${day()}天。你把新的刻痕留在日历上。还有${365 - day()}天。`,
@@ -8732,6 +8797,7 @@ function actDrink(uidValue) {
     if (it.brew && !G.power && !has("stove"))
       return notify("冲泡需要电力，或便携炉。", "warn");
     if (isSpoiled(b)) return notify("饮品已过期。请丢弃。", "warn");
+    markPackageOpened(b);
     b.units--;
     G.inv = G.inv.filter((x) => x.units > 0);
     G.stats.water = clamp(G.stats.water + it.water);
@@ -8769,6 +8835,7 @@ function consumeMeal(uidValue, success = true, slow = false) {
   const flavor = it.flavor || it.id;
   const repeats = G.foodHistory.slice(-5).filter((f) => f === flavor).length;
   const wasContaminated = b.contaminated;
+  markPackageOpened(b);
   b.units--;
   b.opened = true;
   G.foodHistory.push(flavor);
@@ -8794,7 +8861,7 @@ function consumeMeal(uidValue, success = true, slow = false) {
   G.bowel = clamp(G.bowel + 8 + kcal / 160);
   G.dishes += 1;
   G.dirt += success ? 1 : 4;
-  G.trash += b.units <= 0 ? 1 : 0;
+  addWaste("scraps", it.id);
   if (wasContaminated) addDisease("stomach");
   if (!success)
     logEvent("没能稳稳吃完，桌上多了一点残渣。没有令人不适的画面。", "warn");
@@ -8930,14 +8997,18 @@ function doAction(action, value) {
       if (!G.trash && !G.inv.some((b) => isSpoiled(b)))
         return notify("现在没有需要处理的垃圾。");
       {
-        const spoiled = G.inv.filter((b) => isSpoiled(b));
+        const waste = ensureWaste(),
+          packaging = waste.packaging,
+          scraps = waste.scraps,
+          discarded = waste.discarded,
+          spoiled = G.inv.filter((b) => isSpoiled(b));
         G.inv = G.inv.filter((b) => !isSpoiled(b));
-        G.trash = 0;
         if (has("trashbag")) use("trashbag");
+        clearWaste();
         G.dirt = Math.max(0, G.dirt - 8);
         advanceTime(10, "clean");
         logEvent(
-          `垃圾已密封。处理掉${spoiled.length}批变质物资，没有恶心画面。`,
+          `密封带走包装${packaging}份、餐厨残渣${scraps}份、其他废弃物${discarded}份和变质物资${spoiled.length}批。没有恶心画面。`,
           "good",
         );
         break;
@@ -9188,6 +9259,12 @@ function validateSave(s) {
       "candleUntil",
     ])
       if (!num(s[k], 0, 2e7)) return false;
+    if (s.waste !== undefined) {
+      const w = s.waste,
+        validItem = (x) => obj(x) && ["packaging", "scraps", "discarded"].includes(x.kind) && (x.id === null || Object.hasOwn(DB, x.id));
+      if (!obj(w) || !num(w.packaging, 0, 2e7) || !num(w.scraps, 0, 2e7) || !num(w.discarded, 0, 2e7) || typeof w.warnedFull !== "boolean" || !Array.isArray(w.items) || w.items.length > 48 || !w.items.every(validItem)) return false;
+      if (Math.abs(s.trash - w.packaging - w.scraps - w.discarded) > 0.001) return false;
+    }
     if (!num(s.rng, 0, 4294967295) || !obj(s.env)) return false;
     const expected = environment(s.seed);
     for (const k of [
@@ -9337,6 +9414,7 @@ function loadState(s) {
   if (!validateSave(s)) return notify("存档格式不兼容或已损坏。", "warn");
   closePreparation();
   G = s;
+  ensureWaste();
   G.tradeLocked = true;
   paused = false;
   G.cooldowns ??= {};
@@ -10369,7 +10447,7 @@ function updateTarget() {
     mirror: ["浴室镜子", "剪发 · 剪指甲"],
     toilet: ["卫生间", "小便 · 大便"],
     shower: ["淋浴区", "洗澡 · 洗衣"],
-    trash: ["垃圾桶", "打扫 · 密封垃圾"],
+    trash: ["垃圾桶", "包装 · 餐厨残渣 · 清理"],
     bags: ["采购物资", "拆袋 · 整理"],
     inspect: ["床头柜", "家里的信"],
     journal: ["旧日历", "查看生存手记"],
@@ -10577,51 +10655,100 @@ function showToast(text, type = "info") {
 }
 function productArt(it) {
   const palette = {
-    staple: ["#bbad79", "#6a6947"],
-    canned: ["#a8ad89", "#788163"],
-    fresh: ["#8f9b6a", "#5b7552"],
-    drink: ["#a8b3a0", "#617b68"],
-    hygiene: ["#c2c5a1", "#7b8e6a"],
-    clean: ["#a8bd9e", "#607953"],
-    medical: ["#c8bea1", "#9a8163"],
-    tool: ["#b1b5a1", "#6f7d69"],
-    leisure: ["#a4ad87", "#5d7053"],
-    furniture: ["#bdac86", "#7e7056"],
-  };
-  const [a, b] = palette[it.category] || palette.tool;
-  let shape = "";
+      staple: ["#c8ad74", "#aa6b45", "#ded0ab", "#5e7457"],
+      canned: ["#bd6a4c", "#3c6d79", "#bca051", "#8d3d36"],
+      fresh: ["#7e9b60", "#c05a3d", "#d9c384", "#467a55"],
+      drink: ["#5290a0", "#668451", "#b65341", "#d0aa4c"],
+      hygiene: ["#6d9b9a", "#d4cbb0", "#9a668a", "#53896b"],
+      clean: ["#d7462e", "#2f6ca6", "#e2bd2f", "#3d8a6d"],
+      medical: ["#f1efe8", "#e0d8c4"],
+      tool: ["#737c6d", "#b04a2e", "#4c6b7e"],
+      leisure: ["#3f5d55", "#8a3f33", "#b79b59"],
+      furniture: ["#8a7a5c", "#a88d68"],
+    },
+    colors = palette[it.category] || palette.tool;
+  let h = 2166136261;
+  for (const c of String(it.id || "")) h = Math.imul(h ^ c.charCodeAt(0), 16777619);
+  h >>>= 0;
+  const a = colors[h % colors.length],
+    b = colors[(h >>> 4) % colors.length],
+    look = it.look || it.base || it.id;
+  let form = "";
+  try {
+    form = it.shape?.[0] || (I_SPEC[it.id] || (it.look && I_SPEC[it.look]))?.[0] || "";
+  } catch {}
   if (it.levelClock) {
     if (it.levelClock === "hourglass")
-      shape = `<path d="M27 10h26v7L44 34l12 24v12H24V58l12-24L24 17v-7Z" fill="${a}" stroke="${b}" stroke-width="3"/><path d="M29 14h22M28 63h24M32 18l8 12 8-12m-16 39 8-12 8 12" fill="none" stroke="${b}" stroke-width="3"/><path d="M36 52h8l-4 5Z" fill="#c4a96e"/>`;
-    else if (it.levelClock === "digital" || it.levelClock === "mains")
-      shape = `<rect x="13" y="22" width="54" height="40" rx="5" fill="${b}"/><rect x="19" y="28" width="42" height="19" rx="2" fill="#29332e"/><path d="M26 33h8v9h-8zm15 0h8v9h-8z" fill="${a}"/><path d="M54 33v9" stroke="${a}" stroke-width="3"/><path d="M33 54h14" stroke="${a}" stroke-width="3"/>`;
-    else if (it.levelClock === "calendar")
-      shape = `<path d="M20 14h40v56H20z" fill="#ded4bb" stroke="${b}" stroke-width="3"/><path d="M20 14h40v14H20z" fill="${b}"/><path d="M29 10v10m22-10v10" stroke="${a}" stroke-width="4"/><path d="M27 37h6m6 0h6m6 0h6M27 47h6m6 0h6m6 0h6M27 57h6m6 0h6m6 0h6" stroke="${b}" stroke-width="3"/>`;
-    else {
-      const wrist=/腕表/.test(it.name), r=wrist?15:21;
-      shape = wrist
-        ? `<path d="M33 8h14l4 16v16l-4 22H33l-4-22V24z" fill="${b}"/><circle cx="40" cy="34" r="${r}" fill="${a}" stroke="${b}" stroke-width="4"/><path d="M40 22v12l8 5M40 14v4m0 32v4m-18-20h4m28 0h4" fill="none" stroke="${b}" stroke-width="3" stroke-linecap="round"/>`
-        : `<rect x="22" y="12" width="36" height="56" rx="10" fill="${b}"/><circle cx="40" cy="32" r="${r}" fill="${a}" stroke="#dbcfb2" stroke-width="3"/><path d="M40 18v4m0 20v4m-14-14h4m20 0h4M40 32V22m0 10 9 5" fill="none" stroke="${b}" stroke-width="3" stroke-linecap="round"/>`;
-    }
+      form = "hourglass";
+    else if (it.levelClock === "calendar") form = "calendar";
+    else if (it.levelClock === "digital" || it.levelClock === "mains") form = "digital";
+    else form = /腕表/.test(it.name) ? "wristwatch" : "clock";
+  }
+  let shape = "";
+  if (form === "hourglass")
+    shape = `<path d="M25 8h30v8L44 34l12 28v10H24V62l12-28L25 16Z" fill="${a}" stroke="${b}" stroke-width="3"/><path d="M29 13h22M29 67h22m-18-49 7 13 7-13m-14 40 7-13 7 13" fill="none" stroke="${b}" stroke-width="3"/><path d="M36 53h8l-4 6Z" fill="#c4a96e"/>`;
+  else if (form === "digital")
+    shape = `<rect x="12" y="22" width="56" height="42" rx="7" fill="${b}"/><rect x="18" y="28" width="44" height="20" rx="2" fill="#29332e"/><path d="M25 33h9v10h-9zm16 0h9v10h-9zm16 0v10" fill="${a}"/><path d="M31 55h18" stroke="${a}" stroke-width="3"/>`;
+  else if (form === "calendar")
+    shape = `<path d="M18 14h44v56H18z" fill="#ded4bb" stroke="${b}" stroke-width="3"/><path d="M18 14h44v14H18z" fill="${b}"/><path d="M29 10v10m22-10v10" stroke="${a}" stroke-width="4"/><path d="M25 38h7m7 0h7m7 0h7M25 49h7m7 0h7m7 0h7M25 60h7m7 0h7m7 0h7" stroke="${b}" stroke-width="3"/>`;
+  else if (form === "wristwatch" || form === "clock") {
+    const wrist = form === "wristwatch",
+      r = wrist ? 16 : 22;
+    shape = wrist
+      ? `<path d="M32 6h16l4 17v20l-4 22H32l-4-22V23z" fill="${b}"/><circle cx="40" cy="33" r="${r}" fill="${a}" stroke="#dbcfb2" stroke-width="3"/><path d="M40 21v12l8 5M40 14v4m0 32v4m-18-21h4m28 0h4" fill="none" stroke="${b}" stroke-width="3" stroke-linecap="round"/>`
+      : `<rect x="22" y="10" width="36" height="60" rx="10" fill="${b}"/><circle cx="40" cy="33" r="${r}" fill="${a}" stroke="#dbcfb2" stroke-width="3"/><path d="M40 19v4m0 20v4m-14-14h4m20 0h4M40 33V23m0 10 9 5" fill="none" stroke="${b}" stroke-width="3" stroke-linecap="round"/>`;
   } else if (it.kind === "book")
-    shape = `<path d="M19 9h40v61H19z" fill="${b}"/><path d="M23 9h3v61h-3z" fill="${a}"/><path d="M29 15h25v48H29z" fill="${a}" opacity=".35"/><path d="M32 28h19m-19 5h16m-16 5h17" stroke="${a}" stroke-width="1"/><path d="M20 65h38v4H20z" fill="#d0c8a6"/>`;
-  else if (it.category === "canned")
-    shape = `<ellipse cx="40" cy="19" rx="21" ry="7" fill="${a}"/><path d="M19 19v43c0 9 42 9 42 0V19" fill="${b}"/><path d="M20 31h40v23H20z" fill="${a}"/><ellipse cx="40" cy="19" rx="21" ry="7" fill="${a}" stroke="${b}"/><path d="M36 16h9v4h-9z" fill="${b}"/><path d="M28 41h24m-20 5h15" stroke="${b}" stroke-width="1.5"/>`;
-  else if (
-    it.category === "drink" ||
-    ["soap", "shampoo", "dishsoap", "disinfect"].includes(it.id)
-  )
-    shape = `<path d="M32 10h16v10l9 12v31q0 7-8 7H31q-8 0-8-7V32l9-12Z" fill="${a}"/><rect x="30" y="8" width="20" height="7" rx="2" fill="${b}"/><path d="M24 38h32v19H24z" fill="${b}"/><path d="M32 44h16m-16 5h11" stroke="${a}" stroke-width="1.4"/><path d="M27 30v30" stroke="#eceacb" stroke-width="2" opacity=".18"/>`;
-  else if (it.category === "fresh")
-    shape = `<ellipse cx="40" cy="46" rx="23" ry="22" fill="${b}"/><ellipse cx="31" cy="41" rx="13" ry="18" fill="${a}"/><path d="M40 25V13m0 5c13-12 19-7 14 1-5 4-11 0-14-1" fill="${a}" stroke="${b}" stroke-width="2"/>`;
-  else if (it.category === "medical")
-    shape = `<rect x="19" y="15" width="42" height="53" rx="3" fill="${a}"/><path d="M19 23h42" stroke="${b}"/><path d="M35 34h10v8h8v10h-8v8H35v-8h-8V42h8z" fill="${b}"/>`;
+    shape = `<path d="M16 9h48v62H16z" fill="${b}"/><path d="M21 9h4v62h-4z" fill="${a}"/><path d="M30 17h27v45H30z" fill="${a}" opacity=".34"/><path d="M34 30h20m-20 6h17m-17 6h18" stroke="${b}" stroke-width="1.5"/><path d="M17 65h46v4H17z" fill="#d0c8a6"/>`;
+  else if (form === "jar" || look === "jam" || look === "yogurt")
+    shape = `<path d="M25 20h30l4 8v34q0 7-8 7H29q-8 0-8-7V28z" fill="#d9d2b5" fill-opacity=".7" stroke="${b}" stroke-width="3"/><path d="M23 29h34v25H23z" fill="${a}"/><path d="M24 15h32v8H24z" fill="${b}"/><path d="M29 18h22m-16 21h12m-12 5h9" stroke="#eee5cc" stroke-width="2"/>`;
+  else if (form === "tin" || form === "can" || it.category === "canned")
+    shape = `<ellipse cx="40" cy="19" rx="21" ry="7" fill="#d1d4ca"/><path d="M19 19v43c0 9 42 9 42 0V19" fill="${b}"/><path d="M20 31h40v23H20z" fill="${a}"/><ellipse cx="40" cy="19" rx="21" ry="7" fill="#c8c9bd" stroke="${b}"/><path d="M34 16h12v4H34z" fill="${b}"/><path d="M28 41h24m-20 5h15" stroke="#f0e6cb" stroke-width="1.5"/>${form === "can" ? `<ellipse cx="40" cy="19" rx="5" ry="2" fill="none" stroke="${b}" stroke-width="2"/>` : ""}`;
+  else if (["bottle", "hdpe", "jug"].includes(form) || it.category === "drink" || ["soap", "shampoo", "dishsoap", "disinfect"].includes(it.id))
+    shape = form === "jug"
+      ? `<path d="M21 22h35v42H21z" rx="5" fill="#dce9df" stroke="${b}" stroke-width="3"/><path d="M49 26h12v21H49" fill="none" stroke="${b}" stroke-width="5"/><path d="M24 40h29v17H24z" fill="${a}"/><path d="M31 45h16m-16 5h11" stroke="#f4ead2" stroke-width="2"/><rect x="34" y="14" width="12" height="8" fill="${b}"/>`
+      : `<path d="M33 9h14v11l9 10v34q0 7-8 7H31q-8 0-8-7V30l10-10Z" fill="#dce9df" fill-opacity=".75" stroke="${b}" stroke-width="2.5"/><rect x="31" y="7" width="18" height="7" rx="2" fill="${b}"/><path d="M24 37h32v19H24z" fill="${a}"/><path d="M31 43h18m-18 5h13" stroke="#f1ead8" stroke-width="1.7"/>`;
+  else if (["carton", "box"].includes(form) && it.kind !== "book")
+    shape = form === "carton"
+      ? `<path d="M23 26h34v42H23z" fill="${a}" stroke="${b}" stroke-width="2"/><path d="m23 26 17-13 17 13M23 26l9 8h16l9-8" fill="${b}"/><path d="M37 12h7v6h-7z" fill="#e9e3d4"/><path d="M29 43h22v12H29z" fill="${b}"/><path d="M33 47h14m-14 4h10" stroke="${a}" stroke-width="1.5"/>`
+      : `<path d="M18 19h44v49H18z" fill="${a}" stroke="${b}" stroke-width="2"/><path d="M18 19l22-9 22 9v7H18z" fill="${b}"/><path d="M23 36h34v19H23z" fill="${b}"/><path d="M29 42h22m-22 6h16" stroke="${a}" stroke-width="1.5"/>`;
+  else if (["paper", "pouch", "sack", "windowbag", "frozenbag"].includes(form)) {
+    const bagPath = form === "sack"
+      ? "M24 14l8-5h16l8 5-3 12 6 34q0 8-9 8H30q-9 0-9-8l6-34z"
+      : form === "frozenbag" || form === "windowbag"
+        ? "M22 13h36v53H22z"
+        : form === "pouch"
+          ? "M25 10h30l4 9-3 9 5 34H19l5-34-3-9z"
+          : "M24 14h32v52H24z";
+    shape = `<path d="${bagPath}" fill="${a}" stroke="${b}" stroke-width="2.5"/><path d="M24 16h32v8H24z" fill="${b}"/><path d="M27 34h26v20H27z" fill="${b}"/><path d="M31 39h18m-18 5h14m-14 5h16" stroke="${a}" stroke-width="1.5"/>${form === "frozenbag" ? `<circle cx="31" cy="57" r="4" fill="#eee9dc"/><circle cx="40" cy="59" r="4" fill="#eee9dc"/><circle cx="49" cy="57" r="4" fill="#eee9dc"/>` : ""}${form === "windowbag" ? `<path d="M29 56h22" stroke="#e7e1d0" stroke-width="2"/>` : ""}`;
+  } else if (form === "pile" || form === "cabbage" || form === "banana" || it.category === "fresh") {
+    if (form === "banana" || look === "banana")
+      shape = `<path d="M17 49q6-31 23-35 14-2 22 10-7 20-18 27-15 11-27-2Z" fill="#dfc445" stroke="${b}" stroke-width="3"/><path d="M25 46q15 3 30-18" fill="none" stroke="#f3dfa0" stroke-width="3"/><path d="M38 14l3-6" stroke="${b}" stroke-width="4"/>`;
+    else if (form === "cabbage" || /cabbage|lettuce|vegetable/.test(look))
+      shape = `<circle cx="40" cy="43" r="27" fill="#72925a"/><path d="M20 39q17-18 39-1M22 52q18-15 36-3M40 17v49M28 22q22 20 24 40" fill="none" stroke="#c6d29b" stroke-width="3"/><path d="M39 19q9-13 18-8-5 11-17 13" fill="${a}"/>`;
+    else if (/egg/.test(look))
+      shape = `<path d="M15 44q25-12 50 0v20H15z" fill="#918b7c"/><path d="M19 43q4-18 9-14 4-3 7 14m1 0q3-21 9-18 5-1 8 18m0 0q4-17 9-14 5 0 6 14" fill="#ece3cf" stroke="${b}" stroke-width="2"/><path d="M19 54h42" stroke="#b7ad98" stroke-width="3"/>`;
+    else if (/bread|loaf|mantou/.test(look))
+      shape = `<path d="M15 55q0-28 15-31 5-12 14-5 16-7 21 8 8 5 5 28-2 9-10 9H24q-9 0-9-9Z" fill="#b87843" stroke="${b}" stroke-width="3"/><path d="M29 29q8 5 9 15m6-18q6 6 6 14" stroke="#e1b67e" stroke-width="3"/>`;
+    else if (form === "pile")
+      shape = `<ellipse cx="40" cy="58" rx="25" ry="8" fill="#e3d8bd"/>${[0,1,2,3,4].map((i)=>`<ellipse cx="${23+(i%3)*15}" cy="${40-Math.floor(i/3)*12}" rx="10" ry="12" fill="${[a,b,"#d78935","#7d9b52"][i%4]}"/>`).join("")}<path d="M37 25q9-13 17-7-5 9-16 10" fill="#66824d"/>`;
+    else
+      shape = `<ellipse cx="40" cy="48" rx="24" ry="22" fill="${b}"/><ellipse cx="31" cy="42" rx="13" ry="17" fill="${a}"/><path d="M40 26V13m0 5c13-12 19-7 14 1-5 4-11 0-14-1" fill="${a}" stroke="${b}" stroke-width="2"/>`;
+  } else if (form === "eggs")
+    shape = `<path d="M12 38h56v27H12z" fill="#99917e"/><path d="M16 39q4-21 9-14 4-2 7 14m1 0q4-24 10-18 5-1 8 18m1 0q3-20 9-14 5 0 6 14" fill="#eee5d1" stroke="${b}" stroke-width="2"/>`;
+  else if (form === "cheese")
+    shape = `<path d="M15 54 42 20l24 34v12H15z" fill="#e5c75a" stroke="${b}" stroke-width="3"/><circle cx="38" cy="51" r="4" fill="#bf9f36"/><circle cx="52" cy="58" r="3" fill="#bf9f36"/><path d="M15 54h51" stroke="#f3df8c" stroke-width="3"/>`;
+  else if (form === "sausage")
+    shape = `<path d="M18 50q4-17 18-11 14 5 24-5 10-5 8 9-4 17-18 12-14-5-24 6-10 5-8-11Z" fill="#9d4632" stroke="${b}" stroke-width="3"/><path d="m20 48-5-5m47 9 7 4" stroke="#e0b59a" stroke-width="4"/>`;
+  else if (form === "rolls")
+    shape = `<circle cx="27" cy="31" r="14" fill="#eee9db" stroke="${b}" stroke-width="2"/><circle cx="52" cy="31" r="14" fill="#eee9db" stroke="${b}" stroke-width="2"/><circle cx="27" cy="56" r="14" fill="#eee9db" stroke="${b}" stroke-width="2"/><circle cx="52" cy="56" r="14" fill="#eee9db" stroke="${b}" stroke-width="2"/><path d="M22 31h10m-10 25h10" stroke="#aaa18d"/>`;
+  else if (form === "cloth" || form === "sponge")
+    shape = `<path d="m19 22 40-6 4 39-42 8z" fill="${a}" stroke="${b}" stroke-width="3"/><path d="M24 28h28M25 35h30M26 42h29" stroke="#eee5ce" stroke-width="2" opacity=".55"/>`;
+  else if (it.category === "medical" || form === "med")
+    shape = `<rect x="18" y="14" width="44" height="54" rx="4" fill="#f1efe8" stroke="${b}" stroke-width="3"/><path d="M18 24h44" stroke="${b}"/><path d="M34 33h12v8h8v12h-8v8H34v-8h-8V41h8z" fill="#b3261e"/>`;
   else if (it.category === "furniture")
     shape = `<path d="M16 29h48v11H16zM21 40h5v28h-5zm33 0h5v28h-5z" fill="${b}"/><path d="M22 13h36v18H22z" fill="${a}"/><path d="M25 16h30v12H25z" fill="${b}" opacity=".25"/>`;
-  else if (it.category === "staple")
-    shape = `<path d="m22 13 8-4h21l8 4-2 11 7 40q0 7-8 7H24q-8 0-8-7l7-40Z" fill="${a}"/><path d="M22 13h37l-2 8H23z" fill="${b}"/><path d="M23 33h34v24H23z" fill="${b}"/><path d="M30 39h20m-20 6h16m-16 5h18" stroke="${a}" stroke-width="1"/><path d="m24 60 6 6m27-6-6 6" stroke="${b}" opacity=".5"/>`;
   else
-    shape = `<rect x="18" y="20" width="44" height="45" rx="3" fill="${b}"/><path d="M25 20V10h30v10" fill="none" stroke="${a}" stroke-width="4"/><rect x="23" y="27" width="34" height="29" rx="2" fill="${a}"/><path d="M32 36h16m-8-8v24" stroke="${b}" stroke-width="3"/>`;
+    shape = `<rect x="18" y="20" width="44" height="45" rx="3" fill="${b}"/><path d="M25 20V10h30v10" fill="none" stroke="${a}" stroke-width="4"/><rect x="23" y="27" width="34" height="29" rx="2" fill="${a}"/><path d="M32 36h16m-8-7v22" stroke="${b}" stroke-width="3"/>`;
   return `<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${shape}</svg>`;
 }
 function updateSeed() {
@@ -10904,7 +11031,8 @@ function openStation(id) {
   } else if (id === "trash" || id === "inspect") {
     title = "让房间仍像一个家。";
     subtitle = "HOUSEKEEPING";
-    html = `<div class="stat-grid"><div class="stat-tile"><span>房间整洁</span><strong>${Math.round(100 - G.dirt)}<small>%</small></strong><p>脏乱会影响精神</p></div><div class="stat-tile"><span>未洗餐具</span><strong>${G.dishes}<small>份</small></strong><p>清洗后更安心</p></div><div class="stat-tile"><span>待处理包装</span><strong>${G.trash}<small>份</small></strong><p>密封处理，无恶心画面</p></div></div><div class="action-grid">${action("清扫整理", "扫帚/拖把更有效 · 30–45分钟", "clean", "", "⌁")}${action("密封处理垃圾", "10分钟 · 一并丢弃过期物资", "trash", "", "▧")}${action("检查家具", "15分钟 · 概率发现，隐藏总数未知", "inspect", "", "⌕")}${action("清洗餐具", "12分钟 · 用水1L", "dishes", "", "◡")}</div><h3 class="section-label">房东的旧抽屉</h3><div class="action-grid">${action("检查旧抽屉", G.emergencyUsed ? "已经检查过，没有更多物资" : "房东遗留的小量应急品 · 仅一次", "emergency", "", "▣")}</div><p class="panel-note">脏乱只影响心情、卫生和健康，房间里不会出现任何虫鼠或替代物。</p>`;
+    const waste = G.waste || { packaging: G.trash, scraps: 0, discarded: 0 };
+    html = `<div class="stat-grid"><div class="stat-tile"><span>房间整洁</span><strong>${Math.round(100 - G.dirt)}<small>%</small></strong><p>脏乱会影响精神</p></div><div class="stat-tile"><span>未洗餐具</span><strong>${G.dishes}<small>份</small></strong><p>清洗后更安心</p></div><div class="stat-tile"><span>待处理废弃物</span><strong>${G.trash}<small>份</small></strong><p>包装 ${waste.packaging} · 餐厨残渣 ${waste.scraps} · 其他 ${waste.discarded}</p></div></div><div class="action-grid">${action("清扫整理", "扫帚/拖把更有效 · 30–45分钟", "clean", "", "⌁")}${action("密封处理垃圾", "10分钟 · 清走包装、餐厨残渣与过期物资", "trash", "", "▧")}${action("检查家具", "15分钟 · 概率发现，隐藏总数未知", "inspect", "", "⌕")}${action("清洗餐具", "12分钟 · 用水1L", "dishes", "", "◡")}</div><h3 class="section-label">房东的旧抽屉</h3><div class="action-grid">${action("检查旧抽屉", G.emergencyUsed ? "已经检查过，没有更多物资" : "房东遗留的小量应急品 · 仅一次", "emergency", "", "▣")}</div><p class="panel-note">开封包装和每顿餐厨残渣都会累积；章节模式垃圾桶满后会慢慢影响整洁，经典模式仅记录，不加新惩罚。可以用垃圾袋封口。没有虫鼠，也没有恶心画面。</p>`;
   } else if (id === "window") {
     title = "窗外，还是那座城市。";
     subtitle = "WINDOW / A VIEW WITH CONSEQUENCES";
@@ -11396,8 +11524,9 @@ function setupEvents() {
       return;
     }
     if ((b = e.target.closest("[data-drop]"))) {
+      const discarded = G.inv.find((x) => x.uid === b.dataset.drop);
       G.inv = G.inv.filter((x) => x.uid !== b.dataset.drop);
-      G.trash++;
+      if (discarded) addWaste("discarded", discarded.id);
       advanceTime(2, "clean");
       openInventory();
       return;
@@ -12665,7 +12794,7 @@ function worldUpdatePaper(force = false) {
       `储水 ${G.tank.toFixed(1)} / ${waterCapacity()} L`,
       `未拆 ${G.bags.filter((b) => !b.opened).length} 袋`,
       `现金 E$ ${G.cash.toFixed(2)}`,
-      `餐具 ${G.dishes} · 垃圾 ${G.trash}`,
+      `餐具 ${G.dishes} · 待处理废弃物 ${G.trash}`,
       `整洁 ${Math.round(100 - G.dirt)} / 100`,
       `衣物 ${Math.round(G.clothes)} / 100`,
       `头发 ${G.hair.toFixed(1)} · 指甲 ${G.nails.toFixed(1)}`,
@@ -13137,8 +13266,8 @@ function worldTargetInfo(o) {
     trash: [
       "垃圾桶",
       W.held
-        ? "R 丢弃手里的这一包  ·  E 密封并清走变质物资"
-        : "E 密封垃圾，清走变质物资",
+        ? "R 丢弃手里的物资  ·  E 清理包装、残渣与过期物资"
+        : "E 清理包装、餐厨残渣与过期物资",
     ],
     mirror: ["浴室镜子", "E 修剪指甲  ·  Shift+E 理发  ·  工具在镜子下方"],
     hands: ["盥洗位置", "E 洗手  ·  Shift+E 刷牙"],
@@ -13292,7 +13421,7 @@ function worldInteract(shift = false) {
     case "clean":
       return worldAction("clean", "扫净地板，收拾房间", 3.5);
     case "trash":
-      return worldAction("trash", "密封垃圾，清走变质物资", 2);
+      return worldAction("trash", "清理包装、餐厨残渣与过期物资", 2);
     case "mirror":
       return worldAction(
         shift ? "hair" : "nails",
@@ -13365,7 +13494,7 @@ function worldAlternate() {
     const b = G.inv.find((b) => b.uid === W.held.uid);
     if (b) {
       G.inv = G.inv.filter((x) => x !== b);
-      G.trash++;
+      addWaste("discarded", b.id);
       logEvent(`把${DB[b.id].name}丢进垃圾桶。`);
     }
     W.held = null;
@@ -16849,6 +16978,7 @@ const I = {
   labels: new Map(),
   mats: new Map(),
   geos: new Map(),
+  wasteDisplay: null,
 };
 function iTex(name, rx = 1, ry = 1) {
   const src = R.textures[name];
@@ -17980,7 +18110,50 @@ function iBathroom() {
     trash.add(rim);
     iBox(trash, [0.1, 0.012, 0.06], [0, 0.03, 0.16], chrome, 0.004);
     iBox(trash, [0.29, 0.02, 0.29], [0, 0.01, 0], iStd("#2e2a26", 0.7), 0.006);
+    iBuildWasteDisplay(trash);
   }
+}
+function iBuildWasteDisplay(bin) {
+  if (!bin) return;
+  const root = new THREE.Group();
+  root.name = "generated-waste";
+  const bags = [];
+  for (let i = 0; i < 3; i++) {
+    const bag = new THREE.Group(),
+      mat = new THREE.MeshPhysicalMaterial({ color: ["#4c504a", "#55574f", "#625d53"][i], roughness: 0.88, metalness: 0, transparent: true, opacity: 0.96, side: THREE.DoubleSide }),
+      tieMat = new THREE.MeshStandardMaterial({ color: "#30332e", roughness: 0.92 });
+    const spill = [[0.22, -0.3], [-0.25, -0.45], [-0.55, -0.18]][i];
+    bag.position.set(spill[0], 0.012, spill[1]);
+    bag.rotation.y = (i - 1) * 0.18;
+    const profile = [[0,0],[0.06,0],[0.088,0.014],[0.098,0.05],[0.09,0.11],[0.08,0.15],[0.056,0.17],[0.034,0.19],[0.028,0.205],[0,0.215]].map(([r,y]) => new THREE.Vector2(r,y));
+    const body = new THREE.Mesh(new THREE.LatheGeometry(profile, 12), mat);
+    body.position.y = 0.008;
+    body.castShadow = true;
+    bag.add(body);
+    const tie = new THREE.Mesh(new THREE.TorusGeometry(0.028, 0.006, 5, 14), tieMat);
+    tie.rotation.x = Math.PI / 2;
+    tie.position.y = 0.218;
+    bag.add(tie);
+    const knot = new THREE.Mesh(new THREE.SphereGeometry(0.012, 8, 6), mat);
+    knot.position.set(0, 0.224, 0);
+    bag.add(knot);
+    const loop = new THREE.Mesh(new THREE.TorusGeometry(0.018, 0.004, 5, 12), mat);
+    loop.scale.set(1.4, 0.8, 0.65);
+    loop.position.set(0.022, 0.229, 0);
+    bag.add(loop);
+    root.add(bag);
+    bags.push(bag);
+  }
+  bin.add(root);
+  I.wasteDisplay = { root, bags };
+  iUpdateWasteDisplay();
+}
+function iUpdateWasteDisplay() {
+  if (!I.wasteDisplay) return;
+  const trash = Math.max(0, Number(G?.trash) || 0),
+    count = trash > 0 ? Math.min(3, Math.ceil(trash / 4)) : 0;
+  I.wasteDisplay.bags.forEach((bag, i) => { bag.visible = i < count; });
+  I.wasteDisplay.root.visible = count > 0;
 }
 function iBroom() {
   const g = W.broomProp;
@@ -18293,15 +18466,30 @@ function iLabel(it) {
   const tex = iCanvas(384, 256, (x, w, hh) => {
     x.fillStyle = bg;
     x.fillRect(0, 0, w, hh);
+    const noise = iHash(`${it.id}|print`);
     for (let i = 0; i < 1600; i++) {
-      x.fillStyle = `rgba(255,255,255,${Math.random() * 0.05})`;
-      x.fillRect(Math.random() * w, Math.random() * hh, 2, 2);
+      const n = noise + i * 3;
+      x.fillStyle = `rgba(255,255,255,${iRand(n) * 0.05})`;
+      x.fillRect(iRand(n + 1) * w, iRand(n + 2) * hh, 2, 2);
     }
     const light = ["#e7e2d2", "#e6d7a8", "#d8c49a", "#f1efe8", "#e2c46a", "#e2bd2f"].includes(bg);
     const ink = light ? "#2b2a24" : "#f4eedd";
     // Period print: a band, an emblem, the product name in heavy type and a small standard code.
     x.fillStyle = medical ? "#b3261e" : light ? "#7d3a2a" : "rgba(0,0,0,.28)";
     x.fillRect(0, 0, w, 46);
+    const labelStyle = h % 4;
+    if (labelStyle === 1) {
+      x.fillStyle = light ? "#b83d2c" : "rgba(255,228,176,.28)";
+      x.fillRect(0, 46, 20, hh - 104);
+    } else if (labelStyle === 2) {
+      x.strokeStyle = light ? "#7d3a2a" : "rgba(244,238,221,.65)";
+      x.lineWidth = 3;
+      x.strokeRect(8, 54, w - 16, hh - 108);
+    } else if (labelStyle === 3) {
+      x.fillStyle = light ? "#d8c49a" : "rgba(255,255,255,.18)";
+      x.fillRect(w - 22, 46, 22, hh - 104);
+      x.fillRect(0, 46, w, 5);
+    }
     x.fillStyle = medical ? "#fff" : light ? "#f4eedd" : "#f4eedd";
     x.font = "bold 22px 'Noto Sans SC','PingFang SC','Microsoft YaHei',sans-serif";
     x.textAlign = "center";
@@ -18446,10 +18634,40 @@ function iBookSize(it) {
   if (/散文|传记|诗|历史|哲学/.test(it.genre || "")) return [0.14, 0.203, d];
   return [0.13, 0.184, d];
 }
+function iVisualSpec(it) {
+  const raw = I_SPEC[it.id] || it?.shape || (it?.kind === "book" ? ["book", iBookSize(it)] : null) || (it?.look && I_SPEC[it.look]);
+  if (!raw) return null;
+  let shape = raw[0], dims = Array.isArray(raw[1]) ? raw[1].slice() : [], color = raw[2];
+  if (!it.gen || it.kind === "book") return [shape, dims, color];
+  const seed = iHash(`${it.line || it.id}|${it.brand || it.maker || ""}|package`),
+    sizeFactor = it.name.includes("家庭装") ? 1.24 : it.name.includes("小包装") ? 0.8 : 1;
+  // Factory-specific paper, carton and cellophane choices make otherwise similar SKUs read differently.
+  if (!it.id.startsWith("x_") && ["box", "paper", "pouch"].includes(shape) && ["staple", "drink"].includes(it.category)) {
+    const forms = shape === "box" ? ["box", "box", "paper", "pouch"] : shape === "paper" ? ["paper", "paper", "pouch", "box"] : ["pouch", "pouch", "paper", "box"];
+    shape = forms[seed % forms.length];
+  }
+  if (shape === "bottle" && it.category === "drink" && seed % 5 === 0) shape = "hdpe";
+  if (dims.length === 3) {
+    const fw = 0.9 + ((seed >>> 4) % 6) * 0.04,
+      fd = 0.9 + ((seed >>> 9) % 6) * 0.04;
+    dims[0] *= sizeFactor * fw;
+    dims[1] *= sizeFactor / Math.sqrt(fw * fd);
+    dims[2] *= sizeFactor * fd;
+  } else if (dims.length === 2 && shape !== "pile") {
+    const fr = 0.9 + ((seed >>> 6) % 5) * 0.05;
+    dims[0] *= sizeFactor * fr;
+    dims[1] *= sizeFactor / (fr * fr);
+  } else if (dims.length === 1) {
+    dims[0] *= sizeFactor;
+  }
+  if (shape === "jar" && !color) color = ["#b98752", "#98633b", "#c29e62", "#8b7150"][seed % 4];
+  return [shape, dims, color];
+}
 function iProduct(id, parent) {
-  const it = DB[id],
-    spec = I_SPEC[id] || it?.shape || (it?.kind === "book" ? ["book", iBookSize(it)] : null) || (it?.look && I_SPEC[it.look]);
-  if (!it || !spec || !R.ready) return null;
+  const it = DB[id];
+  if (!it || !R.ready) return null;
+  const spec = iVisualSpec(it);
+  if (!spec) return null;
   const [shape, dims, color] = spec,
     g = new THREE.Group(),
     label = () => iProductMat(it);
@@ -18478,18 +18696,88 @@ function iProduct(id, parent) {
   } else if (shape === "box" || shape === "med") {
     const [w, h, d] = dims;
     iBox(g, [w, h, d], [0, h / 2, 0], label(), Math.min(0.004, h * 0.15));
+    if (shape === "box") {
+      const seam = iSolid("#c9b99a", 0.85),
+        stripe = iSolid(["#a94332", "#47634a", "#2f5f7a", "#b28b3e"][iHash(it.brand || it.id) % 4], 0.7);
+      iBox(g, [w * 0.96, 0.004, d * 0.92], [0, h * 0.94, 0], seam, 0.001);
+      if (iHash(it.brand || it.id) % 2 === 0) iBox(g, [0.008, h * 0.88, d * 0.9], [-w * 0.47, h * 0.51, 0], stripe, 0.002);
+    }
     height = h;
   } else if (shape === "paper" || shape === "pouch" || shape === "sack") {
     const [w, h, d] = dims;
     const body = iBox(g, [w, h, d], [0, h / 2, 0], label(), Math.min(w, h, d) * 0.3);
     body.material = iProductMat(it, { key: shape, roughness: shape === "pouch" ? 0.35 : 0.85 });
-    if (shape === "paper") iBox(g, [w * 0.98, 0.03, d * 0.5], [0, h + 0.012, 0], iSolid("#d8cdb4", 0.9), 0.004);
-    if (shape === "pouch") iBox(g, [w * 1.02, 0.018, d * 0.25], [0, h + 0.004, 0], iSolid("#e8e4da", 0.3), 0.003);
+    const seal = iSolid(shape === "pouch" ? "#c6bba0" : "#d8cdb4", shape === "pouch" ? 0.36 : 0.9);
+    if (shape === "paper") {
+      iBox(g, [w * 0.96, 0.022, d * 0.52], [0, h + 0.008, 0], seal, 0.003);
+      iBox(g, [w * 0.88, 0.003, 0.003], [0, h * 0.93, d / 2 + 0.003], iSolid("#8a7558", 0.88), 0);
+    }
+    if (shape === "pouch") {
+      iBox(g, [w * 1.02, 0.014, d * 0.25], [0, h + 0.003, 0], seal, 0.003);
+      for (const side of [-1, 1]) iBox(g, [0.003, h * 0.88, d * 0.08], [side * w * 0.49, h * 0.47, 0], seal, 0.001);
+    }
     if (shape === "sack") {
       body.scale.set(1, 1, 1);
       for (const s of [-1, 1]) iBox(g, [w * 0.9, h * 0.6, 0.03], [0, h * 0.42, s * (d / 2 + 0.005)], iSolid("#d9d2bd", 0.95), 0.012);
+      iBox(g, [w * 0.9, 0.006, 0.008], [0, h * 0.94, 0], iSolid("#826e53", 0.95), 0.002);
     }
-    height = h;
+    height = h + (shape === "paper" ? 0.02 : 0.01);
+  } else if (["windowbag", "frozenbag", "twist-pack"].includes(shape)) {
+    const [w, h, d] = dims,
+      film = new THREE.MeshPhysicalMaterial({ color: shape === "frozenbag" ? "#e8e6dd" : "#d9d3bf", roughness: 0.28, transparent: true, opacity: 0.5, clearcoat: 0.8, side: THREE.DoubleSide }),
+      sticker = iProductMat(it, { key: "film-label", roughness: 0.7 });
+    const body = iBox(g, [w, h, d], [0, h / 2, 0], film, 0.012);
+    body.material = film;
+    if (shape === "frozenbag") {
+      for (let k = 0; k < 6; k++) {
+        const dumpling = add(new THREE.Mesh(new THREE.SphereGeometry(0.022, 14, 10), iSolid("#f1eee4", 0.58)));
+        dumpling.scale.set(1.05, 0.86, 1);
+        dumpling.position.set((k % 3 - 1) * 0.042, 0.035 + Math.floor(k / 3) * 0.045, (k % 2) * 0.025);
+        const sesame = add(new THREE.Mesh(new THREE.SphereGeometry(0.003, 6, 5), iSolid("#332820", 0.9)));
+        sesame.position.set(dumpling.position.x, dumpling.position.y, dumpling.position.z + 0.02);
+      }
+      iBox(g, [w * 0.84, h * 0.25, 0.004], [0, h * 0.78, d / 2 + 0.004], sticker, 0.003);
+    } else if (shape === "twist-pack") {
+      const sweet = iSolid("#a94a35", 0.55), wrapper = iSolid("#d8b66d", 0.55);
+      for (let k = 0; k < 5; k++) {
+        const x = (k - 2) * w * 0.17;
+        const piece = add(new THREE.Mesh(new THREE.SphereGeometry(0.019, 10, 8), sweet));
+        piece.scale.set(1.35, 0.85, 0.8);
+        piece.position.set(x, h * 0.46, 0);
+        for (const side of [-1, 1]) {
+          const twist = iBox(g, [0.028, 0.012, 0.024], [x + side * 0.025, h * 0.46, 0], wrapper, 0.004);
+          twist.rotation.z = side * 0.15;
+        }
+      }
+      iBox(g, [w * 0.38, h * 0.34, 0.004], [0, h * 0.82, d / 2 + 0.003], sticker, 0.003);
+    } else {
+      if (it.id === "x_smoked_squid") {
+        const strips = iSolid("#9c5436", 0.78);
+        for (let k = 0; k < 6; k++) {
+          const strip = iBox(g, [0.012, h * 0.43, 0.009], [(k - 2.5) * 0.014, h * 0.38, (k % 2) * 0.012], strips, 0.003);
+          strip.rotation.z = (k % 3 - 1) * 0.12;
+        }
+      } else if (it.id === "x_dried_shiitake") {
+        const capMat = iSolid("#765039", 0.82), stemMat = iSolid("#d3b78e", 0.9);
+        for (let k = 0; k < 5; k++) {
+          const x = (k - 2) * 0.023, z = (k % 2) * 0.018;
+          const cap = add(new THREE.Mesh(new THREE.SphereGeometry(0.022, 10, 7), capMat));
+          cap.scale.set(1.15, 0.42, 0.95);
+          cap.position.set(x, h * 0.24 + (k % 3) * 0.012, z);
+          const stem = add(new THREE.Mesh(new THREE.CylinderGeometry(0.004, 0.006, 0.018, 7), stemMat));
+          stem.position.set(x, cap.position.y - 0.008, z);
+        }
+      } else {
+        const leaf = iSolid("#263f34", 0.82);
+        for (let k = 0; k < 4; k++) {
+          const chip = iBox(g, [0.045, 0.009, 0.024], [(k - 1.5) * 0.025, h * 0.24, (k % 2) * 0.016], leaf, 0.002);
+          chip.rotation.y = k * 0.35;
+        }
+      }
+      iBox(g, [w * 0.82, h * 0.25, 0.004], [0, h * 0.78, d / 2 + 0.004], sticker, 0.003);
+    }
+    iBox(g, [w * 0.98, 0.014, d * 0.9], [0, h + 0.004, 0], iSolid("#d5cbb2", 0.5), 0.003);
+    height = h + 0.018;
   } else if (shape === "bottle") {
     const [r, h] = dims;
     const pet = new THREE.MeshPhysicalMaterial({
@@ -18508,7 +18796,9 @@ function iProduct(id, parent) {
     );
     const band = add(new THREE.Mesh(new THREE.CylinderGeometry(r * 1.01, r * 1.01, h * 0.28, 24, 1, true), label()));
     band.position.y = h * 0.36;
-    const cap = add(new THREE.Mesh(new THREE.CylinderGeometry(r * 0.36, r * 0.36, h * 0.07, 16), iSolid(id === "oil" ? "#c23a1e" : "#2f6aa6", 0.4)));
+    const caps = ["#2f6aa6", "#a64032", "#76813d", "#c19a3d"],
+      capColor = id === "oil" ? "#c23a1e" : caps[iHash(it.brand || it.id) % caps.length];
+    const cap = add(new THREE.Mesh(new THREE.CylinderGeometry(r * 0.36, r * 0.36, h * 0.07, 16), iSolid(capColor, 0.4)));
     cap.position.y = h * 0.965;
     height = h;
   } else if (shape === "hdpe") {
@@ -18523,7 +18813,8 @@ function iProduct(id, parent) {
     const band = add(new THREE.Mesh(new THREE.CylinderGeometry(r * 1.01, r * 1.01, h * 0.4, 24, 1, true), label()));
     band.scale.z = 0.7;
     band.position.y = h * 0.38;
-    const cap = add(new THREE.Mesh(new THREE.CylinderGeometry(r * 0.32, r * 0.34, h * 0.12, 14), iSolid("#efece4", 0.35)));
+    const caps = ["#efece4", "#b93e32", "#637d66", "#d3ad47"],
+      cap = add(new THREE.Mesh(new THREE.CylinderGeometry(r * 0.32, r * 0.34, h * 0.12, 14), iSolid(caps[iHash(it.brand || it.id) % caps.length], 0.35)));
     cap.position.y = h * 0.94;
     height = h;
   } else if (shape === "jar") {
@@ -18540,11 +18831,25 @@ function iProduct(id, parent) {
     lid.position.y = h * 0.93;
     height = h;
   } else if (shape === "tin" || shape === "can") {
-    const [r, h] = dims;
-    const metal = iSolid("#c5c9c6", 0.28, { metalness: 0.9 });
-    add(new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, 24), metal)).position.y = h / 2;
-    const band = add(new THREE.Mesh(new THREE.CylinderGeometry(r * 1.004, r * 1.004, h * 0.86, 24, 1, true), label()));
-    band.position.y = h / 2;
+    const [r, h] = dims,
+      metal = iSolid("#c5c9c6", 0.28, { metalness: 0.9 }),
+      rimMat = iSolid("#aeb4b1", 0.22, { metalness: 0.95 });
+    add(new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, 32), metal)).position.y = h / 2;
+    const band = add(new THREE.Mesh(new THREE.CylinderGeometry(r * 1.004, r * 1.004, h * 0.82, 32, 1, true), label()));
+    band.position.y = h * 0.49;
+    for (const y of [0.006, h - 0.006]) {
+      const seam = add(new THREE.Mesh(new THREE.TorusGeometry(r * 0.98, Math.max(0.0015, r * 0.055), 6, 28), rimMat));
+      seam.rotation.x = Math.PI / 2;
+      seam.position.y = y;
+    }
+    if (shape === "can") {
+      const tab = add(new THREE.Mesh(new THREE.TorusGeometry(r * 0.18, r * 0.055, 6, 14), rimMat));
+      tab.rotation.x = Math.PI / 2;
+      tab.position.set(0, h - 0.002, 0);
+      const score = add(new THREE.Mesh(new THREE.CircleGeometry(r * 0.34, 18), rimMat));
+      score.rotation.x = -Math.PI / 2;
+      score.position.set(-r * 0.22, h + 0.001, 0);
+    }
     height = h;
   } else if (shape === "carton") {
     const [w, h, d] = dims;
@@ -18719,11 +19024,13 @@ worldProduct = function (id, parent = null, bare = false) {
 };
 syncWorldRoom = function () {
   interiorPrevSyncWorld();
-  if (!W.props || W.store || !env?.mirror) return;
-  for (const o of W.props.children) if (!o.userData.mirrorFixed) {
-    o.scale.x *= -1;
-    o.userData.mirrorFixed = true;
+  if (W.props && !W.store && env?.mirror) {
+    for (const o of W.props.children) if (!o.userData.mirrorFixed) {
+      o.scale.x *= -1;
+      o.userData.mirrorFixed = true;
+    }
   }
+  iUpdateWasteDisplay();
 };
 roomLight = function () {
   interiorPrevLight();
@@ -22474,6 +22781,7 @@ function lcSeason() {
   const last = G.life.lastSeason;
   const pick = opts.find((b) => DB[b.id].line !== last) || opts[0],
     it = DB[pick.id];
+  markPackageOpened(pick);
   pick.units--;
   G.inv = G.inv.filter((x) => x.units > 0.0001);
   G.life.lastSeason = it.line;
@@ -23812,8 +24120,10 @@ worldTargetInfo = function (o) {
   try {
     if (id.startsWith("stock:")) {
       const b = G?.inv.find((x) => x.uid === o.userData.uid),
-        use = b && itemUse(DB[b.id]);
-      if (use) return [r[0], r[1] + "\n用途：" + use];
+        it = b && DB[b.id],
+        use = it && itemUse(it),
+        expiry = it?.life < 9999 ? "\n保质期：" + expiryInventoryLabel(it, b) : "";
+      if (use || expiry) return [r[0], r[1] + (use ? "\n用途：" + use : "") + expiry];
     }
     if (SR_EFFECT[id] && !(id === "kitchen" && W.held)) return [r[0], r[1] + "\n" + SR_EFFECT[id]];
   } catch (e) {}

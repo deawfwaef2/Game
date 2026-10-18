@@ -371,3 +371,21 @@
 - `python3 tools/build.py` generated offline `index.html` at **22,855,124 bytes** and a temporary ZIP in `dist/`; `dist/` and QA artifacts were removed after verification. Workspace measured about **71 MB**.
 - `scene.js` already advances idle time during active play. This update does not add offline time advancement. Pause/panels/busy actions continue to suppress idle time.
 - Uncertain/missing expiry is only a public label; internal spoilage age, refrigeration and power effects are unchanged. Trait fatigue and difficulty are chapter-only; classic mode keeps its 365-day rules and 300-paper budget.
+
+# v0.21.0-preview — distinct package models, visible shelf life, waste cycle (2026-10-18)
+
+## Pure simulation
+- `node tests/levels.cjs`: **98 assertions pass**. Unmarked and blurred labels show a nominal range and storage time without exposing exact batch dates/remaining life; internal exact spoilage still triggers. Also checks 12 custom food shapes, once-per-batch packaging, meal scraps, chapter-only overflow tidiness, classic no-penalty behavior, and disposal.
+- `node tests/simulation.cjs`: **165 deterministic assertions pass**. Waste save integrity is checked; unsupported categories and inconsistent totals are rejected; old saves without categorized waste migrate their legacy trash count. Classic 365-day policy still wins on day 366.
+
+## Browser / visual / offline regressions
+- `tests/levels-browser.cjs`: chapter picker, progression lock, searchable order book, checkout, hidden clock and room fixture pass; **0 external requests, 0 JS errors**.
+- `tests/browser.cjs`: physical shop, one-time purchase, manual placement, meal, categorized package/scrap creation, visible waste bag, unmarked batch shelf-life focus hint, old-v3 save, mobile and no-WebGL fallback pass; **0 external requests, 0 JS errors**. A title-button timeout happened once during a run; isolated interaction and full retry passed.
+- `tests/realism.cjs`: imported mesh/PBR, 25-joint hands, animated cup, placement, sample isolation and opaque offline iframe pass.
+- `tests/navigation.cjs`: 14 shop stops, apartment routes, touch arrows, pause/load and **257 seeded routes** pass; `liveClock:true`, **0 external requests, 0 JS errors**.
+- `tests/audio.cjs`: **72/72** embedded clips decode; feedback, effects, knocks, ambience and sound toggle pass.
+- QA-only screenshots of varied 3D packaged products and tied waste bags were manually inspected; screenshots are removed after QA.
+
+## Build / boundaries
+- `python3 tools/build.py`: self-contained offline `index.html`, **22,874,204 bytes**, with temporary ZIP under `dist/`. The final workspace cleanup removes `dist/` and `tests/artifacts/`; root `index.html` remains the deliverable.
+- No offline time progression, automatic inventory placement, additional pest/disgust mechanics, restocking, gifts, or purchasable chapter mechanisms were added. Chapter overflow penalty is exclusive to chapter mode; classic 365-day rules remain unchanged.

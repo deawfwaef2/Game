@@ -220,5 +220,59 @@
     "license": "Project asset; no third-party source",
     "source": "src/assets/textures/coop-shop-hero.jpg",
     "processing": "AI-generated photo-style 1986 cooperative shop header for the in-game order-book UI; embedded as a data URI for offline play."
+  },
+  {
+    "name": "chapter-bellhouse",
+    "author": {
+      "Generated for this project (Arena.ai image generation)": "All"
+    },
+    "license": "Project asset; no third-party source",
+    "source": "src/assets/textures/chapter-bellhouse.jpg",
+    "processing": "AI-generated, offline chapter-card illustration; Old apartment corridor, brass bell and sealed door vignette for the chapter archive."
+  },
+  {
+    "name": "chapter-sealed",
+    "author": {
+      "Generated for this project (Arena.ai image generation)": "All"
+    },
+    "license": "Project asset; no third-party source",
+    "source": "src/assets/textures/chapter-sealed.jpg",
+    "processing": "AI-generated, offline chapter-card illustration; Boarded apartment window and damp wallpaper vignette for the chapter archive."
+  },
+  {
+    "name": "chapter-night-radio",
+    "author": {
+      "Generated for this project (Arena.ai image generation)": "All"
+    },
+    "license": "Project asset; no third-party source",
+    "source": "src/assets/textures/chapter-night-radio.jpg",
+    "processing": "AI-generated, offline chapter-card illustration; Shortwave receiver and distant harbor lights vignette for the chapter archive."
+  },
+  {
+    "name": "chapter-ledger",
+    "author": {
+      "Generated for this project (Arena.ai image generation)": "All"
+    },
+    "license": "Project asset; no third-party source",
+    "source": "src/assets/textures/chapter-ledger.jpg",
+    "processing": "AI-generated, offline chapter-card illustration; Rain-stained ledger, matchbox and lighter vignette for the chapter archive."
+  },
+  {
+    "name": "chapter-clockmaker",
+    "author": {
+      "Generated for this project (Arena.ai image generation)": "All"
+    },
+    "license": "Project asset; no third-party source",
+    "source": "src/assets/textures/chapter-clockmaker.jpg",
+    "processing": "AI-generated, offline chapter-card illustration; Grandfather clock in a dusty attic vignette for the chapter archive."
+  },
+  {
+    "name": "chapter-thousand",
+    "author": {
+      "Generated for this project (Arena.ai image generation)": "All"
+    },
+    "license": "Project asset; no third-party source",
+    "source": "src/assets/textures/chapter-thousand.jpg",
+    "processing": "AI-generated, offline chapter-card illustration; Windowless final room where the four chapter clues converge."
   }
 ]

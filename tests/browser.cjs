@@ -128,7 +128,7 @@ fs.mkdirSync(artifacts, { recursive: true });
     await boot(page);
     assert.strictEqual(await page.evaluate(() => fallbackMode), false);
     assert.strictEqual(await page.evaluate(() => W.enabled), true);
-    await page.locator("#newGameButton").click();
+    await page.locator("#newGameButton").click({ timeout: 30000 });
     await helpers(page);
     assert.strictEqual(await page.evaluate(() => W.shopProducts.length), await page.evaluate(() => shopStock().length));
     assert.ok(await page.evaluate(() => CATALOG.length >= 15000 && shopStock().length <= 220));

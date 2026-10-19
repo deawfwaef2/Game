@@ -7,7 +7,7 @@ import json
 import base64
 ROOT=Path(__file__).resolve().parents[1]
 SRC=ROOT/'src'
-for name in ['data.js','catalog-gen.js','core.js','scene.js','ui.js','world.js','store.js','realism.js','navigation.js','city-film.js','interior.js','fixtures.js','lighting.js','life-text.js','life.js','life-more.js','life-world.js','life-real.js','life-home.js','life-items.js','life-catalog.js','life-body.js','store-real.js','audio.js','levels.js']:
+for name in ['data.js','catalog-gen.js','core.js','scene.js','ui.js','world.js','store.js','realism.js','navigation.js','city-film.js','interior.js','fixtures.js','lighting.js','life-text.js','life.js','life-more.js','life-world.js','life-real.js','life-home.js','life-items.js','life-catalog.js','life-body.js','store-real.js','audio.js','levels.js','level-minigames.js']:
     subprocess.run(['node','--check',str(SRC/name)],check=True,capture_output=True)
 html=(SRC/'template.html').read_text()
 assets={'models':{},'textures':{}}
@@ -21,7 +21,7 @@ credits='/* Offline hand assets, MIT license:\n'+(SRC/'assets'/'WEBXR-HANDS-LICE
 audio={p.stem:base64.b64encode(p.read_bytes()).decode() for p in sorted((SRC/'audio').glob('*.mp3'))}
 html=html.replace('/* AUDIO_DATA */','/* Sounds and music: CC0 (Kenney, rubberduck, OwlishMedia, cynicmusic, Yoiyami, Wolfgang_, Kistol, Joth, extenz via OpenGameArt). See src/audio/CREDITS.md */\nconst AUDIO_DATA='+json.dumps(audio,separators=(',',':'))+';')
 html=html.replace('/* ROOM_ASSETS */',credits+'const OFFLINE_ROOM='+json.dumps(assets,separators=(',',':'))+';')
-for marker,file in [('STYLE','style.css'),('WORLD_STYLE','world.css'),('REALISM_STYLE','realism.css'),('NAV_STYLE','navigation.css'),('CITY_FILM_STYLE','city-film.css'),('ROOM_TOOLS','vendor/room-tools.min.js'),('ENGINE','vendor/three.min.js'),('DATA','data.js'),('CORE','core.js'),('SCENE','scene.js'),('UI','ui.js'),('WORLD','world.js'),('STORE','store.js'),('REALISM','realism.js'),('NAVIGATION','navigation.js'),('CITY_FILM','city-film.js'),('INTERIOR','interior.js'),('FIXTURES','fixtures.js'),('LIGHTING','lighting.js'),('LIFE_TEXT','life-text.js'),('LIFE','life.js'),('LIFE_MORE','life-more.js'),('LIFE_WORLD','life-world.js'),('LIFE_REAL','life-real.js'),('LIFE_HOME','life-home.js'),('LIFE_ITEMS','life-items.js'),('LIFE_CATALOG','life-catalog.js'),('LIFE_BODY','life-body.js'),('STORE_REAL','store-real.js'),('AUDIO','audio.js'),('LEVELS','levels.js')]:
+for marker,file in [('STYLE','style.css'),('WORLD_STYLE','world.css'),('REALISM_STYLE','realism.css'),('NAV_STYLE','navigation.css'),('CITY_FILM_STYLE','city-film.css'),('ROOM_TOOLS','vendor/room-tools.min.js'),('ENGINE','vendor/three.min.js'),('DATA','data.js'),('CORE','core.js'),('SCENE','scene.js'),('UI','ui.js'),('WORLD','world.js'),('STORE','store.js'),('REALISM','realism.js'),('NAVIGATION','navigation.js'),('CITY_FILM','city-film.js'),('INTERIOR','interior.js'),('FIXTURES','fixtures.js'),('LIGHTING','lighting.js'),('LIFE_TEXT','life-text.js'),('LIFE','life.js'),('LIFE_MORE','life-more.js'),('LIFE_WORLD','life-world.js'),('LIFE_REAL','life-real.js'),('LIFE_HOME','life-home.js'),('LIFE_ITEMS','life-items.js'),('LIFE_CATALOG','life-catalog.js'),('LIFE_BODY','life-body.js'),('STORE_REAL','store-real.js'),('AUDIO','audio.js'),('LEVELS','levels.js'),('LEVEL_MINIGAMES','level-minigames.js')]:
     text=(SRC/file).read_text()
     if marker=='DATA': text+='\n'+(SRC/'catalog-gen.js').read_text()
     if marker!='STYLE': text=text.replace('</script','<\\/script')
@@ -47,4 +47,4 @@ with ZipFile(zip_tmp,'w',ZIP_DEFLATED,compresslevel=8) as z:
 zip_tmp.replace(ROOT/'dist'/'Game-playable.zip')
 old_zip=ROOT/'Game-playable.zip'
 if old_zip.exists(): old_zip.unlink()
-print(f'Playable HTML published: {len(html.encode()):,} bytes; ZIP: {(ROOT/"dist"/"Game-playable.zip").stat().st_size:,} bytes (dist/, uploaded as a GitHub Release asset)')
+print(f'Built offline HTML: {len(html.encode()):,} bytes; ZIP: {(ROOT/"dist"/"Game-playable.zip").stat().st_size:,} bytes (local dist/)')

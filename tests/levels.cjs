@@ -9,7 +9,7 @@ const ctx = {
   buildRoom(){}, setFirstPerson(){}, getPlayerPosition(){return null;}, $(selector){return null;},
 };
 vm.createContext(ctx);
-for (const f of ["src/data.js","src/catalog-gen.js","src/core.js","src/life-text.js","src/life.js","src/life-more.js","src/life-real.js","src/life-home.js","src/life-items.js","src/life-catalog.js","src/levels.js"])
+for (const f of ["src/data.js","src/catalog-gen.js","src/core.js","src/life-text.js","src/life.js","src/life-more.js","src/life-real.js","src/life-home.js","src/life-items.js","src/life-catalog.js","src/levels.js","src/level-minigames.js"])
   vm.runInContext(fs.readFileSync(f,"utf8"),ctx,{filename:f});
 const run = (code) => vm.runInContext(code,ctx);
 run(`
@@ -119,6 +119,16 @@ G.minute=2*1440+23*60+30;ok(lvTryAt("bell",G.minute),"the thousand-day room comb
 G.minute=3*1440+21*60;ok(lvTryAt("radio",G.minute),"the thousand-day room combines the radio mechanism");
 lrPrecip=()=>"rain";G.minute=4*1440+19*60;ok(lvTryAt("ledger",G.minute,true),"the thousand-day room combines the rain ledger");
 ok(G.level.cut===10,"combined mechanisms each reduce their own number of hidden days");
+
+// The new hand-skill games are distinct from the secret chapter-time gates.
+g=startChapter("bellhouse");
+ok(lvMiniConfig("bell").kind==="timing"&&lvMiniConfig("wall").kind==="memory","doorbell and wall use distinct timing and spatial-memory games");
+ok(lvMiniConfig("radio").kind==="tune"&&lvMiniConfig("ledger").motif==="flame","radio tuning and ledger flame control have chapter-specific play");
+ok(lvMiniConfig("clock",false).motif==="pendulum"&&lvMiniConfig("clock",true).kind==="crank","grandfather clock has separate pendulum and winding games");
+const wallPattern=lvMiniPattern(4,3,"wall");ok(wallPattern.length===4&&wallPattern.every(x=>x>=0&&x<3)&&JSON.stringify(wallPattern)===JSON.stringify(lvMiniPattern(4,3,"wall")),"wall sequence is reproducible without advancing the game random stream");
+g=startChapter("thousand",{radio:1,lighter:1});
+ok(lvMiniConfig("wall").length===5&&lvMiniConfig("bell").attempts===4,"final room uses longer, harder versions of the same clue games");
+G.minute=1440+23*60+30;ok(!lvTryAt("bell",G.minute,false,false)&&G.level.cut===0&&G.level.wrong===1,"a perfect hidden-window time still requires winning the hand-skill game");
 
 // Bought clocks work, drift, stop for power, or need a battery/winding; time itself remains absent from HUD data.
 g=startChapter("bellhouse",{lv_mwatch:1,lv_qwatch:1,lv_digital:1,lv_plugclock:1,battery:2});

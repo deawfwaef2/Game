@@ -393,3 +393,21 @@
 ## Publication check
 - Local checkpoint: `d3ba4eefa35017a3296ade36452ba0a2d3cc2fab`, annotated `v0.21.0-preview`.
 - No-token push attempts were safely blocked: strict SSH lacked a verified GitHub host key; HTTPS with credential helpers disabled had no username. No verification bypass, token use, or remote mutation. A read-only post-check confirmed remote `main` remains at v0.18 commit `92bebdcd15749bfae9d452ca611256802323fdb7` and v0.21 is not on the remote.
+
+# v0.22.0-preview — immersive chapter archive and short mechanism games (2026-10-19)
+
+## Gameplay / visual checks
+- Six separate chapter cover illustrations load from embedded `data:image/jpeg` assets in the offline build. The chapter archive shows all six cards at the 1440×900 QA viewport; lower-row cards fit in view, and locked cards retain readable status and budget without the former overlay.
+- `tests/levels-browser.cjs`: chapter picker art/lock status/budgets, order-book checkout, hidden-clock room, timing challenge, cancellation, and radio-tuning continuation pass. A clean timing-game result does not bypass the hidden trigger; cancel adds no attempt and the mini-game pauses the hidden simulation. **0 external requests, 0 JS errors**.
+- Manually inspected `tests/artifacts/levels/02-chapter-book.jpg` and `05-wall-mini-game.jpg`; reduced scanlines and card height are legible, and the memory-game controls/status fit the viewport.
+
+## Regression results
+- `node tests/levels.cjs`: **108 assertions pass**; `node tests/simulation.cjs`: **165 deterministic assertions pass**, including the classic 365-day policy.
+- `tests/browser.cjs`: all physical-world, shop, placement, purchase-lock, save/import, touch and no-WebGL tests pass. First invocation hit a 15-second title-button click timeout under software GPU; retry with a 30-second action timeout passed. **0 external requests, 0 JS errors**.
+- `tests/realism.cjs`, `tests/navigation.cjs`, `tests/audio.cjs`, and `tests/life.cjs` pass. Navigation covers **257 seeded routes** and reports `liveClock:true`; audio decodes **72/72** clips. No JS errors or external requests reported.
+
+## Build / boundaries
+- `python3 tools/build.py` built self-contained offline `index.html` (**24,273,575 bytes**) and local `dist/Game-playable.zip` (**30,770,828 bytes**) after the visual refinements. The generated ZIP and QA screenshots are temporary; keep the root HTML build, but remove `dist/` and `tests/artifacts/` after any packaging/checkpoint step to respect the 128 MB workspace cap.
+- Local generated illustrations remain source assets; no external styles, images, fonts, scripts, or network calls were added. The challenge UI does not show date, clock or hidden days; successful hand-skill only proceeds to the unchanged `lvTryAt()` secret checks. Chapters retain their fixed mechanisms, budgets, penalties, unlock flow and star-by-speed scoring; classic mode is unchanged.
+- `tools/build.py` now describes ZIP creation as a **local build**, not a GitHub upload.
+- Local v0.22 checkpoint/tag has not yet been created at the time this entry was written. Do not push without a verified GitHub host key and authorized credential; never use the previously pasted PAT and remind the user to revoke it.

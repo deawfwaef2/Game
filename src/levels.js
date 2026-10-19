@@ -370,7 +370,7 @@ function lvOutcome(ok, reward, penalty = 1) {
   else { l.wrong++; l.penalty += penalty * lvDifficulty(l.difficulty).penalty; }
   return !!ok;
 }
-function lvTryAt(action, at = G.minute, shift = false) {
+function lvTryAt(action, at = G.minute, shift = false, skillOK = true) {
   const l = lvState();
   if (!l) return false;
   const id = l.id, t = lvTimeOf(at);
@@ -378,13 +378,13 @@ function lvTryAt(action, at = G.minute, shift = false) {
     const key = id === "thousand" ? "bell" : "press";
     const night = Math.floor(at / 1440) - (lvTimeOf(at) < 60 ? 1 : 0);
     if (!lvAttemptOnce(key, at, night)) return false;
-    const ok = lvWithinWindow(at, 23 * 60, 60);
+    const ok = skillOK && lvWithinWindow(at, 23 * 60, 60);
     lvOutcome(ok, id === "thousand" ? 4 : 1, id === "thousand" ? 2 : 1);
     return ok;
   }
   if (id === "sealed") {
     if (action !== "wall" || !lvAttemptOnce("wall-" + l.cueNo, at)) return false;
-    const ok = l.cueOpen && at <= l.cueUntil;
+    const ok = skillOK && l.cueOpen && at <= l.cueUntil;
     lvOutcome(ok, 3, 2);
     l.cueOpen = false;
     lvNextCue(at);
@@ -392,14 +392,14 @@ function lvTryAt(action, at = G.minute, shift = false) {
   }
   if (id === "night-radio") {
     if (action !== "radio" || !lvAttemptOnce("radio", at)) return false;
-    const ok = lvWithinWindow(at, 20 * 60 + 30, 22 * 60) && (G.power || has("battery"));
+    const ok = skillOK && lvWithinWindow(at, 20 * 60 + 30, 22 * 60) && (G.power || has("battery"));
     lvOutcome(ok, 3, 2);
     return ok;
   }
   if (id === "ledger") {
     if (action !== "ledger" || !shift || !lvAttemptOnce("ledger", at)) return false;
     const rain = typeof lrPrecip === "function" ? lrPrecip(at) === "rain" : false;
-    const ok = lvWithinWindow(at, 18 * 60, 20 * 60) && rain && has("lighter");
+    const ok = skillOK && lvWithinWindow(at, 18 * 60, 20 * 60) && rain && has("lighter");
     if (has("lighter")) lvConsumeOne("lighter");
     lvOutcome(ok, 2, 2);
     return ok;
@@ -408,7 +408,8 @@ function lvTryAt(action, at = G.minute, shift = false) {
     if (action !== "clock") return false;
     if (shift) {
       if (!lvAttemptOnce("wind", at)) return false;
-      if (at - (l.windAt || l.startedAt) < 6 * 1440) {
+      const due = at - (l.windAt || l.startedAt) >= 6 * 1440;
+      if (!skillOK || !due) {
         l.wrong++; l.penalty += lvDifficulty(l.difficulty).penalty;
         return false;
       }
@@ -417,14 +418,14 @@ function lvTryAt(action, at = G.minute, shift = false) {
     }
     if (!lvAttemptOnce("clock", at)) return false;
     const due = !l.windAt || at - l.windAt <= 8 * 1440;
-    const ok = lvWithinWindow(at, 11 * 60 + 50, 12 * 60 + 10) && due;
+    const ok = skillOK && lvWithinWindow(at, 11 * 60 + 50, 12 * 60 + 10) && due;
     lvOutcome(ok, 4, 3);
     return ok;
   }
   if (id === "thousand") {
     if (action === "wall") {
       if (!lvAttemptOnce("wall-" + l.cueNo, at)) return false;
-      const ok = l.cueOpen && at <= l.cueUntil;
+      const ok = skillOK && l.cueOpen && at <= l.cueUntil;
       lvOutcome(ok, 3, 2);
       l.cueOpen = false;
       lvNextCue(at);
@@ -432,13 +433,13 @@ function lvTryAt(action, at = G.minute, shift = false) {
     }
     if (action === "radio") {
       if (!lvAttemptOnce("radio", at)) return false;
-      const ok = lvWithinWindow(at, 20 * 60 + 30, 22 * 60) && (G.power || has("battery"));
+      const ok = skillOK && lvWithinWindow(at, 20 * 60 + 30, 22 * 60) && (G.power || has("battery"));
       lvOutcome(ok, 4, 2); return ok;
     }
     if (action === "ledger") {
       if (!shift || !lvAttemptOnce("ledger", at)) return false;
       const rain = typeof lrPrecip === "function" && lrPrecip(at) === "rain";
-      const ok = lvWithinWindow(at, 18 * 60, 20 * 60) && rain && has("lighter");
+      const ok = skillOK && lvWithinWindow(at, 18 * 60, 20 * 60) && rain && has("lighter");
       if (has("lighter")) lvConsumeOne("lighter");
       lvOutcome(ok, 2, 2); return ok;
     }
@@ -576,15 +577,10 @@ actDrink = function (uidValue) {
   return result;
 };
 function lvServiceOrTry(id, shift = false) {
-  if (id === "bell") { lvTryAt("bell", G.minute, shift); advanceTime(1, "level-action", false); return; }
-  if (id === "wall") { lvTryAt("wall", G.minute, shift); advanceTime(1, "level-action", false); return; }
-  if (id === "ledger") {
-    if (shift && !has("lighter")) return notify("抽屉里没有火柴或打火机。", "warn");
-    lvTryAt("ledger", G.minute, shift); advanceTime(1, "level-action", false); return;
-  }
-  if (id === "clock") {
-    lvTryAt("clock", G.minute, shift); advanceTime(1, "level-action", false); return;
-  }
+  if (!lvMode() || G?.ended) return;
+  if (id === "ledger" && !shift) { advanceTime(1, "level-action", false); return; }
+  if (id === "ledger" && shift && !has("lighter")) return notify("抽屉里没有火柴或打火机。", "warn");
+  return lvStartMiniGame(id, shift);
 }
 function lvBuildFixtures() {
   if (!G?.level || G.ended || phase !== "playing" || typeof roomRoot === "undefined" || !roomRoot || typeof W === "undefined" || !W.enabled) return;
@@ -709,29 +705,44 @@ showEnd = function () {
   if (btn) btn.insertAdjacentHTML("beforebegin", `<button class="lv-next-button" data-lv-picker>回到章节簿 · ${lvProgress.unlocked}/6已解锁</button>`);
   return r;
 };
+function lvChapterCover(id) {
+  return typeof OFFLINE_ROOM !== "undefined" && OFFLINE_ROOM.textures
+    ? OFFLINE_ROOM.textures[`chapter-${id}`] || ""
+    : "";
+}
 function lvOpenPicker() {
   let root = document.getElementById("lvPicker");
   if (!root) {
-    root = document.createElement("section"); root.id="lvPicker"; root.className="lv-overlay"; root.hidden=true;
-    root.innerHTML = `<div class="lv-picker-card"><header><div><span class="lv-kicker">ANDERS EMPIRE · SEALED ROOMS</span><h2>章节簿</h2><p>每一间房都有自己的故事、时限和规则。没有时钟，也没有成功提示。</p></div><button class="lv-close" data-lv-close aria-label="关闭">×</button></header><section class="lv-difficulty-block"><div class="lv-difficulty-heading"><strong>章节难度</strong><span>只影响章节；经典365天规则保持不变</span></div><div id="lvDifficultySelect" class="lv-difficulty-grid"></div></section><div id="lvChapterGrid" class="lv-chapter-grid"></div><footer><span>通关会留下星级，并逐步开放供销社的全国目录。</span><span>时间在房间里不会自己告诉你。</span></footer></div>`;
+    root = document.createElement("section");
+    root.id = "lvPicker";
+    root.className = "lv-overlay lv-archive-overlay";
+    root.hidden = true;
+    root.innerHTML = `<div class="lv-picker-card lv-archive-card"><header class="lv-archive-head"><div class="lv-archive-title"><div class="lv-archive-eyebrow"><span>ROOM ARCHIVE · ANDERS EMPIRE · 1986</span><span>FIELD DOSSIER / 06 ROOMS</span></div><h2>六扇门，六种等待。</h2><p>楼道尽头的灯总是慢半拍。挑一间房，守住一次采购，听它把故事说完。</p></div><div class="lv-archive-seal" aria-hidden="true"><span>闭门</span><small>THE LAST TENANT<br>安德士帝国 · 1986</small></div><button class="lv-close lv-archive-close" data-lv-close aria-label="关闭章节簿">×</button></header><div class="lv-archive-rail"><span>案件档案 / CASE FILES</span><span id="lvArchiveProgress">已解锁 1 / 6</span></div><section class="lv-difficulty-block"><div class="lv-difficulty-heading"><strong>选择生活尺度</strong><span>只影响章节预算、机关窗口与误触代价；经典365天不变</span></div><div id="lvDifficultySelect" class="lv-difficulty-grid"></div></section><div class="lv-grid-heading"><span>ROOMS UNDER WATCH</span><span>选择一间已开放的房间，进入开局采购</span></div><div id="lvChapterGrid" class="lv-chapter-grid"></div><footer class="lv-archive-footer"><span>通关留星，逐步开启全国订货簿。时间不会主动告诉你机关是否生效。</span><span>保存于房间里的故事 · CLOSED DOOR ARCHIVE</span></footer></div>`;
     document.body.appendChild(root);
   }
   lvRenderPicker(root);
-  root.hidden=false;
+  root.hidden = false;
   root.querySelector(".lv-close")?.focus();
 }
 function lvRenderPicker(root) {
   if (!root) return;
+  const progress = root.querySelector("#lvArchiveProgress");
+  if (progress) progress.textContent = `已解锁 ${lvUnlocked()} / 6`;
   const choices = root.querySelector("#lvDifficultySelect");
-  if (choices) choices.innerHTML = Object.values(LV_DIFFICULTIES).map((d) =>
-    `<button class="lv-difficulty-card ${d.id === lvDifficultyKey ? "selected" : ""}" data-lv-difficulty="${d.id}" aria-pressed="${d.id === lvDifficultyKey}"><strong>${d.name}</strong><span>${d.note}</span></button>`
+  if (choices) choices.innerHTML = Object.values(LV_DIFFICULTIES).map((d, i) =>
+    `<button class="lv-difficulty-card ${d.id === lvDifficultyKey ? "selected" : ""}" data-lv-difficulty="${d.id}" aria-pressed="${d.id === lvDifficultyKey}"><span class="lv-difficulty-index">0${i + 1}</span><strong>${d.name}</strong><span>${d.note}</span></button>`
   ).join("");
   const grid = root.querySelector("#lvChapterGrid");
   if (!grid) return;
   grid.innerHTML = LV_CHAPTERS.map((c) => {
-    const record = lvProgress.clears[c.id], unlocked = c.no <= lvUnlocked();
-    const stars = record ? `<span class="lv-stars">${"★".repeat(record.stars)}${"☆".repeat(3-record.stars)}</span>` : `<span class="lv-locked">${unlocked ? "尚未通关" : "完成前一章后开放"}</span>`;
-    return `<button class="lv-chapter ${unlocked ? "" : "locked"}" ${unlocked ? `data-level-select="${c.id}"` : "disabled"}><span class="lv-chapter-no">${String(c.no).padStart(2,"0")} / 06</span><h3>${esc(c.title)}</h3><p>${esc(c.synopsis)}</p><div class="lv-card-meta"><span>期限 · ${c.nominal}天<br>预算 · E$ ${lvBudgetFor(c.id, lvDifficultyKey)}</span>${stars}</div><small>${esc(c.hint)}</small></button>`;
+    const record = lvProgress.clears[c.id], unlocked = c.no <= lvUnlocked(), cover = lvChapterCover(c.id);
+    const mark = record
+      ? `<span class="lv-card-status cleared">已留档 · ${"★".repeat(record.stars)}${"☆".repeat(3 - record.stars)}</span>`
+      : unlocked
+        ? `<span class="lv-card-status available">点击进入</span>`
+        : `<span class="lv-card-status locked-status">尚未抵达</span>`;
+    const image = cover ? `<img class="lv-card-photo" src="${cover}" alt="" draggable="false">` : "";
+    return `<button class="lv-chapter ${unlocked ? "" : "locked"}" ${unlocked ? `data-level-select="${c.id}"` : "disabled"} aria-label="第${c.no}章：${esc(c.title)}，${unlocked ? "选择进入" : "完成前一章后开放"}">${image}<span class="lv-card-vignette"></span><span class="lv-card-top"><span>FILE ${String(c.no).padStart(2, "0")} <i>/</i> 06</span>${mark}</span><span class="lv-card-copy"><span class="lv-card-place">${esc(c.place)}</span><strong>${esc(c.title)}</strong><span class="lv-card-story">${esc(c.synopsis)}</span><span class="lv-card-metrics"><span><small>本章期限</small><b>${c.nominal} 天</b></span><span><small>开局预算</small><b>预算 · E$ ${lvBudgetFor(c.id, lvDifficultyKey)}</b></span></span><span class="lv-card-hint">${esc(c.hint)}</span></span></button>`;
   }).join("");
 }
 function lvClosePicker() { const root=document.getElementById("lvPicker"); if(root) root.hidden=true; }
@@ -827,14 +838,14 @@ if(lvBaseWorldTargetInfo) worldTargetInfo=function(o){
   if(id==="shopCatalog") return ["全国订货簿",`E 翻阅完整目录 · ${lvCatalogStock().length.toLocaleString("zh-CN")} 种已开放商品`];
   if(id.startsWith("level:")){
     const key=id.slice(6),l=lvState();
-    const hints={bell:["旧电铃按钮","E 按下 · 墙内的线没有接到门外"],wall:["墙上的空响处","E 敲一下 · 听过走廊的声音再想想"],ledger:["洇开的账本","E 翻看 · Shift+E 点燃一页"],clock:["落地钟","E 拉动链条 · Shift+E 上弦"]};
+    const hints={bell:["旧电铃按钮","E 接住门铃的回声节拍"],wall:["墙上的空响处","E 记住敲击位置，再按序回应"],ledger:["洇开的账本","E 翻看 · Shift+E 稳住火苗"],clock:["落地钟","E 捕捉摆锤 · Shift+E 校正机芯"]};
     return hints[key]||[o.userData.worldName||"旧物件","E 检查"];
   }
   if(id.startsWith("stock:")){
     const batch=G?.inv.find(b=>b.uid===o.userData.uid),it=batch&&DB[batch.id];
     if(it?.levelClock) return [it.name,`T 抬腕读时 · Shift+E ${it.levelClock==="mechanical"?"上弦":it.levelClock==="quartz"||it.levelClock==="digital"?"装干电池":it.levelClock==="calendar"?"撕页":"校时"}`];
   }
-  if(id==="radio"&&lvMode()) return ["旧收音机","E 收听广播 · 某些夜里，杂音会停一会儿"];
+  if(id==="radio"&&lvMode()) return ["旧收音机","E 调谐短波 · 找到载波后，房间仍不会作答"];
   return lvBaseWorldTargetInfo(o);
 };
 const lvBaseWorldInteract=typeof worldInteract==="function"?worldInteract:null;
@@ -843,10 +854,10 @@ if(lvBaseWorldInteract) worldInteract=function(shift=false){
   if(worldIsShopping()&&id==="shopCatalog") return lvOpenOrder();
   if(lvMode()&&id.startsWith("level:")){
     const key=id.slice(6);
-    if(key==="bell") return worldStart("按下墙上的按钮",0.45,()=>lvServiceOrTry("bell",shift),"use","button");
-    if(key==="wall") return worldStart("敲一下墙面",0.55,()=>lvServiceOrTry("wall",shift),"use","tap");
-    if(key==="ledger") return worldStart(shift?"点燃账本的一页":"翻看账本",0.7,()=>lvServiceOrTry("ledger",shift),"use","notebook");
-    if(key==="clock") return worldStart(shift?"给落地钟上弦":"拉动钟链",0.8,()=>lvServiceOrTry("clock",shift),"use","clock");
+    if(key==="bell") return lvStartMiniGame("bell",false);
+    if(key==="wall") return lvStartMiniGame("wall",false);
+    if(key==="ledger") return shift ? lvStartMiniGame("ledger",true) : worldStart("翻看洇开的账本",0.7,()=>advanceTime(1,"level-action",false),"use","notebook");
+    if(key==="clock") return lvStartMiniGame("clock",shift);
   }
   if(lvMode()&&id.startsWith("stock:")){
     const batch=G.inv.find(b=>b.uid===W.focus?.userData.uid),it=batch&&DB[batch.id];
@@ -856,7 +867,8 @@ if(lvBaseWorldInteract) worldInteract=function(shift=false){
 };
 const lvBaseDoLeisure=typeof doLeisure==="function"?doLeisure:null;
 if(lvBaseDoLeisure) doLeisure=function(id){
-  if(lvMode()&&id==="radio"&&has("radio")&&(G.power||has("battery"))) lvTryAt("radio",G.minute,false);
+  if(lvMode()&&id==="radio"&&has("radio")&&(G.power||has("battery")))
+    return lvStartMiniGame("radio",false,()=>lvBaseDoLeisure(id));
   return lvBaseDoLeisure.apply(this,arguments);
 };
 const lvBaseWorldShopInteract=typeof worldShopInteract==="function"?worldShopInteract:null;
@@ -921,11 +933,44 @@ function lvEnsureStyles() {
   const f=document.createElement("style");
   f.textContent=`.lv-fallback-tools{position:fixed;right:14px;bottom:92px;z-index:600;display:flex;flex-direction:column;gap:7px;max-width:min(310px,calc(100vw - 28px));padding:12px;background:#e8e0cced;border:1px solid #b5a989;box-shadow:0 8px 26px #171a1433;color:#35362d;font:13px/1.4 system-ui,sans-serif}.lv-fallback-tools strong{font:600 12px system-ui,sans-serif;letter-spacing:.08em}.lv-fallback-tools button{border:1px solid #9a8b68;background:#f3ecd9;padding:9px 11px;text-align:left;color:#3b3c32;cursor:pointer;font:13px system-ui,sans-serif}.lv-fallback-tools button:hover{background:#e0d2af}`;
   document.head.appendChild(f);
+  const archive=document.createElement("style");archive.id="lvArchiveStyles";archive.textContent=`
+  .lv-archive-overlay{align-items:center;padding:clamp(7px,1.5vw,22px);background:linear-gradient(135deg,#050909ec,#101715e6 55%,#080c0beb);backdrop-filter:blur(14px)}
+  .lv-archive-card{position:relative;isolation:isolate;width:min(1420px,100%);max-height:96dvh;overflow:auto;padding:clamp(16px,2.25vw,32px);border:1px solid #c4b58a55;background:linear-gradient(142deg,#19221df2,#111715f5 64%,#191c17f5);box-shadow:0 38px 120px #000c;color:#eee7d5}
+  .lv-archive-card:before{content:"";position:absolute;inset:0;z-index:-1;opacity:.02;pointer-events:none;background:repeating-linear-gradient(0deg,transparent 0 6px,#fff 7px,transparent 8px),linear-gradient(110deg,#ab8f4f12,transparent 55%)}
+  .lv-archive-head{position:relative;display:flex;align-items:center;justify-content:space-between;gap:24px;padding:2px 56px 18px 0!important;border-bottom:1px solid #c9b88035!important}
+  .lv-archive-title{min-width:0}.lv-archive-eyebrow{display:flex;flex-wrap:wrap;gap:9px 18px;align-items:center;color:#c7b27e;font:700 9px/1.4 system-ui,sans-serif;letter-spacing:.19em}.lv-archive-eyebrow span+span{color:#8d927b;letter-spacing:.13em}
+  .lv-archive-title h2{margin:10px 0 7px!important;color:#f0e8d6;font:500 clamp(30px,4vw,48px)/1.1 'Noto Serif CJK SC','Songti SC',Georgia,serif!important;letter-spacing:.08em;text-shadow:0 2px 22px #0009}
+  .lv-archive-title p{max-width:700px!important;margin:0!important;color:#b6b6a9!important;font:13px/1.65 system-ui,sans-serif!important;letter-spacing:.02em}
+  .lv-archive-seal{width:96px;height:96px;flex:0 0 96px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border:1px solid #c4a96977;outline:1px solid #c4a96928;outline-offset:5px;transform:rotate(3deg);color:#d1b66e;text-align:center;background:#a8802710}
+  .lv-archive-seal>span{font:700 27px/1 'Noto Serif CJK SC','Songti SC',serif;letter-spacing:.14em}.lv-archive-seal small{color:#b1a27d;font:8px/1.45 system-ui,sans-serif;letter-spacing:.1em}
+  .lv-archive-close{position:absolute;right:0;top:0;background:#111715b8!important;border-color:#c5b57c77!important;color:#eee6d2!important}
+  .lv-archive-rail{display:flex;justify-content:space-between;gap:12px;margin:13px 0 10px;color:#aaa58e;font:700 9px system-ui,sans-serif;letter-spacing:.17em}.lv-archive-rail span:last-child{color:#d0b875}
+  .lv-archive-card .lv-difficulty-block{margin:0 0 19px;padding:10px 12px 11px;border:1px solid #c3b57a24;background:linear-gradient(90deg,#c5a75b0c,#fff0 65%)}
+  .lv-archive-card .lv-difficulty-heading{color:#d2c8ae;font:12px system-ui,sans-serif}.lv-archive-card .lv-difficulty-heading strong{font-size:13px;letter-spacing:.08em}.lv-archive-card .lv-difficulty-heading span{font-size:10px;color:#969687}
+  .lv-archive-card .lv-difficulty-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-top:8px}
+  .lv-archive-card .lv-difficulty-card{position:relative;display:grid;grid-template-columns:25px 1fr;grid-template-rows:auto auto;align-items:center;gap:1px 8px;min-height:53px;padding:7px 10px;border:1px solid #b7ad8c35;background:#111816a8;color:#e7e0cd;text-align:left;transition:background .16s,border .16s,transform .16s}
+  .lv-archive-card .lv-difficulty-card:hover{transform:translateY(-1px);border-color:#d0b56d88;background:#242c23}.lv-archive-card .lv-difficulty-card.selected{border-color:#d8bb70;background:linear-gradient(105deg,#8c713a63,#3b4432);box-shadow:inset 0 0 0 1px #d0ad6077}
+  .lv-difficulty-index{grid-row:1/3;color:#b89a57;font:700 10px Georgia,serif}.lv-archive-card .lv-difficulty-card strong{font:700 12px system-ui,sans-serif;color:#f1e8d0}.lv-archive-card .lv-difficulty-card span:last-child{font:10px/1.35 system-ui,sans-serif;color:#a5a18d}
+  .lv-grid-heading{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin:0 0 9px;color:#d1bd84;font:700 9px system-ui,sans-serif;letter-spacing:.18em}.lv-grid-heading span:last-child{color:#9b9b8a;font:10px system-ui,sans-serif;letter-spacing:.04em}
+  .lv-archive-card .lv-chapter-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0 0 15px}
+  .lv-archive-card .lv-chapter{position:relative;isolation:isolate;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden;min-width:0;min-height:clamp(215px,25vh,265px);padding:13px 14px 12px;border:1px solid #c9bb9354;background:#161e1bd9;color:#f1ead9;text-align:left;cursor:pointer;box-shadow:0 5px 22px #0005;transition:transform .2s,border .2s,box-shadow .2s;animation:lvArchiveReveal .42s both;animation-delay:calc(var(--card-index,1)*35ms)}
+  @keyframes lvArchiveReveal{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  .lv-archive-card .lv-chapter:not(:disabled):hover{transform:translateY(-3px);border-color:#ddc580;box-shadow:0 13px 30px #0008,0 0 0 1px #d3b86b33}
+  .lv-archive-card .lv-chapter:focus-visible{outline:2px solid #e4c977;outline-offset:2px}.lv-card-photo,.lv-card-vignette{position:absolute;z-index:-2;inset:0;width:100%;height:100%;pointer-events:none}.lv-card-photo{object-fit:cover;object-position:center 50%;filter:saturate(.74) contrast(1.05);transition:transform .5s,filter .3s}.lv-chapter:hover .lv-card-photo{transform:scale(1.035);filter:saturate(.94) contrast(1.08)}
+  .lv-card-vignette{z-index:-1;background:linear-gradient(180deg,#050909a8 0%,#080d0d0b 32%,#080d0d1b 47%,#080d0de8 100%),linear-gradient(90deg,#080b0b4c,#0000 55%,#0002)}
+  .lv-archive-card .lv-chapter.locked .lv-card-photo{filter:grayscale(.92) brightness(.42)}.lv-archive-card .lv-chapter.locked .lv-card-vignette{background:linear-gradient(180deg,#070a0bc9,#080b0b33 39%,#090d0cf0)}
+  .lv-card-top{display:flex;justify-content:space-between;align-items:center;gap:8px;color:#e4d8b8;font:700 9px system-ui,sans-serif;letter-spacing:.14em}.lv-card-top i{font-style:normal;color:#c4aa65}.lv-card-status{padding:5px 7px;border:1px solid #eee2c34c;background:#09100eb8;color:#e7ddc6;font:700 8px system-ui,sans-serif;letter-spacing:.06em;white-space:nowrap}.lv-card-status.available{color:#ead195;border-color:#d6b75b77}.lv-card-status.cleared{color:#f3d983;border-color:#e1c36a77}.lv-card-status.locked-status{color:#aaa79a}
+  .lv-card-copy{display:grid;gap:5px;width:100%;margin-top:auto}.lv-card-place{color:#d0bd83;font:700 9px system-ui,sans-serif;letter-spacing:.13em;text-transform:uppercase}.lv-card-copy>strong{color:#f2ebd9;font:500 clamp(19px,2vw,25px)/1.15 'Noto Serif CJK SC','Songti SC',Georgia,serif;letter-spacing:.07em;text-shadow:0 2px 12px #000b}.lv-card-story{display:-webkit-box;min-height:39px;overflow:hidden;-webkit-line-clamp:2;-webkit-box-orient:vertical;color:#dedacc;font:10px/1.55 system-ui,sans-serif;text-shadow:0 2px 6px #000}
+  .lv-card-metrics{display:grid;grid-template-columns:.8fr 1.2fr;gap:12px;padding-top:8px;border-top:1px solid #e8d8b744}.lv-card-metrics span{display:grid;gap:3px}.lv-card-metrics small{color:#b9b5a4;font:8px system-ui,sans-serif;letter-spacing:.11em}.lv-card-metrics b{color:#efe5cc;font:700 11px system-ui,sans-serif;letter-spacing:.02em}.lv-card-hint{display:none;color:#c9c2ad;font:9px/1.4 system-ui,sans-serif}
+  .lv-card-lock{position:absolute;inset:auto 0 0;display:grid;grid-template-columns:36px 1fr;align-items:center;gap:2px 8px;padding:12px 14px;background:linear-gradient(90deg,#080b0bf2,#111715e8);color:#d1c8b1;pointer-events:none}.lv-lock-glyph{grid-row:1/3;width:30px;height:30px;display:grid;place-items:center;border:1px solid #b7aa8577;border-radius:50%;color:#c6b276;font-size:20px}.lv-card-lock b{font:700 10px system-ui,sans-serif;letter-spacing:.08em}.lv-card-lock small{color:#a5a193;font:9px system-ui,sans-serif}
+  .lv-archive-footer{display:flex;justify-content:space-between;gap:15px;padding-top:10px;border-top:1px solid #c7b87b33;color:#aaa795;font:10px/1.5 system-ui,sans-serif}.lv-archive-footer span:last-child{color:#b9a878;text-align:right;letter-spacing:.1em}
+  @media(max-width:850px){.lv-archive-card .lv-chapter-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.lv-archive-seal{width:72px;height:72px;flex-basis:72px}.lv-archive-seal>span{font-size:21px}.lv-archive-seal small{font-size:7px}}
+  @media(max-width:560px){.lv-archive-overlay{padding:5px}.lv-archive-card{padding:14px;max-height:98dvh}.lv-archive-head{padding-right:43px!important}.lv-archive-seal{display:none}.lv-archive-title h2{font-size:29px!important}.lv-archive-title p{font-size:11px!important}.lv-archive-eyebrow{font-size:8px}.lv-archive-eyebrow span+span{display:none}.lv-archive-rail{font-size:8px}.lv-archive-card .lv-difficulty-block{padding:8px}.lv-archive-card .lv-difficulty-heading{display:block}.lv-archive-card .lv-difficulty-heading span{display:block;margin-top:3px}.lv-archive-card .lv-difficulty-grid{gap:4px}.lv-archive-card .lv-difficulty-card{grid-template-columns:1fr;gap:2px;min-height:55px;padding:6px}.lv-difficulty-index{display:none}.lv-archive-card .lv-difficulty-card strong{font-size:10px}.lv-archive-card .lv-difficulty-card span:last-child{font-size:8px}.lv-grid-heading span:last-child{display:none}.lv-archive-card .lv-chapter-grid{grid-template-columns:1fr;gap:8px}.lv-archive-card .lv-chapter{min-height:265px;padding:12px}.lv-card-copy>strong{font-size:22px}.lv-card-story{min-height:34px}.lv-archive-footer{display:block}.lv-archive-footer span{display:block}.lv-archive-footer span:last-child{text-align:left;margin-top:4px}}
+  `;document.head.appendChild(archive);
 }
 function lvFallbackDo(action,shift=false){
   if(action==="radio"){
     if(!has("radio")) return notify("先拆出自己买的收音机。","warn");
-    if(lvMode()) lvTryAt("radio",G.minute,false);
     return doLeisure("radio");
   }
   if(action==="ledger"&&shift&&!has("lighter")) return notify("抽屉里没有火柴或打火机。","warn");
@@ -939,12 +984,12 @@ function lvFallbackRender(){
   if(!b){b=document.createElement("aside");b.id="lvFallbackTools";b.className="lv-fallback-tools";document.body.appendChild(b);}
   const id=G.level.id, rows=[];
   const add=(action,label,shift=false)=>rows.push(`<button data-lv-fallback-action="${action}" data-lv-fallback-shift="${shift}">${label}</button>`);
-  if(id==="bellhouse") add("bell","按下墙边的旧按钮");
-  if(id==="sealed") add("wall","敲一下墙面");
-  if(id==="night-radio") add("radio","收听收音机");
-  if(id==="ledger"){add("ledger","翻看账本");add("ledger","点燃一页",true);}
-  if(id==="clockmaker"){add("clock","拉动钟链");add("clock","给机芯上弦",true);}
-  if(id==="thousand"){add("bell","按下墙边的旧按钮");add("wall","敲一下墙面");add("radio","收听收音机");add("ledger","点燃一页",true);}
+  if(id==="bellhouse") add("bell","听拍并回应旧电铃");
+  if(id==="sealed") add("wall","复现隔墙敲击顺序");
+  if(id==="night-radio") add("radio","调谐短波，锁定载波");
+  if(id==="ledger"){add("ledger","翻看账本");add("ledger","护住火苗，点亮一页",true);}
+  if(id==="clockmaker"){add("clock","捕捉摆锤的平衡点");add("clock","按齿轮节奏上弦",true);}
+  if(id==="thousand"){add("bell","听拍并回应旧电铃");add("wall","复现隔墙敲击顺序");add("radio","调谐短波，锁定载波");add("ledger","护住火苗，点亮一页",true);}
   b.innerHTML=`<strong>房间里的旧东西</strong>${rows.join("")}`;
 }
 if(typeof document!=="undefined"){

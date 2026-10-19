@@ -17,6 +17,11 @@ const fileURL="file://"+path.resolve("index.html"),out=path.resolve("tests/artif
  await page.locator("#lvPicker").waitFor({state:"visible"});
  assert.equal(await page.locator(".lv-chapter").count(),6);
  assert.equal(await page.locator(".lv-chapter:not([disabled])").count(),1);
+ assert.equal(await page.locator(".lv-card-photo").count(),6,"each chapter is illustrated with its own local cover image");
+ await page.waitForFunction(()=>[...document.querySelectorAll(".lv-card-photo")].every(i=>i.complete&&i.naturalWidth>500),{timeout:15000});
+ await page.waitForFunction(()=>[...document.querySelectorAll(".lv-chapter")].every(el=>getComputedStyle(el).opacity==="1"),{timeout:5000});
+ const coverAudit=await page.locator(".lv-card-photo").evaluateAll(xs=>xs.map(i=>({data:i.src.startsWith("data:image/jpeg;base64,"),width:i.naturalWidth})));
+ assert.ok(coverAudit.every(x=>x.data&&x.width>500),"chapter art is embedded and fully offline");
  assert.equal(await page.locator("[data-lv-difficulty]").count(),3,"chapter picker offers three difficulty profiles");
  assert.equal(await page.locator('[data-lv-difficulty="standard"]').getAttribute("aria-pressed"),"true","standard difficulty is selected by default");
  assert.ok((await page.locator('[data-level-select="bellhouse"]').innerText()).includes("预算 · E$ 300"),"chapter cards show chapter-specific budget");
@@ -57,6 +62,34 @@ const fileURL="file://"+path.resolve("index.html"),out=path.resolve("tests/artif
  assert.ok(report.label.includes("借住的人"));assert.equal(report.mechanism,true);
  assert.ok(report.wrist[0]==="——","packed watch is not yet available to read");
  await snap("04-hidden-clock-room.jpg",84);
+ const beforeMini=await page.evaluate(()=>({minute:G.minute,wrong:G.level.wrong,cut:G.level.cut}));
+ await page.evaluate(()=>lvStartMiniGame("wall",false));
+ await page.locator("#lvMiniOverlay").waitFor({state:"visible"});
+ assert.equal(await page.evaluate(()=>panelType),"chapter-mini");
+ await snap("05-wall-mini-game.jpg",84);
+ await page.waitForTimeout(1200);
+ assert.equal(await page.evaluate(()=>G.minute),beforeMini.minute,"real-time mini-game pauses the hidden simulation clock");
+ await page.keyboard.press("Escape");
+ await page.waitForFunction(()=>lvMiniState===null&&panelType==="");
+ assert.deepStrictEqual(await page.evaluate(()=>({wrong:G.level.wrong,cut:G.level.cut})),{wrong:beforeMini.wrong,cut:beforeMini.cut},"cancelling a challenge does not count as a mechanism attempt");
+ await page.evaluate(()=>{G.minute=3*1440+12*60;lvStartMiniGame("bell",false);});
+ await page.locator("#lvMiniOverlay").waitFor({state:"visible"});
+ for(let i=0;i<3;i++){
+   await page.waitForFunction(()=>lvMiniState&&Math.abs(lvMiniState.position-.5)<.1,{timeout:10000});
+   await page.locator("[data-lv-mini-tap]").click();
+ }
+ await page.waitForFunction(()=>lvMiniState===null&&document.querySelector("#lvMiniOverlay").hidden,{timeout:10000});
+ const afterMini=await page.evaluate(()=>({cut:G.level.cut,wrong:G.level.wrong,hidden:timeHidden()}));
+ assert.equal(afterMini.cut,beforeMini.cut,"a clean skill-game result does not reveal or bypass the chapter's secret timing gate");
+ assert.equal(afterMini.wrong,beforeMini.wrong+1,"the hidden trigger still records the out-of-window attempt");
+ assert.equal(afterMini.hidden,true,"mini-game never exposes the chapter clock");
+ await page.evaluate(()=>{G.inv.push({uid:"iqa-radio",id:"radio",units:1,packed:false,opened:true,location:"shelf",bag:0,age:0,created:G.minute});G.power=true;window.__miniAfter=false;lvStartMiniGame("radio",false,()=>window.__miniAfter=true);});
+ await page.locator("#lvMiniSlider").waitFor({state:"visible"});
+ const hiddenCarrier=await page.evaluate(()=>lvMiniState.target);
+ await page.locator("#lvMiniSlider").evaluate((el,target)=>{el.value=String(target);el.dispatchEvent(new Event("input",{bubbles:true}));},hiddenCarrier);
+ await page.locator("[data-lv-mini-lock]").click();
+ await page.waitForFunction(()=>lvMiniState===null&&window.__miniAfter===true);
+ assert.equal(await page.evaluate(()=>panelType),"","radio tuning resolves cleanly without exposing the chapter trigger");
  assert.equal(errors.length,0,errors.join("\n"));assert.equal(requests.length,0,requests.join("\n"));
  console.log("PASS chapter picker / progression lock / large searchable order book / checkout / hidden clock / room fixture; external requests=0; JS errors=0");
  await page.close();await browser.close();

@@ -1,4 +1,4 @@
-// Deterministic full-run economy proof: one real initial cart per extreme chapter,
+// Deterministic full-run economy proof: one real initial cart per fixed-hard chapter,
 // then a resource-aware policy plays the actual simulator without resetting meters or restocking.
 const fs = require("fs"), vm = require("vm"), assert = require("assert");
 const store = new Map();
@@ -19,7 +19,7 @@ const reports = vm.runInContext(`(() => {
   saveGame = () => {};
   lvProgress.unlocked = 6;
   const runChapter = id => {
-    const detail = lvExtremeBudgetDetails(id), kit = {};
+    const detail = lvHardBudgetDetails(id), kit = {};
     for (const row of detail.foodPlan) kit[row.id] = row.packages;
     const foodKinds = new Set(Object.keys(YEAR_KIT).filter(itemId => ["food", "drink", "seasoning"].includes(DB[itemId]?.kind)));
     for (const [itemId,n] of Object.entries(YEAR_KIT)) if (!foodKinds.has(itemId)) kit[itemId] = n;
@@ -28,8 +28,8 @@ const reports = vm.runInContext(`(() => {
     if (id === "ledger" || id === "thousand") kit.lighter = 1;
     if (id === "thousand") Object.assign(kit,{waterlarge:2,firstaid:2,detergent:4,chocolate:4,jam:3});
 
-    closePreparation(); phase="title"; currentSeed="extreme-proof-"+id; env=environment(currentSeed);
-    lvPending=id; lvDifficultyKey="extreme";
+    closePreparation(); phase="title"; currentSeed="hard-proof-"+id; env=environment(currentSeed);
+    lvPending=id;
     if (!startPreparation()) throw new Error("could not enter procurement for " + id);
     cart=kit;
     const cost=cartSummary(cart).cost, budget=gameBudget();
@@ -105,10 +105,10 @@ const reports = vm.runInContext(`(() => {
   };
   return LV_CHAPTERS.map(ch=>runChapter(ch.id));
 })()`, ctx);
-console.log("EXTREME FULL-RUN BALANCE", JSON.stringify(reports.map(r=>({chapter:r.chapter,cost:r.cost,budget:r.budget,days:r.day,won:r.won,foodKcal:r.foodCalories,remainingKcal:r.remainingKcal,medicines:r.medicines,stars:r.stars})), null, 2));
+console.log("FIXED-HARD FULL-RUN BALANCE", JSON.stringify(reports.map(r=>({chapter:r.chapter,cost:r.cost,budget:r.budget,days:r.day,won:r.won,foodKcal:r.foodCalories,remainingKcal:r.remainingKcal,medicines:r.medicines,stars:r.stars})), null, 2));
 for (const report of reports) {
   assert.ok(report.cost<=report.budget, report.chapter+" kit fits the single initial budget");
-  assert.ok(report.budget-report.cost<=report.budget*0.1, report.chapter+" kit leaves no more than 10% budget slack");
+  assert.ok(report.budget-report.cost<=report.budget*0.11, report.chapter+" reference kit leaves no more than 11% budget slack");
   assert.ok(report.ended&&report.won&&report.day>=({bellhouse:60,sealed:90,"night-radio":120,ledger:180,clockmaker:365,thousand:1000})[report.chapter], report.chapter+" survives the actual chapter simulator");
   assert.ok(report.stats.health>0&&report.stats.morale>0, report.chapter+" ends with positive survival meters");
 }

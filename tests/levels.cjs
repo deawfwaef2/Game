@@ -1,6 +1,6 @@
 // Deterministic regression for the hidden-clock chapter mode. No browser, server or network required.
 const fs = require("fs"), vm = require("vm"), assert = require("assert");
-const store = new Map();
+const store = new Map([["anders-room-difficulty-v1", "extreme"]]);
 const ctx = {
   console, Math, JSON, Number, String, Object, Array, Set, Map, Date, Blob, assert,
   localStorage: { getItem:k=>store.get(k)??null, setItem:(k,v)=>store.set(k,String(v)), removeItem:k=>store.delete(k) },
@@ -14,8 +14,8 @@ for (const f of ["src/data.js","src/catalog-gen.js","src/core.js","src/life-text
 const run = (code) => vm.runInContext(code,ctx);
 run(`
 let checks=0; function ok(x,m){assert.ok(x,m);checks++;}
-function startChapter(id, kit={water:1}, difficulty="standard"){
-  closePreparation(); phase="title"; currentSeed="test-"+id; env=environment(currentSeed); lvPending=id; lvDifficultyKey=difficulty;
+function startChapter(id, kit={water:1}, _legacyProfile=""){
+  closePreparation(); phase="title"; currentSeed="test-"+id; env=environment(currentSeed); lvPending=id;
   ok(startPreparation(),"chapter may enter its one-time procurement"); cart={...kit}; ok(beginGame(),"chapter checkout succeeds");
   for(const b of G.inv){b.packed=false;b.opened=true;b.location="shelf";}
   return G;
@@ -31,6 +31,11 @@ ok(LV_PRODUCTS.every(x=>firstA.some(y=>y.id===x.id)),"all timekeeping goods are 
 const starterSamples=lvPhysicalCatalog();
 ok(starterSamples.length===200,"the starter chapter stocks 20 physical samples in each of ten bays");
 ok(SHOP_CATS.every(cat=>starterSamples.some(x=>x.category===cat)),"the starter chapter has at least one physical product in every bay");
+const tierPremium=CATALOG.find(x=>x.gen&&x.trait==="premium"),tierImported=CATALOG.find(x=>x.gen&&x.trait==="imported"),tierClearance=CATALOG.find(x=>x.gen&&x.trait==="clearance"),unitFood=CATALOG.find(x=>x.gen&&x.kind==="food"&&x.kcal>0);
+ok(!!tierPremium&&cgPriceTierText(tierPremium).includes("优选溢价")&&!!tierImported&&cgPriceTierText(tierImported).includes("进口溢价")&&!!tierClearance&&cgPriceTierText(tierClearance).includes("临期折价"),"catalogue price tiers explain premium, imported and clearance price differences");
+ok(!!unitFood&&cgUnitCostText(unitFood).includes("千大卡")&&Math.abs(cgUnitCostValue(unitFood)-unitFood.price*1000/(unitFood.servings*unitFood.kcal))<1e-10,"food comparisons report cost per serving and per thousand calories");
+const brandPriceValues=Object.values(CG_BRAND_STYLE).map(x=>x[1]?.priceX||1);
+ok(Math.max(...brandPriceValues)-Math.min(...brandPriceValues)>=1,"explicit brand positioning creates materially different price brackets");
 lvProgress.unlocked=6;const full=lvCatalogStock();
 ok(full.length===CATALOG.length+LV_PRODUCTS.length,"last unlock exposes the entire catalogue");
 ok(new Set(full.map(x=>x.id)).size===full.length,"chapter catalogue IDs are unique");
@@ -39,30 +44,38 @@ ok(lvPhysicalCatalog().length<=200,"walkable shelf displays only a readable samp
 ok(SHOP_CATS.every(cat=>lvPhysicalCatalog().some(x=>x.category===cat)),"each category receives visible shelf stock");
 lvProgress.unlocked=1;lvPending=null;phase="title";
 
-// Difficulty changes chapter-only budgets; the classic budget remains the original 300.
-lvPending="bellhouse";phase="shop";lvDifficultyKey="calm";ok(gameBudget()===360,"calm chapter budget is increased by twenty percent");
-lvPending="thousand";ok(gameBudget()===3000,"long chapter has a distinctly larger calm budget");
-lvPending="bellhouse";lvDifficultyKey="strict";ok(gameBudget()===246,"strict chapter budget is reduced");
-lvPending=null;phase="title";lvDifficultyKey="standard";ok(gameBudget()===300,"classic 365-day budget remains unchanged");
-const extremeBudgetTable=LV_CHAPTERS.map(ch=>lvBudgetFor(ch.id,"extreme"));
-ok(JSON.stringify(extremeBudgetTable)==="[64,80,87,98,157,429]","extreme budgets reflect the retuned 103%-calorie plan and six-percent reserve");
-const extremeLong=lvExtremeBudgetDetails("thousand"),extremeSubtotal=extremeLong.foodCost+extremeLong.careReserve+extremeLong.setupReserve+extremeLong.mechanismReserve;
-ok(extremeLong.planningKcalPerDay===1463,"extreme chapters plan 103 percent of the measured calorie baseline");
-ok(Math.abs(extremeLong.riskAndPackingReserve/extremeSubtotal-0.06)<1e-10,"extreme reserve remains exactly six percent of the modeled subtotal");
+// Every room uses one fixed, deliberately challenging profile; old profile saves migrate in place.
+ok(Object.keys(LV_DIFFICULTIES).length===1&&LV_DIFFICULTIES.hard.id==="hard","chapter rules expose exactly one fixed difficulty profile");
+ok(Math.abs(lvDifficulty().window-0.68)<1e-10&&Math.abs(lvDifficulty().penalty-1.4)<1e-10&&Math.abs(lvDifficulty().fatigue-1.35)<1e-10,"the single ruleset has fixed challenge, penalty and fatigue multipliers");
+ok(!localStorage.getItem("anders-room-difficulty-v1"),"the obsolete difficulty-picker preference is removed");
+const hardBudgetTable=LV_CHAPTERS.map(ch=>lvBudgetFor(ch.id));
+ok(JSON.stringify(hardBudgetTable)==="[65,76,88,100,155,388]","all chapters use their modeled fixed-hard budgets");
+ok(lvBudgetFor("bellhouse","calm")===lvBudgetFor("bellhouse","strict"),"legacy profile arguments cannot change a chapter budget");
+const hardLong=lvHardBudgetDetails("thousand"),hardSubtotal=hardLong.foodCost+hardLong.careReserve+hardLong.setupReserve+hardLong.mechanismReserve;
+ok(hardLong.planningKcalPerDay===1463,"fixed-hard chapters plan 103 percent of measured baseline calories");
+ok(Math.abs(hardLong.riskAndPackingReserve/hardSubtotal-0.1)<1e-10,"fixed-hard budget keeps a ten-percent packing and risk reserve");
+ok(gameBudget()===300,"classic 365-day budget remains unchanged outside chapter mode");
+let legacyBase=startChapter("bellhouse",{water:1});const legacySnapshot=JSON.parse(JSON.stringify(legacyBase));
+for(const profile of ["calm","standard","strict","extreme"]){
+  const oldSave=JSON.parse(JSON.stringify(legacySnapshot));oldSave.level.difficulty=profile;
+  ok(validateSave(oldSave),"legacy "+profile+" save remains valid");G=oldSave;
+  ok(lvState().difficulty==="hard","legacy "+profile+" save migrates to fixed-hard rules");
+}
+G=JSON.parse(JSON.stringify(legacySnapshot));lvState();
 
-let g=startChapter("bellhouse",{water:1},"calm");ok(G.level.difficulty==="calm"&&Math.abs(G.cash-(360-cartSummary({water:1}).cost))<0.01,"checkout records the selected chapter budget and deducts only purchased goods");
-g=startChapter("night-radio",{radio:1},"calm");ok(lvWithinWindow(2*1440+20*60+15,20*60+30,22*60),"calm difficulty widens chapter signal windows");
-g=startChapter("night-radio",{radio:1},"strict");ok(!lvWithinWindow(2*1440+20*60+30,20*60+30,22*60),"strict difficulty narrows chapter signal windows");
-g=startChapter("bellhouse",{water:1},"strict");G.minute=3*1440+12*60;lvTryAt("bell",G.minute);ok(G.level.penalty===1.5,"strict difficulty increases a wrong-mechanism penalty");
+let g=startChapter("bellhouse",{water:1},"calm");ok(G.level.difficulty==="hard"&&Math.abs(G.cash-(65-cartSummary({water:1}).cost))<0.01,"checkout records the fixed-hard chapter budget and deducts only purchased goods");
+g=startChapter("night-radio",{radio:1});ok(lvWithinWindow(2*1440+21*60+15,20*60+30,22*60),"the fixed-hard radio window retains its midpoint");
+ok(!lvWithinWindow(2*1440+20*60+30,20*60+30,22*60),"the fixed-hard radio window remains narrower than its full clue interval");
+g=startChapter("bellhouse",{water:1});G.minute=3*1440+12*60;lvTryAt("bell",G.minute);ok(Math.abs(G.level.penalty-1.4)<1e-10,"a wrong-mechanism penalty follows the one fixed-hard profile");
 
 g=startChapter("bellhouse");
 ok(g.level.id==="bellhouse"&&g.level.nominal===60,"fresh chapter save stores its chapter rules");
-ok(timeHidden()&&gameGoalDays()===60&&gameBudget()===300,"chapter hides the clock and loads its own goal and budget");
+ok(timeHidden()&&gameGoalDays()===60&&gameBudget()===65,"chapter hides the clock and loads its own fixed-hard goal and budget");
 G.minute=1440+23*60+30;ok(lvTryAt("bell",G.minute),"night bell accepted within its hidden window");
 ok(G.level.cut===1&&G.level.correct===1,"correct bell silently shortens the hidden remaining days");
 G.minute=2*1440+30;ok(!lvTryAt("bell",G.minute),"crossing midnight cannot create a second press for the same night");
 G.minute=3*1440+12*60;ok(!lvTryAt("bell",G.minute),"a daylight press is not correct");
-ok(G.level.wrong===1&&G.level.penalty===1,"wrong press adds a hidden penalty");
+ok(G.level.wrong===1&&Math.abs(G.level.penalty-1.4)<1e-10,"wrong press adds the fixed-hard hidden penalty");
 ok(validateSave(JSON.parse(JSON.stringify(G))),"chapter save validates and round-trips");
 let bad=JSON.parse(JSON.stringify(G));bad.level.id="made-up";ok(!validateSave(bad),"unknown chapter IDs are rejected");
 bad=JSON.parse(JSON.stringify(G));bad.level.rng=-1;ok(!validateSave(bad),"invalid chapter random state is rejected");

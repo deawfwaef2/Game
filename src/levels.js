@@ -7,6 +7,8 @@ const LV_CHAPTERS = [
     synopsis: "你替一个从不露面的邮差守着房间。门边多了一枚磨亮的旧按钮，楼道尽头偶尔有人报时。",
     rumor: "“有些门铃只在没人看见时才响。”房东说完便换了话题。",
     hint: "房间里有一枚墙上的按钮。楼道的声音不是每天都一样。",
+    guide: "从楼道报时与旧按钮开始；听清节奏，再练习回应。",
+    shopTip: "先顾耐储食物、饮水与卫生；计时器是辅助品，不必买满。",
     window: false,
   },
   {
@@ -14,6 +16,8 @@ const LV_CHAPTERS = [
     synopsis: "房东把窗户钉死，留下了墙纸和几块颜色不同的木板。隔壁住着一位听力很好的老人。",
     rumor: "“他从来不开门，只敲墙。你要是听见，就当没听见。”",
     hint: "窗外的光被木板挡住了。墙上有一块补过的地方。",
+    guide: "留意墙纸、补板和隔壁的节奏；先记顺序，再靠近互动。",
+    shopTip: "优先储水、耐放食物与基础照护；封窗会减少自然光线索。",
     window: true,
   },
   {
@@ -21,6 +25,8 @@ const LV_CHAPTERS = [
     synopsis: "夜里，远处的港口汽笛会穿过墙壁。桌上的收音机收得到一段没有台呼的短波。",
     rumor: "“海潮每天都一样，又每天都不一样。”一张旧纸条这样写。",
     hint: "窗边的天线朝着南边。夜里某个时段，杂音会变得很轻。",
+    guide: "准备可用的收音机与供电；比较短波、港口声音和环境变化。",
+    shopTip: "本章需要可用收音机；记得规划电力或电池，也要留足生活物资。",
     window: false,
   },
   {
@@ -28,6 +34,8 @@ const LV_CHAPTERS = [
     synopsis: "上任租客留下的账本被雨水洇开。几页边缘有红线，桌角有烧过的痕迹。",
     rumor: "“那本账本不记钱，只记欠下的日子。”",
     hint: "有些页角被水泡软了。雨声落在窗台时，屋里会有另一种气味。",
+    guide: "账本会受雨水与火光影响；先备好能点火的用品，再观察页面。",
+    shopTip: "请预备能点火的用品；饮水、长储食物和清洁也要一起规划。",
     window: false,
   },
   {
@@ -35,6 +43,8 @@ const LV_CHAPTERS = [
     synopsis: "这里曾经住过一位钟表匠。落地钟比屋里所有家具都高，摆锤被灰布盖住。",
     rumor: "“他每天都来上弦，却总说钟走得不对。”",
     hint: "墙上没有挂历。落地钟的摆锤偶尔停在最高处。",
+    guide: "观察摆锤与走偏的机芯；互动提示区分捕拍和上弦。",
+    shopTip: "计时器可帮你观察，但会走偏、耗电或停摆；先留足基本生活用品。",
     window: false,
   },
   {
@@ -42,16 +52,19 @@ const LV_CHAPTERS = [
     synopsis: "一间没有窗的旧房子，墙上有按钮、敲痕和被雨水泡过的账本。走廊尽头有一台收音机。",
     rumor: "“不要相信它们各自说的话。把三种声音放在一起。”",
     hint: "留下的线索互相矛盾，却又像是同一个人的手笔。没有人说过你该怎么做。",
+    guide: "多条线索需要互相印证；留意反复出现的声音、记号和天气。",
+    shopTip: "先确认不同线索会用到的辅助设备与能源，再安排千日生活存量。",
     window: true,
   },
 ];
 const LV_BY_ID = Object.fromEntries(LV_CHAPTERS.map((c) => [c.id, c]));
-const LV_DIFFICULTIES = {
-  calm: { id:"calm", name:"宽裕", budget:1.2, fatigue:0.72, penalty:0.72, window:1.45, note:"预算多两成 · 味觉疲劳较缓 · 机关时窗较宽" },
-  standard: { id:"standard", name:"标准", budget:1, fatigue:1, penalty:1, window:1, note:"按本章原始预算与机关时窗" },
-  strict: { id:"strict", name:"拮据", budget:0.82, fatigue:1.3, penalty:1.5, window:0.6, note:"预算少近两成 · 味觉疲劳更重 · 误触代价更高" },
-  extreme: { id:"extreme", name:"生存极限", budget:"modeled", fatigue:1.6, penalty:2, window:0.42, note:"103%基础热量 · 六种耐储食品 · 基础套件 · 6%风险余量" },
-};
+// Chapters use one fixed, deliberately challenging ruleset. Legacy profile keys below are
+// accepted only so older saves migrate cleanly; they are never offered or applied.
+const LV_DIFFICULTIES = Object.freeze({
+  hard: Object.freeze({ id:"hard", name:"统一偏难", budget:"modeled", fatigue:1.35, penalty:1.4, window:0.68 }),
+});
+const LV_LEGACY_DIFFICULTIES = new Set(["calm", "standard", "strict", "extreme"]);
+const LV_HARD_ID = "hard";
 const LV_PRODUCTS = [];
 const LV = {};
 function lvAddProduct(id, name, price, weight, category, clock, desc, shape) {
@@ -76,24 +89,14 @@ lvAddProduct("lv_sandglass", "半小时沙漏", 1.25, 0.16, "tool", "hourglass",
 
 let lvPending = null;
 let lvBaseSeed = "";
-function lvReadDifficultyKey() {
-  try {
-    const saved = localStorage.getItem("anders-room-difficulty-v1");
-    return LV_DIFFICULTIES[saved] ? saved : "standard";
-  } catch (e) { return "standard"; }
-}
-let lvDifficultyKey = lvReadDifficultyKey();
-function lvDifficulty(key = lvState()?.difficulty || lvDifficultyKey) { return LV_DIFFICULTIES[key] || LV_DIFFICULTIES.standard; }
-function lvBudgetFor(id, difficulty = lvDifficultyKey) {
-  const d = lvDifficulty(difficulty);
-  if (d.id === "extreme") return lvExtremeBudgetDetails(id).budget;
-  return Math.round((LV_BY_ID[id]?.budget || 300) * d.budget);
-}
-function lvSaveDifficultyKey() { try { localStorage.setItem("anders-room-difficulty-v1", lvDifficultyKey); } catch (e) {} }
+try { if (typeof localStorage !== "undefined") localStorage.removeItem("anders-room-difficulty-v1"); } catch (e) {}
+function lvDifficulty() { return LV_DIFFICULTIES[LV_HARD_ID]; }
+function lvBudgetFor(id) { return lvHardBudgetDetails(id).budget; }
 let lvShopPage = 0;
 let lvOrderPage = 0;
 let lvOrderCategory = "all";
 let lvOrderQuery = "";
+let lvOrderSort = "catalog";
 let lvOrderOpen = false;
 let lvRoom = null;
 let lvRoomId = "";
@@ -126,24 +129,24 @@ function lvUnlocked() {
   return Math.max(1, Math.min(6, lvProgress.unlocked || 1));
 }
 function lvBudget() {
-  const pending = phase === "shop" && lvPending;
-  const id = pending ? lvPending : G?.level?.id;
-  return lvBudgetFor(id, pending ? lvDifficultyKey : G?.level?.difficulty || "standard");
+  const pending = phase === "shop" && lvPending ? lvPending : null;
+  const id = pending || G?.level?.id;
+  return id ? lvBudgetFor(id) : 300;
 }
 function lvGoalDays() {
   const id = phase === "shop" && lvPending ? lvPending : G?.level?.id;
   return LV_BY_ID[id]?.nominal || 365;
 }
 function lvChapterLabel() {
-  return G?.level ? `${String(lvDef(G.level.id).no).padStart(2, "0")} · ${lvDef(G.level.id).title} · ${lvDifficulty(G.level.difficulty).name}` : "没有日期的房间";
+  return G?.level ? `${String(lvDef(G.level.id).no).padStart(2, "0")} · ${lvDef(G.level.id).title}` : "没有日期的房间";
 }
 function lvWindowBlocked() {
   return !!(G?.level && !G.ended && phase === "playing" && lvDef(G.level.id).window);
 }
-function lvNewRun(id, seed, difficulty = lvDifficultyKey) {
+function lvNewRun(id, seed, _legacyDifficulty = "") {
   const c = lvDef(id);
   return {
-    id, difficulty: LV_DIFFICULTIES[difficulty] ? difficulty : "standard", taste:{}, nominal: c.nominal, cut: 0, penalty: 0,
+    id, difficulty: LV_HARD_ID, taste:{}, nominal: c.nominal, cut: 0, penalty: 0,
     correct: 0, wrong: 0, missed: 0,
     lastAttempt: {}, lastCueAt: 0, cueAt: 0, cueUntil: 0, cueOpen: false, cueNo: 0,
     rng: hashSeed(`${seed}|${id}|hidden-mechanism`),
@@ -156,7 +159,8 @@ function lvNewRun(id, seed, difficulty = lvDifficultyKey) {
 function lvState() {
   const l = G?.level && LV_BY_ID[G.level.id] ? G.level : null;
   if (l) {
-    if (!LV_DIFFICULTIES[l.difficulty]) l.difficulty = "standard";
+    // Map any pre-v0.24 selected profile to today's single fixed chapter rules.
+    l.difficulty = LV_HARD_ID;
     l.taste ||= {};
   }
   return l;
@@ -165,7 +169,7 @@ const lvBaseFreshState = freshState;
 freshState = function (seed) {
   const s = lvBaseFreshState.apply(this, arguments);
   if (lvPending && phase === "shop") {
-    s.level = lvNewRun(lvPending, seed, lvDifficultyKey);
+    s.level = lvNewRun(lvPending, seed);
     s.level.startedAt = s.minute;
     s.level.windAt = s.minute;
     if (s.level.id === "sealed" || s.level.id === "thousand")
@@ -181,7 +185,7 @@ validateSave = function (s) {
   const n = (v, min = 0, max = maxMinute) => typeof v === "number" && Number.isFinite(v) && v >= min && v <= max;
   const bool = (v) => typeof v === "boolean";
   if (!l || typeof l !== "object" || !LV_BY_ID[l.id] || l.nominal !== LV_BY_ID[l.id].nominal) return false;
-  if (l.difficulty !== undefined && !LV_DIFFICULTIES[l.difficulty]) return false;
+  if (l.difficulty !== undefined && l.difficulty !== LV_HARD_ID && !LV_LEGACY_DIFFICULTIES.has(l.difficulty)) return false;
   if (l.taste !== undefined) {
     if (!l.taste || typeof l.taste !== "object" || Array.isArray(l.taste) || Object.keys(l.taste).length > 256) return false;
     for (const [k,v] of Object.entries(l.taste)) if (!k || k.length > 90 || !n(v,0,100)) return false;
@@ -198,6 +202,7 @@ validateSave = function (s) {
     if (d.sandUntil !== undefined && !n(d.sandUntil,0,maxMinute)) return false;
     if (d.initialized !== undefined && !bool(d.initialized)) return false;
   }
+  l.difficulty = LV_HARD_ID;
   return true;
 };
 function lvRemaining(state = lvState()) {
@@ -219,7 +224,7 @@ function lvLineRank() {
   LV._lineRank = new Map(sorted.map(([key], i) => [key, 1 + (i % 6)]));
   return LV._lineRank;
 }
-function lvExtremeBudgetDetails(id) {
+function lvHardBudgetDetails(id) {
   const chapter = LV_BY_ID[id] || LV_CHAPTERS[0],
     days = chapter.nominal,
     ranks = lvLineRank(),
@@ -262,7 +267,7 @@ function lvExtremeBudgetDetails(id) {
     mechanismReserve =
       id === "night-radio" ? DB.radio.price : id === "ledger" ? DB.lighter.price : id === "thousand" ? DB.radio.price + DB.lighter.price : 0,
     subtotal = foodCost + careReserve + setupReserve + mechanismReserve,
-    riskAndPackingReserve = subtotal * 0.06;
+    riskAndPackingReserve = subtotal * 0.1;
   return {
     days,
     dailyNeedKcal,
@@ -430,7 +435,7 @@ function lvOutcome(ok, reward, penalty = 1) {
   const l = lvState();
   if (!l) return false;
   if (ok) { l.correct++; l.cut += reward; }
-  else { l.wrong++; l.penalty += penalty * lvDifficulty(l.difficulty).penalty; }
+  else { l.wrong++; l.penalty += penalty * lvDifficulty().penalty; }
   return !!ok;
 }
 function lvTryAt(action, at = G.minute, shift = false, skillOK = true) {
@@ -473,7 +478,7 @@ function lvTryAt(action, at = G.minute, shift = false, skillOK = true) {
       if (!lvAttemptOnce("wind", at)) return false;
       const due = at - (l.windAt || l.startedAt) >= 6 * 1440;
       if (!skillOK || !due) {
-        l.wrong++; l.penalty += lvDifficulty(l.difficulty).penalty;
+        l.wrong++; l.penalty += lvDifficulty().penalty;
         return false;
       }
       l.windAt = at;
@@ -574,7 +579,7 @@ function lvTastePenalty(it, mode = "eat") {
 function lvRecordTaste(it, mode = "eat") {
   const l = lvState();
   if (!l) return;
-  const factor = lvDifficulty(l.difficulty).fatigue;
+  const factor = lvDifficulty().fatigue;
   for (const x of lvTasteEntries(it, mode)) l.taste[x.key] = Math.min(80, (l.taste[x.key] || 0) + x.rate * factor);
   const keys = Object.keys(l.taste);
   if (keys.length > 256) {
@@ -780,7 +785,7 @@ function lvOpenPicker() {
     root.id = "lvPicker";
     root.className = "lv-overlay lv-archive-overlay";
     root.hidden = true;
-    root.innerHTML = `<div class="lv-picker-card lv-archive-card"><header class="lv-archive-head"><div class="lv-archive-title"><div class="lv-archive-eyebrow"><span>ROOM ARCHIVE · ANDERS EMPIRE · 1986</span><span>FIELD DOSSIER / 06 ROOMS</span></div><h2>六扇门，六种等待。</h2><p>楼道尽头的灯总是慢半拍。挑一间房，守住一次采购，听它把故事说完。</p></div><div class="lv-archive-seal" aria-hidden="true"><span>闭门</span><small>THE LAST TENANT<br>安德士帝国 · 1986</small></div><button class="lv-close lv-archive-close" data-lv-close aria-label="关闭章节簿">×</button></header><div class="lv-archive-rail"><span>案件档案 / CASE FILES</span><span id="lvArchiveProgress">已解锁 1 / 6</span></div><section class="lv-difficulty-block"><div class="lv-difficulty-heading"><strong>选择生活尺度</strong><span>章节可选四档生存难度；经典365天与已保存的章节规则保持不变</span></div><div id="lvDifficultySelect" class="lv-difficulty-grid"></div></section><div class="lv-grid-heading"><span>ROOMS UNDER WATCH</span><span>选择一间已开放的房间，进入开局采购</span></div><div id="lvChapterGrid" class="lv-chapter-grid"></div><footer class="lv-archive-footer"><span>通关留星，逐步开启全国订货簿。时间不会主动告诉你机关是否生效。</span><span>保存于房间里的故事 · CLOSED DOOR ARCHIVE</span></footer></div>`;
+    root.innerHTML = `<div class="lv-picker-card lv-archive-card"><header class="lv-archive-head"><div class="lv-archive-title"><div class="lv-archive-eyebrow"><span>ROOM ARCHIVE · ANDERS EMPIRE · 1986</span><span>FIELD DOSSIER / 06 ROOMS</span></div><h2>六扇门，六种等待。</h2><p>楼道尽头的灯总是慢半拍。挑一间房，守住一次采购，听它把故事说完。</p></div><div class="lv-archive-seal" aria-hidden="true"><span>闭门</span><small>THE LAST TENANT<br>安德士帝国 · 1986</small></div><button class="lv-close lv-archive-close" data-lv-close aria-label="关闭章节簿">×</button></header><div class="lv-archive-rail"><span>案件档案 / CASE FILES</span><span id="lvArchiveProgress">已解锁 1 / 6</span></div><section class="lv-archive-briefing" aria-label="章节游玩导览"><div class="lv-briefing-item"><span>01</span><div><strong>先活下来</strong><small>一次采购；按份数、保质期与单位价规划食物和生活物资。</small></div></div><div class="lv-briefing-item"><span>02</span><div><strong>回屋过日子</strong><small>手动拆袋；照看饮水、饥饿、睡眠、卫生、健康与精神。</small></div></div><div class="lv-briefing-item"><span>03</span><div><strong>调查固定机关</strong><small>小游戏练习操作；隐藏条件不公开，也不会即时确认成败。</small></div></div></section><div class="lv-grid-heading"><span>ROOMS UNDER WATCH · 统一偏难</span><span>选择一间已开放的房间，进入唯一一次开局采购</span></div><div id="lvChapterGrid" class="lv-chapter-grid"></div><footer class="lv-archive-footer"><span>通关留星，逐步开启全国订货簿。时间不会主动告诉你机关是否生效。</span><span>保存于房间里的故事 · CLOSED DOOR ARCHIVE</span></footer></div>`;
     document.body.appendChild(root);
   }
   lvRenderPicker(root);
@@ -791,10 +796,6 @@ function lvRenderPicker(root) {
   if (!root) return;
   const progress = root.querySelector("#lvArchiveProgress");
   if (progress) progress.textContent = `已解锁 ${lvUnlocked()} / 6`;
-  const choices = root.querySelector("#lvDifficultySelect");
-  if (choices) choices.innerHTML = Object.values(LV_DIFFICULTIES).map((d, i) =>
-    `<button class="lv-difficulty-card ${d.id === lvDifficultyKey ? "selected" : ""}" data-lv-difficulty="${d.id}" aria-pressed="${d.id === lvDifficultyKey}"><span class="lv-difficulty-index">0${i + 1}</span><strong>${d.name}</strong><span>${d.note}</span></button>`
-  ).join("");
   const grid = root.querySelector("#lvChapterGrid");
   if (!grid) return;
   grid.innerHTML = LV_CHAPTERS.map((c) => {
@@ -805,7 +806,7 @@ function lvRenderPicker(root) {
         ? `<span class="lv-card-status available">点击进入</span>`
         : `<span class="lv-card-status locked-status">尚未抵达</span>`;
     const image = cover ? `<img class="lv-card-photo" src="${cover}" alt="" draggable="false">` : "";
-    return `<button class="lv-chapter ${unlocked ? "" : "locked"}" ${unlocked ? `data-level-select="${c.id}"` : "disabled"} aria-label="第${c.no}章：${esc(c.title)}，${unlocked ? "选择进入" : "完成前一章后开放"}">${image}<span class="lv-card-vignette"></span><span class="lv-card-top"><span>FILE ${String(c.no).padStart(2, "0")} <i>/</i> 06</span>${mark}</span><span class="lv-card-copy"><span class="lv-card-place">${esc(c.place)}</span><strong>${esc(c.title)}</strong><span class="lv-card-story">${esc(c.synopsis)}</span><span class="lv-card-metrics"><span><small>本章期限</small><b>${c.nominal} 天</b></span><span><small>开局预算</small><b>预算 · E$ ${lvBudgetFor(c.id, lvDifficultyKey)}</b></span></span><span class="lv-card-hint">${esc(c.hint)}</span></span></button>`;
+    return `<button class="lv-chapter ${unlocked ? "" : "locked"}" ${unlocked ? `data-level-select="${c.id}"` : "disabled"} aria-label="第${c.no}章：${esc(c.title)}，${unlocked ? "选择进入" : "完成前一章后开放"}">${image}<span class="lv-card-vignette"></span><span class="lv-card-top"><span>FILE ${String(c.no).padStart(2, "0")} <i>/</i> 06</span>${mark}</span><span class="lv-card-copy"><span class="lv-card-place">${esc(c.place)}</span><strong>${esc(c.title)}</strong><span class="lv-card-story">${esc(c.synopsis)}</span><span class="lv-card-metrics"><span><small>本章期限</small><b>${c.nominal} 天</b></span><span><small>开局预算 · 统一偏难</small><b>E$ ${lvBudgetFor(c.id)}</b></span></span><span class="lv-card-hint"><b>调查方向</b> ${esc(c.guide || c.hint)}</span></span></button>`;
   }).join("");
 }
 function lvClosePicker() { const root=document.getElementById("lvPicker"); if(root) root.hidden=true; }
@@ -829,18 +830,25 @@ function lvEnsureOrderPanel() {
   root=document.createElement("section"); root.id="lvOrderOverlay"; root.className="lv-overlay lv-order-overlay"; root.hidden=true;
   const hero=typeof OFFLINE_ROOM!=="undefined"?OFFLINE_ROOM.textures?.["coop-shop-hero"]||"":"";
   const heroImage=hero?`<img class="lv-order-hero-image" src="${hero}" alt="">`:"";
-  root.innerHTML=`<div class="lv-order-card"><header class="lv-order-hero">${heroImage}<div class="lv-order-hero-shade"></div><div class="lv-order-hero-copy"><span class="lv-kicker">ANDERS PEOPLE'S COOPERATIVE · 1986</span><h2>全国订货簿</h2><p id="lvOrderCount"></p></div><button class="lv-close lv-order-close" data-order-close aria-label="关闭">×</button></header><div class="lv-order-content"><div class="lv-order-tools"><label class="lv-search-wrap"><span aria-hidden="true">⌕</span><input id="lvOrderSearch" type="search" placeholder="搜索商品、用途或特色" autocomplete="off" aria-label="搜索商品"></label><select id="lvOrderCategory" aria-label="商品分类"></select><span>柜台订货簿 · 搜索已开放商品，点“加入篮子”登记采购。</span></div><div id="lvOrderGrid" class="lv-order-grid"></div><footer class="lv-order-foot"><button data-order-page="-1">← 上一页</button><span id="lvOrderPageLabel"></span><button data-order-page="1">下一页 →</button><button class="lv-checkout-mini" data-order-checkout>前往收银台　→</button></footer></div></div>`;
+  root.innerHTML=`<div class="lv-order-card"><header class="lv-order-hero">${heroImage}<div class="lv-order-hero-shade"></div><div class="lv-order-hero-copy"><span class="lv-kicker">ANDERS PEOPLE'S COOPERATIVE · 1986</span><h2>全国订货簿</h2><p id="lvOrderCount"></p></div><button class="lv-close lv-order-close" data-order-close aria-label="关闭">×</button></header><div class="lv-order-content"><div class="lv-order-tools"><label class="lv-search-wrap"><span aria-hidden="true">⌕</span><input id="lvOrderSearch" type="search" placeholder="搜索商品、用途或特色" autocomplete="off" aria-label="搜索商品"></label><select id="lvOrderCategory" aria-label="商品分类"></select><select id="lvOrderSort" aria-label="商品排序"><option value="catalog">按目录顺序</option><option value="price-low">单件价由低到高</option><option value="price-high">单件价由高到低</option><option value="value">生存性价比优先</option></select><span>看清价位档、每份/每次成本和食品每千大卡成本；点“加入篮子”登记采购。</span></div><div id="lvOrderGrid" class="lv-order-grid"></div><footer class="lv-order-foot"><button data-order-page="-1">← 上一页</button><span id="lvOrderPageLabel"></span><button data-order-page="1">下一页 →</button><button class="lv-checkout-mini" data-order-checkout>前往收银台　→</button></footer></div></div>`;
   document.body.appendChild(root);
-  const select=root.querySelector("#lvOrderCategory");
+  const select=root.querySelector("#lvOrderCategory"), sortSelect=root.querySelector("#lvOrderSort");
   select.innerHTML=CATEGORIES.map(([id,name])=>`<option value="${id}">${name}</option>`).join("");
+  select.value=lvOrderCategory; sortSelect.value=lvOrderSort;
   root.querySelector("#lvOrderSearch").addEventListener("input",e=>{lvOrderQuery=e.target.value.trim();lvOrderPage=0;lvRenderOrder();});
   select.addEventListener("change",e=>{lvOrderCategory=e.target.value;lvOrderPage=0;lvRenderOrder();});
+  sortSelect.addEventListener("change",e=>{lvOrderSort=e.target.value;lvOrderPage=0;lvRenderOrder();});
   return root;
 }
 function lvRenderOrder() {
   const root=lvEnsureOrderPanel(), all=lvCatalogStock();
   const q=lvOrderQuery.toLowerCase();
   const filtered=all.filter(it=>(lvOrderCategory==="all"||it.category===lvOrderCategory)&&(!q||it.name.toLowerCase().includes(q)||(it.desc||"").toLowerCase().includes(q)||(it.note||"").toLowerCase().includes(q)));
+  if(lvOrderSort!=="catalog") filtered.sort((a,b)=>{
+    const av=lvOrderSort==="price-low"||lvOrderSort==="price-high"?a.price:(typeof cgUnitCostValue==="function"?cgUnitCostValue(a):a.price);
+    const bv=lvOrderSort==="price-low"||lvOrderSort==="price-high"?b.price:(typeof cgUnitCostValue==="function"?cgUnitCostValue(b):b.price);
+    return (lvOrderSort==="price-high"?bv-av:av-bv)||(a.name||"").localeCompare(b.name||"")||a.id.localeCompare(b.id);
+  });
   const pages=Math.max(1,Math.ceil(filtered.length/48)); lvOrderPage=Math.max(0,Math.min(pages-1,lvOrderPage));
   const spent=cartSummary(cart).cost;
   root.querySelector("#lvOrderCount").textContent=`${filtered.length.toLocaleString("zh-CN")} 件可订 · 本章已开放 · 已用 E$ ${spent.toFixed(2)} / ${gameBudget().toFixed(2)}`;
@@ -849,7 +857,7 @@ function lvRenderOrder() {
   root.querySelector("#lvOrderGrid").innerHTML=view.map(it=>{
     const n=cart[it.id]||0;
     const useText=it.desc||(it.gen&&typeof cgUse==="function"?cgUse(it):it.note)||"日常物资 · 按包装说明使用";
-    return `<article class="lv-order-item"><div class="lv-order-art">${productArt(it)}</div><h3>${esc(it.name)}</h3><p>${esc(useText)}</p><div class="lv-order-meta"><span>${it.weight.toFixed(it.weight<1?2:1)} kg</span><b>E$ ${it.price.toFixed(2)}</b></div><div class="lv-order-qty"><button data-lv-cart="${it.id}" data-delta="-1" ${n?"":"disabled"}>−</button><span>${n}</span><button data-lv-cart="${it.id}" data-delta="1">加入篮子</button></div></article>`;
+    return `<article class="lv-order-item" data-item="${it.id}"><div class="lv-order-art">${productArt(it)}</div><h3>${esc(it.name)}</h3><p>${esc(useText)}</p><div class="lv-order-price-info">${esc(typeof cgPriceInfo === "function" ? cgPriceInfo(it) : "基础价")}</div><div class="lv-order-meta"><span>${it.weight.toFixed(it.weight<1?2:1)} kg</span><b>E$ ${it.price.toFixed(2)}</b></div><div class="lv-order-qty"><button data-lv-cart="${it.id}" data-delta="-1" ${n?"":"disabled"}>−</button><span>${n}</span><button data-lv-cart="${it.id}" data-delta="1">加入篮子</button></div></article>`;
   }).join("");
 }
 function lvOpenOrder() {
@@ -873,7 +881,7 @@ if(lvBaseRenderCatalog) renderCatalog=function(){
   const pageSize=60,pages=Math.max(1,Math.ceil(list.length/pageSize)); lvShopPage=Math.max(0,Math.min(pages-1,lvShopPage));
   const view=list.slice(lvShopPage*pageSize,(lvShopPage+1)*pageSize);
   $("#shopEmpty").hidden=!!list.length;
-  $("#catalogGrid").innerHTML=view.map(it=>{const q=cart[it.id]||0,meta=it.kind==="food"?`${it.servings}份 · ${it.kcal} kcal/份`:it.kind==="book"?`${it.pages}页 · 可重读`:it.levelClock?"计时设备":it.servings>1?`${it.servings}次用量`:"耐用物品";return `<article class="product-card ${q?"in-cart":""}" title="${esc(it.desc||it.name)}"><button class="product-art" data-product="${it.id}" aria-label="查看${esc(it.name)}详情">${productArt(it)}</button><h3>${esc(it.name)}</h3><div class="product-meta"><span>${it.weight.toFixed(it.weight<1?2:1)}kg</span><span>${meta}</span>${it.life<9999?`<span>${expiryPublicLabel(it)}${it.cook?" · 需烹煮":""}</span>`:""}</div><div class="product-footer"><span class="product-price"><small>E$</small>${it.price.toFixed(2)}</span><div class="qty-control"><button data-cart="${it.id}" data-delta="-1" aria-label="减少${esc(it.name)}">−</button><span>${q}</span><button data-cart="${it.id}" data-delta="1" aria-label="添加${esc(it.name)}">＋</button></div></div></article>`;}).join("");
+  $("#catalogGrid").innerHTML=view.map(it=>{const q=cart[it.id]||0,meta=it.kind==="food"?`${it.servings}份 · ${it.kcal} kcal/份`:it.kind==="book"?`${it.pages}页 · 可重读`:it.levelClock?"计时设备":it.servings>1?`${it.servings}次用量`:"耐用物品";return `<article class="product-card ${q?"in-cart":""}" title="${esc(it.desc||it.name)}"><button class="product-art" data-product="${it.id}" aria-label="查看${esc(it.name)}详情">${productArt(it)}</button><h3>${esc(it.name)}</h3><div class="product-meta"><span>${it.weight.toFixed(it.weight<1?2:1)}kg</span><span>${meta}</span>${it.life<9999?`<span>${expiryPublicLabel(it)}${it.cook?" · 需烹煮":""}</span>`:""}</div><div class="product-value">${esc(typeof cgPriceInfo === "function" ? cgPriceInfo(it) : "")}</div><div class="product-footer"><span class="product-price"><small>E$</small>${it.price.toFixed(2)}</span><div class="qty-control"><button data-cart="${it.id}" data-delta="-1" aria-label="减少${esc(it.name)}">−</button><span>${q}</span><button data-cart="${it.id}" data-delta="1" aria-label="添加${esc(it.name)}">＋</button></div></div></article>`;}).join("");
   let nav=document.getElementById("lvShopPager");if(!nav){nav=document.createElement("nav");nav.id="lvShopPager";nav.className="lv-shop-pager";$("#catalogGrid").after(nav);}
   nav.innerHTML=`<button data-lv-shop-page="-1" ${lvShopPage===0?"disabled":""}>← 上一页</button><span>${list.length.toLocaleString("zh-CN")}件 · ${lvShopPage+1}/${pages}</span><button data-lv-shop-page="1" ${lvShopPage>=pages-1?"disabled":""}>下一页 →</button>`;
 };
@@ -881,10 +889,10 @@ const lvBaseOpenShop=typeof openShop==="function"?openShop:null;
 if(lvBaseOpenShop) openShop=function(isRestock=false){
   const r=lvBaseOpenShop.apply(this,arguments);
   if(lvPending&&phase==="shop"&&!W.enabled){
-    const difficulty=lvDifficulty(lvDifficultyKey);
-    $("#shopBudgetLabel").textContent=`章节预算 · E$ ${lvBudget().toFixed(2)}`;
-    const budgetMethod=difficulty.id==="extreme"?"按模拟基础消耗的103%热量、六种耐储食品、基础生活用品全套、每日E$0.02照护额和6%风险/包装余量测算；仅供开局一次采购，不代表可补货。":"";
-    $("#shopIntroText").textContent=`本章期限 ${lvGoalDays()} 天 · ${difficulty.name}难度 · 预算 E$ ${lvBudget().toFixed(2)}。${budgetMethod} 房间里没有时钟；计时器需开局购买，机关是否生效不会提示。开局只采购一次。`;
+    const chapter=LV_BY_ID[lvPending]||LV_CHAPTERS[0];
+    $("#shopBudgetLabel").textContent=`章节预算 · 固定偏难 · E$ ${lvBudget().toFixed(2)}`;
+    const budgetMethod="按模拟基础消耗的103%热量、六种耐储食品、基础生活用品、每日E$0.02照护额和10%风险/包装余量测算；可自行调整搭配。";
+    $("#shopIntroText").textContent=`本章期限 ${lvGoalDays()} 天 · 所有章节统一偏难 · 预算 E$ ${lvBudget().toFixed(2)}。${budgetMethod} ${chapter.shopTip||"先核对份数、保质期与单位成本。"} 价差来自简装、常规、优选与进口等不同档位；食品另列每份和每千大卡成本。房间里没有时钟，开局只采购一次，机关是否生效不会提示。`;
     $("#catalogCount").textContent=`${lvCatalogStock().length.toLocaleString("zh-CN")} 件 / 本章已开放 · 目录共 ${CATALOG.length.toLocaleString("zh-CN")} 种`;
     renderCatalog();
   }
@@ -974,7 +982,7 @@ if(lvBaseUpdatePhase) updatePhase=function(){const r=lvBaseUpdatePhase.apply(thi
 const lvBaseOpenHelp=typeof openHelp==="function"?openHelp:null;
 if(lvBaseOpenHelp) openHelp=function(){
   if(!lvMode()) return lvBaseOpenHelp.apply(this,arguments);
-  showPanel("help","没有钟的章节","CHAPTER RULES / TIME IS HIDDEN",`<p class="help-paragraph">本章没有常驻日期、钟点或剩余天数。身体仍会按原来的节奏消耗，睡觉和日常活动也会推进时间；主动生活时，房间里的时间也会自然流动。窗外光线、广播、环境声和你自己买来的计时用品，是判断时刻的线索。</p><p class="help-paragraph">商品只在开局采购一次。机械钟需要上弦，石英钟需要自己装电池，插电钟会受停电影响；不同商品的误差和故障不一样。手记会隐藏时间戳。</p><p class="help-paragraph">不同食物的风味、特征和厂牌会形成味觉记忆。相似口味反复出现会逐步积累腻度、压低精神；这种疲劳会随游戏时间缓慢消退。换着吃、留意商品词条，有助于稳定心情。</p><p class="help-paragraph">有些包装的保质日期没有印清或已经褪色，物品仍会按真实内部批次变质；冰箱和储存位置会改变实际变质速度。</p><p class="help-paragraph">每间房都有自己的线索和机关。按对或按错都不会马上告诉你，结局后才会显示哪些操作生效。机关装置是房间固定设施，不是商店商品。难度会改变预算、机关时窗、误触代价和味觉疲劳；经典365天玩法不受影响。</p><p class="help-paragraph">危险状态会打断长时间跳过，健康或精神耗尽仍会失败。结局评级看实际等待时间和误触次数。通关会开放新章节和更多订货品种。</p>`);
+  showPanel("help","没有钟的章节","CHAPTER RULES / TIME IS HIDDEN",`<p class="help-paragraph">本章没有常驻日期、钟点或剩余天数。身体仍会按原来的节奏消耗，睡觉和日常活动也会推进时间；主动生活时，房间里的时间也会自然流动。窗外光线、广播、环境声和你自己买来的计时用品，是判断时刻的线索。</p><p class="help-paragraph">商品只在开局采购一次。订货簿可按单件价格或生存性价比排序，食品会列出每份与每千大卡成本。机械钟需要上弦，石英钟需要自己装电池，插电钟会受停电影响；不同商品的误差和故障不一样。手记会隐藏时间戳。</p><p class="help-paragraph">不同食物的风味、特征和厂牌会形成味觉记忆。相似口味反复出现会逐步积累腻度、压低精神；这种疲劳会随游戏时间缓慢消退。换着吃、留意商品词条，有助于稳定心情。</p><p class="help-paragraph">有些包装的保质日期没有印清或已经褪色，物品仍会按真实内部批次变质；冰箱和储存位置会改变实际变质速度。</p><p class="help-paragraph">每间房都有自己的线索和机关。按对或按错都不会马上告诉你，结局后才会显示哪些操作生效。机关装置是房间固定设施，不是商店商品。六个章节共用同一套固定偏难规则；旧存档中的难度标签会自动迁移。经典365天玩法仍按原有规则进行。</p><p class="help-paragraph">危险状态会打断长时间跳过，健康或精神耗尽仍会失败。结局评级看实际等待时间和误触次数。通关会开放新章节和更多订货品种。</p>`);
 };
 const lvBaseWorldFrame=typeof worldFrame==="function"?worldFrame:null;
 if(lvBaseWorldFrame) worldFrame=function(now,dt){
@@ -990,9 +998,7 @@ function lvEnsureStyles() {
   if(document.getElementById("lvRuntimeCss")) return;
   const s=document.createElement("style");s.id="lvRuntimeCss";s.textContent=`.lv-overlay{position:fixed;inset:0;z-index:1200;display:grid;place-items:center;padding:clamp(12px,3vw,42px);background:rgba(18,22,19,.72);backdrop-filter:blur(10px);color:#272a23}.lv-overlay[hidden]{display:none!important}.lv-picker-card,.lv-order-card{width:min(1160px,100%);max-height:min(92dvh,1000px);overflow:auto;background:#e7dfca;border:1px solid #c9b995;box-shadow:0 30px 90px #1119;padding:clamp(18px,3vw,38px);font-family:Georgia,'Noto Serif CJK SC',serif}.lv-picker-card>header,.lv-order-head{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;border-bottom:1px solid #b8ad94;padding-bottom:20px}.lv-kicker{font:700 11px/1.4 system-ui,sans-serif;letter-spacing:.18em;color:#73705e}.lv-picker-card h2,.lv-order-head h2{font-size:clamp(30px,5vw,50px);font-weight:500;margin:8px 0}.lv-picker-card header p,.lv-order-head p{font:15px/1.6 system-ui,sans-serif;color:#686656;margin:0;max-width:680px}.lv-close{font-size:28px;border:1px solid #a69c84;background:transparent;width:44px;height:44px;color:#4c4d42;cursor:pointer}.lv-chapter-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:22px 0}.lv-chapter{min-height:215px;text-align:left;padding:20px;background:#f1ead8;border:1px solid #c6baa0;color:#302f28;cursor:pointer;transition:transform .18s,background .18s,border .18s}.lv-chapter:hover:not(:disabled){transform:translateY(-3px);background:#f7f0df;border-color:#9e875d}.lv-chapter.locked{opacity:.52;cursor:not-allowed;background:#ded8ca}.lv-chapter-no,.lv-card-meta,.lv-chapter small{font:12px/1.5 system-ui,sans-serif;color:#82785f;letter-spacing:.08em}.lv-chapter h3{font-size:23px;font-weight:500;margin:9px 0}.lv-chapter p{font:14px/1.6 system-ui,sans-serif;color:#615f54;min-height:44px;margin:0 0 12px}.lv-card-meta{display:flex;justify-content:space-between;gap:10px;border-top:1px solid #d6cbb2;padding-top:10px}.lv-chapter small{display:block;margin-top:10px;letter-spacing:0;color:#6e6b5d}.lv-stars{color:#9b7735;font-size:17px}.lv-locked{color:#8a5247}.lv-picker-card footer,.lv-order-foot{display:flex;justify-content:space-between;align-items:center;gap:14px;padding-top:16px;border-top:1px solid #c5b89d;font:13px/1.5 system-ui,sans-serif;color:#77715f}.lv-order-card{width:min(1280px,100%)}.lv-order-tools{display:grid;grid-template-columns:minmax(190px,1fr) 220px 1.2fr;gap:12px;align-items:center;margin:18px 0}.lv-order-tools input,.lv-order-tools select{background:#f8f3e7;border:1px solid #b8ad94;padding:12px;font:15px system-ui,sans-serif;color:#35362f}.lv-order-tools span{font:13px/1.45 system-ui,sans-serif;color:#77715f}.lv-order-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.lv-order-grid:has(.lv-order-item:only-child){grid-template-columns:minmax(240px,420px);justify-content:center}.lv-order-item{border:1px solid #cfc3aa;background:#f4eddd;padding:12px;min-width:0}.lv-order-art{height:86px;display:grid;place-items:center;background:#e4dcc7}.lv-order-art svg{height:68px;width:68px}.lv-order-item h3{font:600 15px/1.35 system-ui,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:9px 0 4px}.lv-order-item p{font:12px/1.4 system-ui,sans-serif;height:35px;overflow:hidden;color:#716d5f;margin:0 0 7px}.lv-order-meta,.lv-order-qty{display:flex;align-items:center;justify-content:space-between;gap:6px;font:12px system-ui,sans-serif}.lv-order-meta b{color:#735b2f}.lv-order-qty{margin-top:8px}.lv-order-qty button,.lv-order-foot button,.lv-next-button,.lv-shop-pager button{border:1px solid #9c906f;background:#e3d7b9;color:#403c2e;padding:8px 12px;font:600 12px system-ui,sans-serif;cursor:pointer}.lv-order-qty button:disabled,.lv-order-foot button:disabled,.lv-shop-pager button:disabled{opacity:.4;cursor:not-allowed}.lv-order-qty span{min-width:25px;text-align:center}.lv-order-foot{margin-top:16px}.lv-checkout-mini{margin-left:auto;background:#535c48!important;color:#f3ebd8!important}.lv-shop-pager{display:flex;align-items:center;justify-content:center;gap:14px;padding:16px;font:13px system-ui,sans-serif;color:#635f53}.lv-next-button{display:block;width:min(420px,100%);margin:0 auto 10px;padding:13px}@media(max-width:780px){.lv-chapter-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.lv-order-tools{grid-template-columns:1fr 1fr}.lv-order-tools span{grid-column:1/-1}.lv-order-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.lv-picker-card footer{display:block}.lv-picker-card footer span{display:block;margin:6px 0}}@media(max-width:480px){.lv-overlay{padding:8px}.lv-picker-card,.lv-order-card{padding:16px;max-height:96dvh}.lv-chapter-grid{grid-template-columns:1fr}.lv-chapter{min-height:0}.lv-order-tools{grid-template-columns:1fr}.lv-order-tools span{grid-column:auto}.lv-order-grid{gap:7px}.lv-order-item{padding:8px}.lv-order-art{height:68px}.lv-order-item h3{font-size:13px}.lv-order-item p{font-size:11px;height:31px}.lv-order-foot{flex-wrap:wrap}.lv-order-foot>*{flex:1}.lv-order-foot span{order:-1;text-align:center;flex-basis:100%}}`;
   document.head.appendChild(s);
-  const difficultyStyle=document.createElement("style");difficultyStyle.id="lvDifficultyStyles";difficultyStyle.textContent=`.lv-difficulty-block{margin:18px 0 4px}.lv-difficulty-heading{display:flex;justify-content:space-between;align-items:baseline;gap:12px;color:#4e4d41;font:13px system-ui,sans-serif}.lv-difficulty-heading strong{font-size:15px;letter-spacing:.04em}.lv-difficulty-heading span{color:#817963;font-size:11px}.lv-difficulty-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:9px}.lv-difficulty-card{display:flex;flex-direction:column;gap:4px;min-height:68px;padding:11px 14px;text-align:left;border:1px solid #c6baa0;background:#f2ecdd;color:#38382f;cursor:pointer}.lv-difficulty-card:hover{border-color:#9d875e;background:#f8f2e3}.lv-difficulty-card.selected{border-color:#73764f;background:#e4e4cf;box-shadow:inset 0 0 0 1px #73764f}.lv-difficulty-card strong{font:600 15px system-ui,sans-serif}.lv-difficulty-card span{color:#77715f;font:11px/1.4 system-ui,sans-serif}@media(max-width:760px){.lv-difficulty-heading{display:block}.lv-difficulty-heading span{display:block;margin-top:4px}.lv-difficulty-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.lv-difficulty-card{min-height:0}}@media(max-width:380px){.lv-difficulty-grid{grid-template-columns:1fr}}`;
-  document.head.appendChild(difficultyStyle);
-  const premium=document.createElement("style");premium.id="lvPremiumStyles";premium.textContent=`.lv-order-card{width:min(1240px,100%);max-height:94dvh;overflow:auto;padding:0;background:#ede7d8;border:1px solid #c6b998;border-radius:4px;box-shadow:0 34px 100px #090b09a8;color:#292b25}.lv-order-hero{position:relative;min-height:clamp(150px,21vh,220px);display:flex;align-items:flex-end;overflow:hidden;padding:23px 30px;border-bottom:3px solid #9a4f3c;background:linear-gradient(135deg,#53614c,#9b805e)}.lv-order-hero-image{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 57%;filter:saturate(.82) contrast(1.02)}.lv-order-hero-shade{position:absolute;inset:0;background:linear-gradient(90deg,rgba(14,17,14,.82),rgba(20,18,14,.4) 56%,rgba(20,18,14,.1)),linear-gradient(0deg,rgba(12,14,11,.68),transparent 78%)}.lv-order-hero-copy{position:relative;z-index:1;color:#f6ead1;max-width:75%}.lv-order-hero-copy .lv-kicker{color:#e8d8b5;font-size:10px;letter-spacing:.2em}.lv-order-hero-copy h2{margin:5px 0 3px;font:500 clamp(30px,4vw,46px)/1.12 Georgia,'Noto Serif CJK SC','Songti SC',serif;letter-spacing:.06em;text-shadow:0 2px 12px #0009}.lv-order-hero-copy p{margin:0;color:#e4dac5;font:12px/1.4 system-ui,sans-serif;letter-spacing:.02em;text-shadow:0 1px 5px #0009}.lv-order-close{position:absolute;z-index:3;top:17px;right:18px;border-color:#f3e8ce88;background:#1e211bc9;color:#f4ead7;border-radius:3px}.lv-order-content{padding:18px clamp(16px,2.3vw,30px) 22px}.lv-order-tools{grid-template-columns:minmax(220px,1fr) minmax(165px,210px) minmax(180px,.9fr);gap:12px;margin:0 0 15px}.lv-search-wrap{display:flex;align-items:center;gap:8px;padding:0 12px;background:#f8f4ea;border:1px solid #b9aa88;box-shadow:inset 0 1px 2px #4036210d}.lv-search-wrap>span{font:24px/1 Georgia,serif;color:#806e4a}.lv-search-wrap input{min-width:0;width:100%;padding:11px 0;border:0;background:transparent;outline:0;color:#30322b;font:14px system-ui,sans-serif}.lv-order-tools select{min-width:0;background:#f8f4ea;border:1px solid #b9aa88;padding:11px 12px;color:#34362d;font:14px system-ui,sans-serif}.lv-order-tools>span{padding-left:12px;border-left:2px solid #b38f5d;color:#776c58;font:12px/1.5 system-ui,sans-serif}.lv-order-grid{max-height:min(48vh,470px);overflow:auto;padding:2px 3px 5px;grid-template-columns:repeat(auto-fill,minmax(205px,1fr));gap:12px}.lv-order-item{position:relative;border:1px solid #cfc3a9;border-radius:3px;background:linear-gradient(160deg,#faf6ec,#eee7d5);padding:10px;box-shadow:0 3px 11px #574a3010;transition:transform .16s,box-shadow .16s,border-color .16s}.lv-order-item:hover{transform:translateY(-2px);border-color:#a9966b;box-shadow:0 8px 20px #574a3020}.lv-order-art{height:92px;border:1px solid #d9cfb9;background:radial-gradient(ellipse at 50% 70%,#c9bd9e,#e5ddca 72%);overflow:hidden}.lv-order-art svg{height:88px;width:88px;filter:drop-shadow(0 5px 3px #342d1d22)}.lv-order-item h3{white-space:normal;min-height:38px;margin:9px 0 4px;color:#33342e;font:600 14px/1.35 'Noto Serif CJK SC','Songti SC',serif}.lv-order-item p{height:43px;margin:0 0 8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;color:#746d5e;font:11px/1.5 system-ui,sans-serif}.lv-order-meta{padding-top:7px;border-top:1px solid #dfd5c0;color:#766d5a;font:11px system-ui,sans-serif}.lv-order-meta b{color:#934f3c;font-size:13px}.lv-order-qty{margin-top:9px}.lv-order-qty button{border:1px solid #ab9a73;background:#e9dfc8;color:#3e3a2e;border-radius:2px;padding:7px 9px;font:600 11px system-ui,sans-serif}.lv-order-qty button:last-child{background:#59624a;border-color:#59624a;color:#fff6e2}.lv-order-qty button:disabled{opacity:.4}.lv-order-foot{margin-top:14px;padding-top:13px;border-top:1px solid #cfc3a8}.lv-order-foot button{border-radius:2px}.lv-checkout-mini{margin-left:auto;background:#4d5b45!important;border-color:#4d5b45!important;color:#f5eddc!important;min-height:38px}.lv-order-grid::-webkit-scrollbar{width:8px}.lv-order-grid::-webkit-scrollbar-thumb{background:#b8a987;border:2px solid #eee7d8;border-radius:6px}@media(max-width:760px){.lv-order-hero{min-height:150px;padding:18px}.lv-order-hero-copy{max-width:88%}.lv-order-content{padding:14px}.lv-order-tools{grid-template-columns:minmax(0,1fr) minmax(125px,.65fr)}.lv-order-tools>span{grid-column:1/-1;border-left:0;padding:0}.lv-order-grid{max-height:52vh;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.lv-order-item{padding:8px}.lv-order-art{height:72px}.lv-order-art svg{height:68px;width:68px}.lv-order-item h3{font-size:12px;min-height:34px}.lv-order-item p{font-size:10px;height:38px}.lv-order-qty button{padding:7px 6px}.lv-order-foot{flex-wrap:wrap}.lv-order-foot>*{flex:1}.lv-order-foot span{order:-1;text-align:center;flex-basis:100%}}`;
+  const premium=document.createElement("style");premium.id="lvPremiumStyles";premium.textContent=`.lv-order-card{width:min(1240px,100%);max-height:94dvh;overflow:auto;padding:0;background:#ede7d8;border:1px solid #c6b998;border-radius:4px;box-shadow:0 34px 100px #090b09a8;color:#292b25}.lv-order-hero{position:relative;min-height:clamp(150px,21vh,220px);display:flex;align-items:flex-end;overflow:hidden;padding:23px 30px;border-bottom:3px solid #9a4f3c;background:linear-gradient(135deg,#53614c,#9b805e)}.lv-order-hero-image{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 57%;filter:saturate(.82) contrast(1.02)}.lv-order-hero-shade{position:absolute;inset:0;background:linear-gradient(90deg,rgba(14,17,14,.82),rgba(20,18,14,.4) 56%,rgba(20,18,14,.1)),linear-gradient(0deg,rgba(12,14,11,.68),transparent 78%)}.lv-order-hero-copy{position:relative;z-index:1;color:#f6ead1;max-width:75%}.lv-order-hero-copy .lv-kicker{color:#e8d8b5;font-size:10px;letter-spacing:.2em}.lv-order-hero-copy h2{margin:5px 0 3px;font:500 clamp(30px,4vw,46px)/1.12 Georgia,'Noto Serif CJK SC','Songti SC',serif;letter-spacing:.06em;text-shadow:0 2px 12px #0009}.lv-order-hero-copy p{margin:0;color:#e4dac5;font:12px/1.4 system-ui,sans-serif;letter-spacing:.02em;text-shadow:0 1px 5px #0009}.lv-order-close{position:absolute;z-index:3;top:17px;right:18px;border-color:#f3e8ce88;background:#1e211bc9;color:#f4ead7;border-radius:3px}.lv-order-content{padding:18px clamp(16px,2.3vw,30px) 22px}.lv-order-tools{grid-template-columns:minmax(220px,1fr) minmax(145px,180px) minmax(165px,200px) minmax(230px,1.1fr);gap:12px;margin:0 0 15px}.lv-search-wrap{display:flex;align-items:center;gap:8px;padding:0 12px;background:#f8f4ea;border:1px solid #b9aa88;box-shadow:inset 0 1px 2px #4036210d}.lv-search-wrap>span{font:24px/1 Georgia,serif;color:#806e4a}.lv-search-wrap input{min-width:0;width:100%;padding:11px 0;border:0;background:transparent;outline:0;color:#30322b;font:14px system-ui,sans-serif}.lv-order-tools select{min-width:0;background:#f8f4ea;border:1px solid #b9aa88;padding:11px 12px;color:#34362d;font:14px system-ui,sans-serif}.lv-order-tools>span{padding-left:12px;border-left:2px solid #b38f5d;color:#776c58;font:12px/1.5 system-ui,sans-serif}.lv-order-grid{max-height:min(48vh,470px);overflow:auto;padding:2px 3px 5px;grid-template-columns:repeat(auto-fill,minmax(205px,1fr));gap:12px}.lv-order-item{position:relative;border:1px solid #cfc3a9;border-radius:3px;background:linear-gradient(160deg,#faf6ec,#eee7d5);padding:10px;box-shadow:0 3px 11px #574a3010;transition:transform .16s,box-shadow .16s,border-color .16s}.lv-order-item:hover{transform:translateY(-2px);border-color:#a9966b;box-shadow:0 8px 20px #574a3020}.lv-order-art{height:92px;border:1px solid #d9cfb9;background:radial-gradient(ellipse at 50% 70%,#c9bd9e,#e5ddca 72%);overflow:hidden}.lv-order-art svg{height:88px;width:88px;filter:drop-shadow(0 5px 3px #342d1d22)}.lv-order-item h3{white-space:normal;min-height:38px;margin:9px 0 4px;color:#33342e;font:600 14px/1.35 'Noto Serif CJK SC','Songti SC',serif}.lv-order-item p{height:43px;margin:0 0 8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;color:#746d5e;font:11px/1.5 system-ui,sans-serif}.lv-order-price-info{min-height:30px;color:#9a7742;font:10px/1.4 system-ui,sans-serif}.lv-order-meta{padding-top:7px;border-top:1px solid #dfd5c0;color:#766d5a;font:11px system-ui,sans-serif}.lv-order-meta b{color:#934f3c;font-size:13px}.lv-order-qty{margin-top:9px}.lv-order-qty button{border:1px solid #ab9a73;background:#e9dfc8;color:#3e3a2e;border-radius:2px;padding:7px 9px;font:600 11px system-ui,sans-serif}.lv-order-qty button:last-child{background:#59624a;border-color:#59624a;color:#fff6e2}.lv-order-qty button:disabled{opacity:.4}.lv-order-foot{margin-top:14px;padding-top:13px;border-top:1px solid #cfc3a8}.lv-order-foot button{border-radius:2px}.lv-checkout-mini{margin-left:auto;background:#4d5b45!important;border-color:#4d5b45!important;color:#f5eddc!important;min-height:38px}.lv-order-grid::-webkit-scrollbar{width:8px}.lv-order-grid::-webkit-scrollbar-thumb{background:#b8a987;border:2px solid #eee7d8;border-radius:6px}@media(max-width:760px){.lv-order-hero{min-height:150px;padding:18px}.lv-order-hero-copy{max-width:88%}.lv-order-content{padding:14px}.lv-order-tools{grid-template-columns:minmax(0,1fr) minmax(125px,.65fr)}.lv-order-tools>span{grid-column:1/-1;border-left:0;padding:0}.lv-order-grid{max-height:52vh;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.lv-order-item{padding:8px}.lv-order-art{height:72px}.lv-order-art svg{height:68px;width:68px}.lv-order-item h3{font-size:12px;min-height:34px}.lv-order-item p{font-size:10px;height:38px}.lv-order-qty button{padding:7px 6px}.lv-order-foot{flex-wrap:wrap}.lv-order-foot>*{flex:1}.lv-order-foot span{order:-1;text-align:center;flex-basis:100%}}`;
   document.head.appendChild(premium);
   const f=document.createElement("style");
   f.textContent=`.lv-fallback-tools{position:fixed;right:14px;bottom:92px;z-index:600;display:flex;flex-direction:column;gap:7px;max-width:min(310px,calc(100vw - 28px));padding:12px;background:#e8e0cced;border:1px solid #b5a989;box-shadow:0 8px 26px #171a1433;color:#35362d;font:13px/1.4 system-ui,sans-serif}.lv-fallback-tools strong{font:600 12px system-ui,sans-serif;letter-spacing:.08em}.lv-fallback-tools button{border:1px solid #9a8b68;background:#f3ecd9;padding:9px 11px;text-align:left;color:#3b3c32;cursor:pointer;font:13px system-ui,sans-serif}.lv-fallback-tools button:hover{background:#e0d2af}`;
@@ -1009,12 +1015,9 @@ function lvEnsureStyles() {
   .lv-archive-seal>span{font:700 27px/1 'Noto Serif CJK SC','Songti SC',serif;letter-spacing:.14em}.lv-archive-seal small{color:#b1a27d;font:8px/1.45 system-ui,sans-serif;letter-spacing:.1em}
   .lv-archive-close{position:absolute;right:0;top:0;background:#111715b8!important;border-color:#c5b57c77!important;color:#eee6d2!important}
   .lv-archive-rail{display:flex;justify-content:space-between;gap:12px;margin:13px 0 10px;color:#aaa58e;font:700 9px system-ui,sans-serif;letter-spacing:.17em}.lv-archive-rail span:last-child{color:#d0b875}
-  .lv-archive-card .lv-difficulty-block{margin:0 0 19px;padding:10px 12px 11px;border:1px solid #c3b57a24;background:linear-gradient(90deg,#c5a75b0c,#fff0 65%)}
-  .lv-archive-card .lv-difficulty-heading{color:#d2c8ae;font:12px system-ui,sans-serif}.lv-archive-card .lv-difficulty-heading strong{font-size:13px;letter-spacing:.08em}.lv-archive-card .lv-difficulty-heading span{font-size:10px;color:#969687}
-  .lv-archive-card .lv-difficulty-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-top:8px}
-  .lv-archive-card .lv-difficulty-card{position:relative;display:grid;grid-template-columns:25px 1fr;grid-template-rows:auto auto;align-items:center;gap:1px 8px;min-height:53px;padding:7px 10px;border:1px solid #b7ad8c35;background:#111816a8;color:#e7e0cd;text-align:left;transition:background .16s,border .16s,transform .16s}
-  .lv-archive-card .lv-difficulty-card:hover{transform:translateY(-1px);border-color:#d0b56d88;background:#242c23}.lv-archive-card .lv-difficulty-card.selected{border-color:#d8bb70;background:linear-gradient(105deg,#8c713a63,#3b4432);box-shadow:inset 0 0 0 1px #d0ad6077}
-  .lv-difficulty-index{grid-row:1/3;color:#b89a57;font:700 10px Georgia,serif}.lv-archive-card .lv-difficulty-card strong{font:700 12px system-ui,sans-serif;color:#f1e8d0}.lv-archive-card .lv-difficulty-card span:last-child{font:10px/1.35 system-ui,sans-serif;color:#a5a18d}
+  .lv-archive-briefing{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:0 0 15px}
+  .lv-briefing-item{display:flex;gap:9px;align-items:flex-start;min-width:0;padding:9px 10px;border:1px solid #c3b57a24;background:linear-gradient(120deg,#c5a75b10,#fff0 75%)}
+  .lv-briefing-item>span{flex:0 0 auto;color:#c3a65e;font:700 10px Georgia,serif}.lv-briefing-item div{display:grid;gap:3px}.lv-briefing-item strong{color:#e6dcc5;font:700 10px system-ui,sans-serif;letter-spacing:.05em}.lv-briefing-item small{color:#a7a391;font:9px/1.4 system-ui,sans-serif}
   .lv-grid-heading{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin:0 0 9px;color:#d1bd84;font:700 9px system-ui,sans-serif;letter-spacing:.18em}.lv-grid-heading span:last-child{color:#9b9b8a;font:10px system-ui,sans-serif;letter-spacing:.04em}
   .lv-archive-card .lv-chapter-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0 0 15px}
   .lv-archive-card .lv-chapter{position:relative;isolation:isolate;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden;min-width:0;min-height:clamp(215px,25vh,265px);padding:13px 14px 12px;border:1px solid #c9bb9354;background:#161e1bd9;color:#f1ead9;text-align:left;cursor:pointer;box-shadow:0 5px 22px #0005;transition:transform .2s,border .2s,box-shadow .2s;animation:lvArchiveReveal .42s both;animation-delay:calc(var(--card-index,1)*35ms)}
@@ -1025,11 +1028,11 @@ function lvEnsureStyles() {
   .lv-archive-card .lv-chapter.locked .lv-card-photo{filter:grayscale(.92) brightness(.42)}.lv-archive-card .lv-chapter.locked .lv-card-vignette{background:linear-gradient(180deg,#070a0bc9,#080b0b33 39%,#090d0cf0)}
   .lv-card-top{display:flex;justify-content:space-between;align-items:center;gap:8px;color:#e4d8b8;font:700 9px system-ui,sans-serif;letter-spacing:.14em}.lv-card-top i{font-style:normal;color:#c4aa65}.lv-card-status{padding:5px 7px;border:1px solid #eee2c34c;background:#09100eb8;color:#e7ddc6;font:700 8px system-ui,sans-serif;letter-spacing:.06em;white-space:nowrap}.lv-card-status.available{color:#ead195;border-color:#d6b75b77}.lv-card-status.cleared{color:#f3d983;border-color:#e1c36a77}.lv-card-status.locked-status{color:#aaa79a}
   .lv-card-copy{display:grid;gap:5px;width:100%;margin-top:auto}.lv-card-place{color:#d0bd83;font:700 9px system-ui,sans-serif;letter-spacing:.13em;text-transform:uppercase}.lv-card-copy>strong{color:#f2ebd9;font:500 clamp(19px,2vw,25px)/1.15 'Noto Serif CJK SC','Songti SC',Georgia,serif;letter-spacing:.07em;text-shadow:0 2px 12px #000b}.lv-card-story{display:-webkit-box;min-height:39px;overflow:hidden;-webkit-line-clamp:2;-webkit-box-orient:vertical;color:#dedacc;font:10px/1.55 system-ui,sans-serif;text-shadow:0 2px 6px #000}
-  .lv-card-metrics{display:grid;grid-template-columns:.8fr 1.2fr;gap:12px;padding-top:8px;border-top:1px solid #e8d8b744}.lv-card-metrics span{display:grid;gap:3px}.lv-card-metrics small{color:#b9b5a4;font:8px system-ui,sans-serif;letter-spacing:.11em}.lv-card-metrics b{color:#efe5cc;font:700 11px system-ui,sans-serif;letter-spacing:.02em}.lv-card-hint{display:none;color:#c9c2ad;font:9px/1.4 system-ui,sans-serif}
+  .lv-card-metrics{display:grid;grid-template-columns:.8fr 1.2fr;gap:12px;padding-top:8px;border-top:1px solid #e8d8b744}.lv-card-metrics span{display:grid;gap:3px}.lv-card-metrics small{color:#b9b5a4;font:8px system-ui,sans-serif;letter-spacing:.11em}.lv-card-metrics b{color:#efe5cc;font:700 11px system-ui,sans-serif;letter-spacing:.02em}.lv-card-hint{display:block;color:#c9c2ad;font:9px/1.4 system-ui,sans-serif}
   .lv-card-lock{position:absolute;inset:auto 0 0;display:grid;grid-template-columns:36px 1fr;align-items:center;gap:2px 8px;padding:12px 14px;background:linear-gradient(90deg,#080b0bf2,#111715e8);color:#d1c8b1;pointer-events:none}.lv-lock-glyph{grid-row:1/3;width:30px;height:30px;display:grid;place-items:center;border:1px solid #b7aa8577;border-radius:50%;color:#c6b276;font-size:20px}.lv-card-lock b{font:700 10px system-ui,sans-serif;letter-spacing:.08em}.lv-card-lock small{color:#a5a193;font:9px system-ui,sans-serif}
   .lv-archive-footer{display:flex;justify-content:space-between;gap:15px;padding-top:10px;border-top:1px solid #c7b87b33;color:#aaa795;font:10px/1.5 system-ui,sans-serif}.lv-archive-footer span:last-child{color:#b9a878;text-align:right;letter-spacing:.1em}
-  @media(max-width:850px){.lv-archive-card .lv-chapter-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.lv-archive-seal{width:72px;height:72px;flex-basis:72px}.lv-archive-seal>span{font-size:21px}.lv-archive-seal small{font-size:7px}}
-  @media(max-width:560px){.lv-archive-overlay{padding:5px}.lv-archive-card{padding:14px;max-height:98dvh}.lv-archive-head{padding-right:43px!important}.lv-archive-seal{display:none}.lv-archive-title h2{font-size:29px!important}.lv-archive-title p{font-size:11px!important}.lv-archive-eyebrow{font-size:8px}.lv-archive-eyebrow span+span{display:none}.lv-archive-rail{font-size:8px}.lv-archive-card .lv-difficulty-block{padding:8px}.lv-archive-card .lv-difficulty-heading{display:block}.lv-archive-card .lv-difficulty-heading span{display:block;margin-top:3px}.lv-archive-card .lv-difficulty-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}.lv-archive-card .lv-difficulty-card{grid-template-columns:1fr;gap:2px;min-height:55px;padding:6px}.lv-difficulty-index{display:none}.lv-archive-card .lv-difficulty-card strong{font-size:10px}.lv-archive-card .lv-difficulty-card span:last-child{font-size:8px}.lv-grid-heading span:last-child{display:none}.lv-archive-card .lv-chapter-grid{grid-template-columns:1fr;gap:8px}.lv-archive-card .lv-chapter{min-height:265px;padding:12px}.lv-card-copy>strong{font-size:22px}.lv-card-story{min-height:34px}.lv-archive-footer{display:block}.lv-archive-footer span{display:block}.lv-archive-footer span:last-child{text-align:left;margin-top:4px}}
+  @media(max-width:850px){.lv-archive-briefing{grid-template-columns:1fr}.lv-archive-card .lv-chapter-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.lv-archive-seal{width:72px;height:72px;flex-basis:72px}.lv-archive-seal>span{font-size:21px}.lv-archive-seal small{font-size:7px}}
+  @media(max-width:560px){.lv-archive-overlay{padding:5px}.lv-archive-card{padding:14px;max-height:98dvh}.lv-archive-head{padding-right:43px!important}.lv-archive-seal{display:none}.lv-archive-title h2{font-size:29px!important}.lv-archive-title p{font-size:11px!important}.lv-archive-eyebrow{font-size:8px}.lv-archive-eyebrow span+span{display:none}.lv-archive-rail{font-size:8px}.lv-grid-heading span:last-child{display:none}.lv-archive-card .lv-chapter-grid{grid-template-columns:1fr;gap:8px}.lv-archive-card .lv-chapter{min-height:265px;padding:12px}.lv-card-copy>strong{font-size:22px}.lv-card-story{min-height:34px}.lv-archive-footer{display:block}.lv-archive-footer span{display:block}.lv-archive-footer span:last-child{text-align:left;margin-top:4px}}
   `;document.head.appendChild(archive);
 }
 function lvFallbackDo(action,shift=false){
@@ -1061,8 +1064,6 @@ if(typeof document!=="undefined"){
   const cta=document.getElementById("chapterButton");
   cta?.addEventListener("click",lvOpenPicker);
   document.addEventListener("click",e=>{
-    const diff=e.target.closest?.("[data-lv-difficulty]");
-    if(diff && LV_DIFFICULTIES[diff.dataset.lvDifficulty]){lvDifficultyKey=diff.dataset.lvDifficulty;lvSaveDifficultyKey();lvRenderPicker(document.getElementById("lvPicker"));return;}
     const b=e.target.closest?.("[data-level-select]"); if(b){lvChoose(b.dataset.levelSelect);return;}
     if(e.target.closest?.("[data-lv-close]")){lvClosePicker();return;}
     if(e.target.closest?.("[data-lv-picker]")){lvClosePicker();lvOpenPicker();return;}

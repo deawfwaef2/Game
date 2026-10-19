@@ -91,12 +91,21 @@ function srTagTexture(it) {
   x.fillText(name, 14, 52);
   x.fillStyle = "#b8352a";
   x.font = "bold 46px 'DejaVu Sans Mono',monospace";
-  x.fillText(`E$${it.price.toFixed(2)}`, 14, 112);
+  x.fillText(`E$${it.price.toFixed(2)}`, 14, 101);
   x.fillStyle = "#5b5444";
   x.font = "30px 'Noto Sans CJK SC','PingFang SC',sans-serif";
   x.textAlign = "right";
   const sub = it.kind === "food" || it.kind === "drink" ? `${it.servings}份` : it.servings > 1 ? `${it.servings}次` : "耐用";
-  x.fillText(`${sub} · ${it.weight}kg`, 498, 112);
+  x.fillText(`${sub} · ${it.weight}kg`, 498, 101);
+  const unitText = typeof cgUnitCostText === "function" ? cgUnitCostText(it) : "";
+  if (unitText) {
+    x.fillStyle = "#73684f";
+    x.font = "22px 'Noto Sans CJK SC','PingFang SC',sans-serif";
+    x.textAlign = "left";
+    let line = unitText;
+    while (x.measureText(line).width > 484 && line.length > 4) line = line.slice(0, -2) + "…";
+    x.fillText(line, 14, 136);
+  }
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
   t.anisotropy = 4;
@@ -173,9 +182,10 @@ function srCard() {
 #shopCard.on{opacity:1;transform:translate(0,-50%)}
 #shopCard .cat{font-size:14px;letter-spacing:.18em;color:#c9a86a}
 #shopCard h2{margin:6px 0 10px;font:600 27px/1.25 'Noto Serif CJK SC','Songti SC',serif;color:#fff6e2}
-#shopCard .price{display:flex;align-items:baseline;gap:14px;margin-bottom:14px}
+#shopCard .price{display:flex;align-items:baseline;gap:14px;margin-bottom:5px}
 #shopCard .price b{font:700 30px/1 'DejaVu Sans Mono',monospace;color:#f08d70}
 #shopCard .price span{font-size:16px;color:#cfc3a8}
+#shopCard .price-reading{margin:0 0 12px;color:#dbbd7e;font:12px/1.5 system-ui,sans-serif}
 #shopCard .use{font-size:18px;line-height:1.65;margin:0 0 12px;color:#f5ecda}
 #shopCard .use em{font-style:normal;display:inline-block;font-size:14px;padding:2px 8px;margin-right:8px;border-radius:3px;background:#c9a86a;color:#231f18;vertical-align:2px}
 #shopCard .facts{font-size:15px;line-height:1.6;color:#cdbf9f;margin:0 0 14px;padding-top:10px;border-top:1px solid rgba(232,214,170,.15)}
@@ -223,7 +233,7 @@ function srUpdateCard() {
     key = id + ":" + inCart + ":" + spent.toFixed(2);
   if (key !== SR.cardKey) {
     SR.cardKey = key;
-    card.innerHTML = `<div class="cat">${srEsc(SR_CAT[it.category] || "")}</div><h2>${srEsc(it.name)}</h2><div class="price"><b>E$ ${it.price.toFixed(2)}</b><span>篮中 ×${inCart}</span></div>${srUseRows(it)}<p class="facts">${srEsc(itemFacts(it))}</p><div class="keys"><span><kbd>E</kbd>放进篮子</span><span><kbd>Shift</kbd>+<kbd>E</kbd>拿5件</span><span><kbd>R</kbd>放回一件</span></div><div class="budget">已花 E$ ${spent.toFixed(2)} · 还剩 E$ ${(gameBudget() - spent).toFixed(2)} · 进门后不能再买</div>`;
+    card.innerHTML = `<div class="cat">${srEsc(SR_CAT[it.category] || "")}</div><h2>${srEsc(it.name)}</h2><div class="price"><b>E$ ${it.price.toFixed(2)}</b><span>篮中 ×${inCart}</span></div><p class="price-reading">${srEsc(typeof cgPriceInfo === "function" ? cgPriceInfo(it) : "基础价")}</p>${srUseRows(it)}<p class="facts">${srEsc(itemFacts(it))}</p><div class="keys"><span><kbd>E</kbd>放进篮子</span><span><kbd>Shift</kbd>+<kbd>E</kbd>拿5件</span><span><kbd>R</kbd>放回一件</span></div><div class="budget">已花 E$ ${spent.toFixed(2)} · 还剩 E$ ${(gameBudget() - spent).toFixed(2)} · 进门后不能再买</div>`;
   }
   card.classList.add("on");
 }
@@ -232,7 +242,8 @@ worldTargetInfo = function (o) {
   const id = o?.userData?.interact;
   if (worldIsShopping() && typeof id === "string" && id.startsWith("buy:") && DB[id.slice(4)]) {
     const it = DB[id.slice(4)];
-    return [it.name, `E$ ${it.price.toFixed(2)}  ·  E 入篮  ·  右侧卡片写着它的用途`];
+    const unit = typeof cgPriceInfo === "function" ? ` · ${cgPriceInfo(it)}` : "";
+    return [it.name, `E$ ${it.price.toFixed(2)}${unit} · E 入篮 · 右侧卡片写着它的用途`];
   }
   return srPrevInfo(o);
 };

@@ -318,12 +318,23 @@
   opacity: 0.68;
 }
 #worldHint {
+  flex: 0 1 29%;
+  max-width: 29%;
   text-align: right;
 }
+#worldChapterGuide {
+  flex: 1 1 38%;
+  max-width: 38%;
+  color: #d4c395;
+  font-size: 13px;
+  line-height: 1.45;
+  text-align: center;
+}
 #worldCondition {
+  flex: 0 1 30%;
   color: #dfc9a6;
   letter-spacing: 0.04em;
-  max-width: 48%;
+  max-width: 30%;
 }
 #worldCondition.urgent {
   color: #ecc09c;
@@ -612,7 +623,14 @@
     font-size: 14px;
   }
   #worldHint {
-    max-width: 43%;
+    max-width: 32%;
+  }
+  #worldChapterGuide {
+    max-width: 37%;
+    font-size: 11px;
+  }
+  #worldCondition {
+    max-width: 30%;
   }
   #worldFocus {
     bottom: 23%;

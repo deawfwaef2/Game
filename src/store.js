@@ -705,9 +705,10 @@ if (W.enabled) {
             ? `${it.servings}份 · ${it.kcal}kcal/份${it.cook ? " · 需烹煮" : ""}`
             : `${it.servings}次用量`;
       const life = it.life < 9999 ? ` · ${expiryPublicLabel(it)}` : " · 长期保存";
+      const priceInfo = typeof cgPriceInfo === "function" ? ` · ${cgPriceInfo(it)}` : "";
       return [
         it.name,
-        `E 入篮  ·  Shift+E 拿5件  ·  R 放回  |  E$ ${(it.price * 1).toFixed(2)} · ${it.weight}kg · ${detail}${life}  |  篮中×${cart[it.id] || 0}`,
+        `E 入篮  ·  Shift+E 拿5件  ·  R 放回  |  E$ ${(it.price * 1).toFixed(2)}${priceInfo} · ${it.weight}kg · ${detail}${life}  |  篮中×${cart[it.id] || 0}`,
       ];
     }
     if (id === "kit:starter" || id === "kit:year") {

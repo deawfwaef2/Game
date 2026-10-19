@@ -22,17 +22,15 @@ const fileURL="file://"+path.resolve("index.html"),out=path.resolve("tests/artif
  await page.waitForFunction(()=>[...document.querySelectorAll(".lv-chapter")].every(el=>getComputedStyle(el).opacity==="1"),{timeout:5000});
  const coverAudit=await page.locator(".lv-card-photo").evaluateAll(xs=>xs.map(i=>({data:i.src.startsWith("data:image/jpeg;base64,"),width:i.naturalWidth})));
  assert.ok(coverAudit.every(x=>x.data&&x.width>500),"chapter art is embedded and fully offline");
- assert.equal(await page.locator("[data-lv-difficulty]").count(),4,"chapter picker offers four difficulty profiles");
- assert.equal(await page.locator('[data-lv-difficulty="standard"]').getAttribute("aria-pressed"),"true","standard difficulty is selected by default");
- assert.ok((await page.locator('[data-level-select="bellhouse"]').innerText()).includes("预算 · E$ 300"),"chapter cards show chapter-specific budget");
- await page.locator('[data-lv-difficulty="extreme"]').click();
- assert.equal(await page.locator('[data-lv-difficulty="extreme"]').getAttribute("aria-pressed"),"true","extreme difficulty can be selected");
- assert.ok((await page.locator('[data-level-select="bellhouse"]').innerText()).includes("预算 · E$ 64"),"extreme difficulty updates the unlocked chapter's modeled budget");
- assert.equal(await page.evaluate(()=>lvBudgetFor("thousand","extreme")),429,"the 1000-day extreme budget uses the modeled economy");
- assert.equal(await page.evaluate(()=>lvExtremeBudgetDetails("thousand").flavorCount),6,"extreme budget is built around six distinct long-life food flavors");
- assert.equal(await page.evaluate(()=>lvExtremeBudgetDetails("thousand").planningKcalPerDay),1463,"extreme plan uses 103 percent of the simulator's measured daily calorie baseline");
- await page.locator('[data-lv-difficulty="standard"]').click();
- assert.equal(await page.locator('[data-lv-difficulty="standard"]').getAttribute("aria-pressed"),"true","standard profile can be restored before entering the chapter");
+ assert.equal(await page.locator("[data-lv-difficulty]").count(),0,"the archive has no selectable difficulty controls");
+ assert.equal(await page.locator(".lv-difficulty-block").count(),0,"the old difficulty-selection panel is removed");
+ assert.equal(await page.locator(".lv-archive-briefing .lv-briefing-item").count(),3,"the archive teaches procurement, physical play and investigation without spoilers");
+ assert.ok((await page.locator('[data-level-select="bellhouse"]').innerText()).includes("E$ 65"),"chapter cards show the fixed-hard modeled budget");
+ assert.equal(await page.evaluate(()=>lvBudgetFor("thousand")),388,"the 1000-day fixed-hard budget uses the modeled economy");
+ assert.equal(await page.evaluate(()=>lvHardBudgetDetails("thousand").flavorCount),6,"fixed-hard budget is built around six distinct long-life food flavors");
+ assert.equal(await page.evaluate(()=>lvHardBudgetDetails("thousand").planningKcalPerDay),1463,"fixed-hard plan uses 103 percent of the simulator's measured daily calorie baseline");
+ assert.ok(await page.evaluate(()=>Math.abs(lvHardBudgetDetails("thousand").riskAndPackingReserve/(lvHardBudgetDetails("thousand").foodCost+lvHardBudgetDetails("thousand").careReserve+lvHardBudgetDetails("thousand").setupReserve+lvHardBudgetDetails("thousand").mechanismReserve)-0.1)<1e-10),"fixed-hard budgets retain a ten-percent packing and risk reserve");
+ assert.equal(await page.evaluate(()=>lvNewRun("bellhouse","legacy","extreme").difficulty),"hard","legacy difficulty arguments cannot create a softer or harder profile");
  await snap("02-chapter-book.jpg",84);
  await page.locator('[data-level-select="bellhouse"]').click();
  await page.waitForFunction(()=>phase==="shop"&&W.store,{timeout:30000});
@@ -43,6 +41,19 @@ const fileURL="file://"+path.resolve("index.html"),out=path.resolve("tests/artif
  await page.locator("#worldCatalogButton").click();
  await page.locator("#lvOrderOverlay").waitFor({state:"visible"});
  assert.ok(await page.locator("#lvOrderGrid .lv-order-item").count()>0,"the order book opens with products instead of an empty catalogue");
+ assert.ok(await page.locator("#lvOrderGrid .lv-order-price-info").first().innerText(),"order cards explain the price tier and per-unit cost");
+ await page.locator("#lvOrderSort").selectOption("price-low");
+ const cheapest=await page.evaluate(()=>Math.min(...lvCatalogStock().map(it=>it.price)));
+ const firstPrice=Number((await page.locator("#lvOrderGrid .lv-order-meta b").first().innerText()).replace(/[^0-9.]/g,""));
+ assert.ok(Math.abs(firstPrice-cheapest)<0.011,"single-item-price sort puts the cheapest product first");
+ await page.locator("#lvOrderSort").selectOption("value");
+ const bestValue=await page.evaluate(()=>lvCatalogStock().slice().sort((a,b)=>cgUnitCostValue(a)-cgUnitCostValue(b)||(a.name||"").localeCompare(b.name||"")||a.id.localeCompare(b.id))[0].id);
+ assert.equal(await page.locator("#lvOrderGrid .lv-order-item").first().getAttribute("data-item"),bestValue,"survival-value sort uses cost per serving or thousand food calories");
+ const foodName=await page.evaluate(()=>lvCatalogStock().find(it=>it.kind==="food"&&it.gen)?.name);
+ assert.ok(foodName,"chapter stock includes generated food with meaningful unit-cost data");
+ await page.locator("#lvOrderSearch").fill(foodName);
+ await page.waitForFunction(()=>document.querySelectorAll("#lvOrderGrid .lv-order-item").length>0);
+ assert.ok((await page.locator("#lvOrderGrid .lv-order-price-info").first().innerText()).includes("千大卡"),"food cards show cost per thousand calories");
  await page.locator("#lvOrderSearch").fill("机械腕表");
  await page.waitForFunction(()=>document.querySelectorAll("#lvOrderGrid .lv-order-item").length>0);
  assert.ok(await page.locator("#lvOrderGrid").innerText().then(t=>t.includes("安德士机械腕表")));
@@ -59,7 +70,7 @@ const fileURL="file://"+path.resolve("index.html"),out=path.resolve("tests/artif
  await page.waitForFunction(()=>phase==="playing"&&!W.store,{timeout:30000});
  const report=await page.evaluate(()=>({
    chapter:G.level.id,hidden:timeHidden(),day:document.querySelector("#hudDay").textContent,hudHeaderVisible:getComputedStyle(document.querySelector("#hud .hud-header")).display!=="none",
-   hudClock:document.querySelector("#hudClock").textContent,topRight:document.querySelector("#worldTopRight").textContent,
+   hudClock:document.querySelector("#hudClock").textContent,topRight:document.querySelector("#worldTopRight").textContent,guide:document.querySelector("#worldChapterGuide").textContent,guideVisible:!document.querySelector("#worldChapterGuide").hidden,
    label:document.querySelector("#worldDay").textContent,mechanism:(()=>{let found=false;roomRoot.traverse(o=>{if(o.userData.interact==="level:bell")found=true;});return found;})(),
    catalog:CATALOG.length,added:Object.keys(cart),wrist:lvWristLines(),
  }));
@@ -68,6 +79,7 @@ const fileURL="file://"+path.resolve("index.html"),out=path.resolve("tests/artif
  assert.equal(await page.locator("#worldVitals .world-vital").count(),6,"all six survival needs have bars");
  assert.ok(!/\b\d{1,2}:\d{2}\b/.test(report.label));assert.equal(report.topRight,"");
  assert.ok(report.label.includes("借住的人"));assert.equal(report.mechanism,true);
+ assert.equal(report.guideVisible,true,"the in-world HUD carries non-spoiling chapter guidance");assert.ok(report.guide.includes("听清节奏"),"the chapter guide reminds players what to observe without giving away the hidden window");
  assert.ok(report.wrist[0]==="——","packed watch is not yet available to read");
  await snap("04-hidden-clock-room.jpg",84);
  const beforeMini=await page.evaluate(()=>({minute:G.minute,wrong:G.level.wrong,cut:G.level.cut}));
@@ -109,7 +121,7 @@ const fileURL="file://"+path.resolve("index.html"),out=path.resolve("tests/artif
  await page.evaluate(()=>{qte.pos=0.5;finishQTE(false);});
  await page.waitForFunction(()=>!qte.active);
  const fallSetup=await page.evaluate(()=>{
-   G.level.difficulty="extreme";G.minute=22*60;G.power=false;G.candleUntil=0;G.dirt=70;G.stats.energy=10;
+   G.level.difficulty="extreme";lvState();G.minute=22*60;G.power=false;G.candleUntil=0;G.dirt=70;G.stats.energy=10;
    G.cooldowns.wetFloorUntil=G.minute+60;G.env.wear=0.9;env=G.env;paused=false;panelType="";
    SURVIVAL.distance=0;SURVIVAL.seed=G.seed;
    const hazards=survCurrentHazards(5),chance=survFallChance(hazards);let seed=0;
@@ -117,7 +129,7 @@ const fileURL="file://"+path.resolve("index.html"),out=path.resolve("tests/artif
    G.rng=seed;survTrackDistance(5,1);
    return {hazards,chance,baseChance:survFallChance({}),kind:SURVIVAL.qte?.kind,seed};
  });
- assert.ok(fallSetup.hazards.wet&&fallSetup.hazards.dark&&fallSetup.hazards.clutter&&fallSetup.hazards.tired&&fallSetup.hazards.extreme,"fall risk accounts for wet, dark, cluttered, tired, extreme conditions");
+ assert.ok(fallSetup.hazards.wet&&fallSetup.hazards.dark&&fallSetup.hazards.clutter&&fallSetup.hazards.tired&&fallSetup.hazards.chapterHard,"fall risk accounts for wet, dark, cluttered, tired, and fixed-hard chapter conditions");
  assert.ok(fallSetup.chance>fallSetup.baseChance&&fallSetup.kind==="fall","five metres of hazardous movement triggers a fall QTE");
  await page.locator("#survivalIncident").waitFor({state:"visible"});
  await page.evaluate(()=>{SURVIVAL.qte.half=0.5;});
@@ -128,6 +140,6 @@ const fileURL="file://"+path.resolve("index.html"),out=path.resolve("tests/artif
  await page.evaluate(()=>{SURVIVAL.qte.pos=0.5;survFallFinish(false);});
  assert.ok(await page.evaluate(()=>G.illness.some(x=>x.id==="sprain")&&G.cooldowns.fallUntil>G.minute&&survCurrentHazards(0).tired),"a failed fall QTE applies sprain and a cooldown");
  assert.equal(errors.length,0,errors.join("\n"));assert.equal(requests.length,0,requests.join("\n"));
- console.log("PASS chapter picker / one-time budget / all six chapters / hidden-clock mechanisms / cutting, hand-injury and environment-driven fall QTEs; external requests=0; JS errors=0");
+ console.log("PASS single fixed-hard chapter archive / price tiers and unit-cost ordering / one-time budget / all six chapters / hidden-clock mechanisms / cutting, hand-injury and environment-driven fall QTEs; external requests=0; JS errors=0");
  await page.close();await browser.close();
 })().catch(e=>{console.error(e);process.exit(1);});

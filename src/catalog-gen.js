@@ -353,19 +353,19 @@ pintu4|拼图·海港 750片|craft|puzzle|1.8|0.7|11
 `;
 const CG_FOOD_TRAITS = {
   std: ["", 1, {}, ""],
-  premium: ["特级", 1.35, { joy: 1.5 }, "特级品：心情再+1.5"],
+  premium: ["特级", 1.8, { joy: 1.5 }, "优选批次：价格约为常规品的1.8倍，心情再+1.5"],
   spicy: ["麻辣", 1.05, { joy: 1, thirst: 5 }, "麻辣：心情+1，但每吃一份水分−5"],
   light: ["清淡", 1, { health: 0.4, joy: -0.5 }, "清淡少盐：每份健康+0.4，但没那么香（心情−0.5）"],
-  energy: ["高能", 1.15, { kcalX: 1.3 }, "高能配方：每份热量高三成"],
-  fortified: ["强化", 1.2, { health: 0.8 }, "营养强化：每份健康+0.8"],
+  energy: ["高能", 1.2, { kcalX: 1.3 }, "高能配方：热量高三成，售价也更高"],
+  fortified: ["强化", 1.35, { health: 0.8 }, "营养强化：每份健康+0.8，售价较常规品高"],
   sweet: ["甜味", 1.05, { joy: 1.5 }, "甜口：心情+1.5"],
-  clearance: ["临期", 0.55, { lifeX: 0.3 }, "临期特价：便宜近一半，但只剩三成保质期"],
-  army: ["军需", 0.95, { lifeX: 2.2, joy: -1 }, "军需库存：保质期翻倍，但口味单调（心情−1）"],
+  clearance: ["临期", 0.38, { lifeX: 0.3 }, "临期特价：约四折，剩余保质期也大幅缩短"],
+  army: ["军需", 0.82, { lifeX: 2.2, joy: -1 }, "军需库存：量大价低、耐储，但口味单调（心情−1）"],
   home: ["家乡风味", 1.4, { joy: 2 }, "家乡风味：吃着想家，心情+2"],
-  coarse: ["粗粮", 0.9, { kcalX: 0.88, health: 0.5 }, "粗粮：热量略低，每份健康+0.5"],
+  coarse: ["粗粮", 0.86, { kcalX: 0.88, health: 0.5 }, "粗粮：热量略低、价格实在，每份健康+0.5"],
   instant: ["速食", 1.2, { cook: false }, "速食：不用煮，停电也能吃"],
   warm: ["暖身", 1.1, { warmth: 3 }, "暖身：天冷（低于15°C）时吃，心情再+3"],
-  imported: ["进口", 1.8, { joy: 2.5 }, "进口货：少见的味道，心情+2.5"],
+  imported: ["进口", 2.65, { joy: 2.5 }, "进口货：少量到货，价格明显更高；少见的味道，心情+2.5"],
 };
 const CG_FOOD_POOL = {
   g: ["std", "premium", "coarse", "army", "clearance", "home", "instant", "fortified", "energy"],
@@ -376,20 +376,20 @@ const CG_FOOD_POOL = {
 };
 const CG_GOOD_TRAITS = {
   std: ["", 1, {}, ""],
-  premium: ["精制", 1.4, { mor: 1 }, "精制：用着舒服，每次心情+1"],
-  economy: ["简装", 0.7, { mor: -0.5 }, "简装：便宜三成，用着差一点（每次心情−0.5）"],
-  durable: ["加厚", 1.25, { usesX: 1.5 }, "加厚耐用：能多用一半次数"],
-  scented: ["香型", 1.1, { mor: 1 }, "带香味：每次心情+1"],
-  medicated: ["药用", 1.15, { hp: 0.5 }, "药用：每次健康+0.5"],
-  gentle: ["温和", 1.1, { hyg: 3 }, "温和配方：清洁再+3"],
-  strong: ["强效", 1.2, { dirt: 5, hyg: 2 }, "强效：屋子再干净一点（脏乱−5）"],
-  imported: ["进口", 1.8, { mor: 1.5, hyg: 2 }, "进口货：心情+1.5，清洁+2"],
-  cozy: ["舒适", 1.3, { comfort: 0.04 }, "舒适：放在屋里，心情下降更慢"],
-  warm: ["保暖", 1.3, { comfort: 0.06, cold: true }, "保暖：屋里低于13°C时，心情下降更慢"],
-  old: ["旧货", 0.5, { mor: -0.3 }, "旧货：半价，但看着有点旧（每次心情−0.3）"],
-  bigpot: ["大盆", 1.5, { comfort: 0.02 }, "大盆：长得茂盛，心情下降再慢一点"],
-  seedling: ["小苗", 0.6, {}, "小苗：便宜，还没长开"],
-  bloomy: ["带花苞", 1.3, { comfort: 0.015 }, "带花苞：过阵子开花，心情下降慢一点"],
+  premium: ["精制", 1.8, { mor: 1 }, "精制优选：售价约为常规品的1.8倍，用着舒服，每次心情+1"],
+  economy: ["简装", 0.5, { mor: -0.5 }, "简装平价：约半价，用着朴素一点（每次心情−0.5）"],
+  durable: ["加厚", 1.35, { usesX: 1.5 }, "加厚耐用：售价略高，但能多用一半次数"],
+  scented: ["香型", 1.15, { mor: 1 }, "带香味：每次心情+1"],
+  medicated: ["药用", 1.25, { hp: 0.5 }, "药用配方：每次健康+0.5，售价较高"],
+  gentle: ["温和", 1.15, { hyg: 3 }, "温和配方：清洁再+3"],
+  strong: ["强效", 1.35, { dirt: 5, hyg: 2 }, "强效配方：屋子再干净一点（脏乱−5），价格较高"],
+  imported: ["进口", 2.6, { mor: 1.5, hyg: 2 }, "进口货：价格约为常规品的2.6倍，心情+1.5，清洁+2"],
+  cozy: ["舒适", 1.35, { comfort: 0.04 }, "舒适：售价略高，放在屋里心情下降更慢"],
+  warm: ["保暖", 1.4, { comfort: 0.06, cold: true }, "保暖：屋里低于13°C时，心情下降更慢"],
+  old: ["旧货", 0.45, { mor: -0.3 }, "旧货：折价处理，但看着有点旧（每次心情−0.3）"],
+  bigpot: ["大盆", 1.6, { comfort: 0.02 }, "大盆：长得茂盛，心情下降再慢一点"],
+  seedling: ["小苗", 0.55, {}, "小苗：低价，还没长开"],
+  bloomy: ["带花苞", 1.45, { comfort: 0.015 }, "带花苞：过阵子开花，心情下降慢一点"],
 };
 const CG_GOOD_POOL = {
   care: ["std", "premium", "economy", "scented", "medicated", "gentle", "imported"],
@@ -400,9 +400,9 @@ const CG_GOOD_POOL = {
   plant: ["std", "bigpot", "seedling", "bloomy"],
 };
 const CG_SIZES = [
-  ["小包装", 0.5, 0.58],
+  ["小包装", 0.5, 0.62],
   ["", 1, 1],
-  ["家庭装", 2, 1.82],
+  ["家庭装", 2, 1.72],
 ];
 const CG_SIZE_SHORT = ["小", "", "大"];
 const CG_EXTRA = {}; // generated id -> use text parts are rebuilt on demand
@@ -442,7 +442,7 @@ function cgBuild() {
       brands = cgSample(CG_BRANDS.food, 7),
       traits = cgSample(CG_FOOD_POOL[group], 4);
     brands.forEach((brand, bi) => {
-      const bf = 0.85 + cgR() * 0.4;
+      const bf = 0.95 + cgR() * 0.1;
       CG_SIZES.forEach(([sname, sx, px], si) => {
         if (category === "fresh" && si === 0) return;
         traits.forEach((tr, ti) => {
@@ -511,7 +511,7 @@ function cgBuild() {
       brands = cgSample(CG_BRANDS.drink, 7),
       traits = cgSample(CG_FOOD_POOL.d, 4);
     brands.forEach((brand, bi) => {
-      const bf = 0.85 + cgR() * 0.4;
+      const bf = 0.95 + cgR() * 0.1;
       CG_SIZES.forEach(([sname, sx, px], si) => {
         if (t.liters && si !== 1) return;
         traits.forEach((tr, ti) => {
@@ -561,7 +561,7 @@ function cgBuild() {
       traits = cgSample(pool, 4),
       consumable = +uses > 1;
     brands.forEach((brand, bi) => {
-      const bf = 0.85 + cgR() * 0.4;
+      const bf = 0.95 + cgR() * 0.1;
       [0, 1, 2].forEach((si) => {
         if ((!consumable || /o/.test(ex || "")) && si !== 1) return;
         const [sname, sx, px] = CG_SIZES[si];
@@ -622,7 +622,7 @@ function cgBuild() {
     const brands = cgSample(CG_BRANDS[category === "medical" ? "med" : category === "leisure" ? "fun" : "care"], 7),
       traits = cgSample(["std", "premium", "economy", "scented", "imported"], 3);
     brands.forEach((brand, bi) => {
-      const bf = 0.85 + cgR() * 0.4;
+      const bf = 0.95 + cgR() * 0.1;
       traits.forEach((tr, ti) => {
         const [tn, tp, mod] = CG_GOOD_TRAITS[tr];
         cgAdd({
@@ -656,7 +656,7 @@ function cgBuild() {
         cgAdd({
           id: `${key}.${bi}1${ti}`,
           name: `${brand}${tn}${name}`,
-          price: cgMoney(+price * tp * (0.85 + cgR() * 0.4)),
+          price: cgMoney(+price * tp * (0.95 + cgR() * 0.1)),
           weight: +weight,
           servings: 1,
           category: "leisure",
@@ -721,12 +721,12 @@ function cgBooks() {
     seen.add(title);
     const pages = Math.round((pmin + cgR() * (pmax - pmin)) / 10) * 10,
       ed = cgR(),
-      edition = ed < 0.15 ? ["精装", 1.6, 1] : ed < 0.3 ? ["旧书", 0.5, -1] : ed < 0.4 ? ["插图本", 1.3, 1.5] : ["", 1, 0],
+      edition = ed < 0.15 ? ["精装", 2.0, 1] : ed < 0.3 ? ["旧书", 0.45, -1] : ed < 0.4 ? ["插图本", 1.55, 1.5] : ["", 1, 0],
       brand = cgPick(CG_BRANDS.fun);
     cgAdd({
       id: `bk.${made}`,
       name: `${kind}${title}${edition[0] ? " · " + edition[0] : ""}`,
-      price: cgMoney((0.5 + pages / 400) * edition[1] * (0.8 + cgR() * 0.4)),
+      price: cgMoney((0.5 + pages / 400) * edition[1] * (0.95 + cgR() * 0.1)),
       weight: +(0.15 + pages / 1200).toFixed(2),
       servings: 1,
       category: "leisure",
@@ -1136,107 +1136,144 @@ const CG_BRAND_STYLE = {
   红星: ["老字号，口味稳定", { joy: 0.5 }],
   北极星: ["北方大厂，分量给得足", { serv: 1 }],
   长城: ["军工转民用，保质期长两成", { lifeX: 1.2 }],
-  金鹰: ["包装讲究，价格略高", { priceX: 1.1, joy: 0.5 }],
-  丰收: ["农场直供，便宜一成", { priceX: 0.9 }],
+  金鹰: ["包装讲究，价格与品相都更高", { priceX: 1.3, joy: 0.5 }],
+  丰收: ["农场直供，价钱实在", { priceX: 0.88 }],
   海燕: ["沿海厂，口味偏咸", { thirst: 1, joy: 0.3 }],
   黎明: ["早点专门厂，吃完精神好", { energy: 2 }],
-  向阳: ["县办厂，便宜实在", { priceX: 0.92 }],
+  向阳: ["县办厂，走量平价", { priceX: 0.82 }],
   松鹤: ["老年营养食品厂，清淡健康", { health: 0.2 }],
   雪莲: ["高原厂，耐储", { lifeX: 1.15 }],
   牡丹: ["南方厂，口味偏甜", { joy: 0.8 }],
-  前进: ["大厂量产，便宜，味道普通", { priceX: 0.85, joy: -0.3 }],
+  前进: ["大厂量产，压低价格，味道普通", { priceX: 0.75, joy: -0.3 }],
   东风: ["东风厂，分量足", { serv: 1 }],
-  群众: ["群众食品厂，最便宜，用料一般", { priceX: 0.8, joy: -0.5 }],
+  群众: ["合作社走量平价，用料朴素", { priceX: 0.68, joy: -0.5 }],
   胜利: ["老牌国营，封口严实，保质期长一成", { lifeX: 1.1 }],
   和平: ["和平厂，口味温和", { joy: 0.3 }],
-  白桦: ["北境合资厂，洋气", { priceX: 1.2, joy: 1 }],
+  白桦: ["北境合资厂，包装讲究", { priceX: 1.45, joy: 1 }],
   铁塔: ["铁塔厂，重口味", { thirst: 2, joy: 0.8 }],
   老码头: ["老码头，重油重辣", { thirst: 2, warmth: 1 }],
-  南港: ["出口转内销，品相好", { priceX: 1.25, joy: 1.2 }],
-  北境: ["北境进口货", { priceX: 1.3, joy: 1.5 }],
-  河谷: ["乡镇小厂，便宜但保质期短", { priceX: 0.75, lifeX: 0.8 }],
+  南港: ["出口转内销，品相好，价格偏高", { priceX: 1.6, joy: 1.2 }],
+  北境: ["少量北境进口货，稀缺价", { priceX: 1.8, joy: 1.5 }],
+  河谷: ["乡镇小厂，低价但保质期较短", { priceX: 0.7, lifeX: 0.8 }],
   山城: ["山城厂，偏麻辣", { thirst: 2, joy: 1 }],
   金穗: ["粮食大厂，足斤足两", { serv: 1, priceX: 1.05 }],
   绿洲: ["少添加，健康但不耐放", { health: 0.3, lifeX: 0.85 }],
   冰川: ["包装结实，耐放", { lifeX: 1.25, priceX: 1.05 }],
   清泉: ["水源好", { health: 0.1 }],
   北冰洋: ["老牌汽水厂，气足", { joy: 0.8 }],
-  海鸥: ["沿海厂，便宜", { priceX: 0.9 }],
+  海鸥: ["沿海厂，薄利走量", { priceX: 0.82 }],
   白鹤: ["茶厂老字号，香", { joy: 0.8 }],
   山泉: ["山里的厂，水甜", { health: 0.15 }],
-  碧螺: ["茶叶嫩", { joy: 1, priceX: 1.15 }],
-  红磨坊: ["合资厂，洋气", { joy: 1, priceX: 1.2 }],
+  碧螺: ["茶叶嫩，采摘量少", { joy: 1, priceX: 1.35 }],
+  红磨坊: ["合资厂，包装与品相讲究", { joy: 1, priceX: 1.4 }],
   南湖: ["南方厂，偏甜", { joy: 0.5 }],
   天鹅: ["分量足", { serv: 1 }],
   云岭: ["高山茶园", { health: 0.2 }],
   老树: ["老树茶，回甘", { joy: 0.6 }],
-  雪峰: ["便宜实在", { priceX: 0.85 }],
+  雪峰: ["朴素包装，价格实在", { priceX: 0.75 }],
   白鸽: ["老牌日化，温和", { m: 0.3 }],
   蜂花: ["洗得干净", { y: 1 }],
   友谊: ["老字号，香味淡雅", { m: 0.5 }],
-  百雀: ["百雀羚式的老配方，讲究", { m: 0.8, priceX: 1.2 }],
-  雪花: ["最便宜的那种", { priceX: 0.85 }],
+  百雀: ["老配方，讲究用料", { m: 0.8, priceX: 1.4 }],
+  雪花: ["基础配方，低价走量", { priceX: 0.72 }],
   茉莉: ["一股茉莉香", { m: 0.5 }],
-  上海风: ["上海货，体面", { m: 1, priceX: 1.3 }],
+  上海风: ["上海货，包装体面", { m: 1, priceX: 1.5 }],
   芳草: ["加了草药", { h: 0.2 }],
   灯塔: ["耐用，用得久", { usesX: 1.2 }],
   郁金香: ["香味浓", { m: 0.6 }],
-  黄河: ["便宜，质量一般", { priceX: 0.8, m: -0.2 }],
+  黄河: ["低价供货，质量普通", { priceX: 0.7, m: -0.2 }],
   春蕾: ["泡沫多", { y: 0.8 }],
   白猫: ["去污强", { d: 1 }],
   活力: ["清清爽爽", { y: 0.5 }],
   立白: ["不伤手", { m: 0.3 }],
   雪山: ["洗得白", { d: 0.5 }],
-  工农: ["工厂货，便宜", { priceX: 0.85 }],
+  工农: ["工厂简装，价格低", { priceX: 0.72 }],
   劳动: ["量大耐用", { usesX: 1.1 }],
   金鱼: ["味道清淡", { m: 0.3 }],
   红旗: ["老牌子，扎实", { d: 0.8 }],
-  大桥: ["便宜实惠", { priceX: 0.9, d: 0.3 }],
+  大桥: ["朴素耐用，价格实惠", { priceX: 0.78, d: 0.3 }],
   蓝天: ["带消毒成分", { h: 0.2 }],
   永久: ["结实耐用", { m: 0.3 }],
-  钢城: ["钢材好", { m: 0.3, priceX: 1.1 }],
-  铁牛: ["粗笨但便宜", { priceX: 0.85 }],
-  老虎: ["做工好", { m: 0.5, priceX: 1.15 }],
+  钢城: ["钢材扎实，用料足", { m: 0.3, priceX: 1.3 }],
+  铁牛: ["粗笨结实，低价", { priceX: 0.7 }],
+  老虎: ["做工精细，价钱更高", { m: 0.5, priceX: 1.4 }],
   飞跃: ["轻巧", { m: 0.2 }],
-  建设: ["建筑工具厂出品", { priceX: 0.9 }],
+  建设: ["建筑工具厂出品，走量价", { priceX: 0.82 }],
   国营五金: ["国营标准件", {}],
   双喜: ["喜庆的红色", { m: 0.4 }],
   北方: ["北方厂，结实", { m: 0.2 }],
   国营第一制药: ["国家标准药", { h: 0.2 }],
-  北岸药厂: ["便宜", { priceX: 0.85 }],
+  北岸药厂: ["基础药，价格低", { priceX: 0.7 }],
   白云山: ["老药厂", { h: 0.3 }],
-  同仁: ["老字号，药材好", { h: 0.4, priceX: 1.2 }],
+  同仁: ["老字号，药材讲究", { h: 0.4, priceX: 1.4 }],
   红十字: ["医院同款", { h: 0.2 }],
   长青: ["中成药", { m: 0.3 }],
   康乐: ["糖衣，好入口", { m: 0.5 }],
   南岭制药: ["南方药厂", {}],
-  黎明药业: ["新厂，便宜", { priceX: 0.85 }],
+  黎明药业: ["新厂量产，价格低", { priceX: 0.7 }],
   凤凰: ["做工细", { m: 0.4, comfort: 0.01 }],
   春风: ["料子软", { comfort: 0.01 }],
   百花: ["花样好看", { m: 0.3 }],
-  红棉: ["南方轻工，便宜", { priceX: 0.88 }],
+  红棉: ["南方轻工，走量价", { priceX: 0.75 }],
   金鹿: ["结实", { m: 0.2 }],
   幸福: ["喜庆", { m: 0.4 }],
   海棠: ["细致", { comfort: 0.01 }],
   向日葵: ["颜色暖", { m: 0.3 }],
   梅花: ["老牌轻工", { m: 0.2 }],
   西郊苗圃: ["苗壮，好养活", { comfort: 0.005 }],
-  河谷花圃: ["便宜，土是自家配的", { priceX: 0.85 }],
+  河谷花圃: ["低价，土是自家配的", { priceX: 0.7 }],
   南湖花木: ["南方花木，叶子油亮", { comfort: 0.008 }],
   松林园艺: ["盆是陶的，透气", { comfort: 0.005 }],
-  红砖区花店: ["包着彩纸，体面", { priceX: 1.2, comfort: 0.01 }],
+  红砖区花店: ["彩纸包装，送礼体面", { priceX: 1.35, comfort: 0.01 }],
   向阳苗圃: ["向阳养大的，耐晒", {}],
-  盐湖花场: ["耐旱品种", { priceX: 0.9 }],
-  青山园艺: ["老师傅修剪过", { comfort: 0.01, priceX: 1.15 }],
+  盐湖花场: ["耐旱品种，养护实惠", { priceX: 0.82 }],
+  青山园艺: ["老师傅修剪过，品相较好", { comfort: 0.01, priceX: 1.35 }],
   新华: ["印刷清楚", { joy: 0.5 }],
   人民: ["装订结实", { joy: 0.3 }],
-  少年: ["给孩子做的，简单", { joy: -0.5, priceX: 0.8 }],
+  少年: ["给孩子做的，简单耐看", { joy: -0.5, priceX: 0.7 }],
   群星: ["花哨", { joy: 0.6 }],
   东方: ["老牌", { joy: 0.3 }],
-  长江: ["量大", { priceX: 0.9 }],
-  未来: ["新奇", { joy: 0.8, priceX: 1.1 }],
+  长江: ["大批量印制，售价低", { priceX: 0.82 }],
+  未来: ["新奇版式，限量发行", { joy: 0.8, priceX: 1.3 }],
   启明: ["适合动脑", { joy: 0.5 }],
 };
+function cgPriceTierText(it) {
+  if (!it) return "";
+  const labels = [], traitLabel = {
+    clearance: "临期折价", imported: "进口溢价", premium: "优选溢价", medicated: "药用配方",
+    economy: "简装折价", old: it.kind === "book" ? "旧书折价" : "旧货折价",
+    hard: "精装版", illus: "插图版", army: "军需价", coarse: "粗粮实惠", home: "风味款",
+    energy: "高热量款", fortified: "强化配方", strong: "强效款", bigpot: "大盆款",
+    durable: "耐用款", seedling: "幼苗价", warm: "保暖款", cozy: "舒适款",
+  }[it.trait];
+  if (traitLabel) labels.push(traitLabel);
+  const brandPrice = CG_BRAND_STYLE[it.brand]?.[1]?.priceX || 1;
+  if (brandPrice <= 0.72) labels.push("平价厂牌");
+  else if (brandPrice <= 0.84) labels.push("实惠厂牌");
+  else if (brandPrice >= 1.55) labels.push("稀缺厂牌");
+  else if (brandPrice >= 1.3) labels.push("精品厂牌");
+  if (!labels.length) labels.push(it.gen ? "常规价" : "基础价");
+  return labels.join(" · ");
+}
+function cgUnitCostValue(it) {
+  const price = Number(it?.price), servings = Math.max(1, Number(it?.servings) || 1);
+  if (!Number.isFinite(price) || price < 0) return Infinity;
+  if (it.kind === "food" && Number(it.kcal) > 0) return price * 1000 / (servings * it.kcal);
+  if (["food", "drink", "seasoning", "care", "medicine"].includes(it.kind) || servings > 1) return price / servings;
+  return price;
+}
+function cgUnitCostText(it) {
+  if (!it) return "";
+  const servings = Math.max(1, Number(it.servings) || 1), price = Number(it.price) || 0;
+  if (it.kind === "food" && Number(it.kcal) > 0)
+    return `E$${(price / servings).toFixed(2)}/份 · E$${cgUnitCostValue(it).toFixed(2)}/千大卡`;
+  if (["drink", "seasoning", "care", "medicine"].includes(it.kind) || servings > 1)
+    return `约 E$${(price / servings).toFixed(2)}/${it.kind === "food" || it.kind === "drink" || it.kind === "seasoning" ? "份" : "次"}`;
+  return "";
+}
+function cgPriceInfo(it) {
+  return [cgPriceTierText(it), cgUnitCostText(it)].filter(Boolean).join(" · ");
+}
 const CG_COUNTY = ["河谷县", "白桦镇", "北岸市", "南港市", "山城", "雪原农场", "盐湖县", "松林县", "铁路桥镇", "海湾区", "第三工业区", "麦田公社", "红砖区", "冬宫区", "灯塔县", "东郊", "西岭", "柳河", "石滩", "青山县"];
 const CG_PACK = {
   staple: ["牛皮纸袋，订书钉封口", "印着红色麦穗", "袋角有一点受潮的痕迹", "外包装是旧报纸改的纸袋", "封口压着蓝色批号", "纸箱里垫着稻草"],

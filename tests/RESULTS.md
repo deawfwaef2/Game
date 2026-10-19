@@ -451,3 +451,37 @@ The extreme profile now uses 103% of the measured 1,420.8 kcal/day simulator bas
 - Pushed commit `e7f853b760da8f67c5467aa6e8737dbcbc5b0f50` to `main` by fast-forward (no force) and pushed annotated tag `v0.23.0-preview`. This brings the previously local v0.19–v0.22 commits onto GitHub alongside v0.23.
 - Strict SSH host verification used GitHub's published ED25519 key fingerprint checked against `api.github.com/meta`; repo-scoped deploy-key authentication succeeded. `git ls-remote` confirmed remote `main` and the peeled tag point to the expected commit.
 - No GitHub Release or ZIP asset was created. Root offline `index.html` and source/tests/docs are committed. Temporary private key cleanup follows after this documentation commit; remove its public Deploy Key from repository settings afterward.
+
+
+# v0.24.0-preview — fixed-hard chapters, clearer prices and non-spoiler guidance (2026-10-19)
+
+## Rules, pricing and player guidance
+- Removed all chapter difficulty choices. One fixed ruleset applies to all six chapters: window multiplier **0.68**, mistake penalty **×1.4**, palate-fatigue accumulation **×1.35**; environmental/cutting QTE challenge is also fixed for chapter mode. Legacy `calm` / `standard` / `strict` / `extreme` saves are accepted and migrated to `hard`; classic 365-day play and E$300 budget are unchanged.
+- Modeled hard budgets use 103% of the measured 1,420.8 kcal/day baseline (**1,463 kcal/day**), six distinct shelf-stable flavor lines, YEAR_KIT non-food goods, E$0.02/day care and a **10%** packing/risk reserve. Budgets round up. The full one-time finite-inventory reference carts all clear the simulator:
+
+| Chapter | Budget | Cart cost | Win day | Starting food kcal | Remaining kcal | Medicines used | Stars |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Bellhouse | E$65 | E$62.47 | 61 | 114,000 | 16,232 | 3 | 1 |
+| Sealed | E$76 | E$71.43 | 91 | 167,880 | 38,350 | 0 | 1 |
+| Night Radio | E$88 | E$82.00 | 121 | 213,290 | 24,092 | 0 | 1 |
+| Ledger | E$100 | E$92.02 | 181 | 301,288 | 33,602 | 8 | 1 |
+| Clockmaker | E$155 | E$138.42 | 366 | 556,678 | 53,924 | 5 | 1 |
+| Thousand | E$388 | E$349.26 | 1,001 | 1,496,050 | 146,320 | 7 | 1 |
+
+- Price generation now uses explicit price tiers and maker positioning instead of broad brand-noise variation. Example multipliers: food premium ×1.8, imported ×2.65, army ×0.82, clearance ×0.38; goods premium ×1.8, economy ×0.5, imported ×2.6 and old stock ×0.45 (pack size and brand also apply). Cards, details and physical shop surfaces explain tiers; comparable foods show E$/serving and E$/1,000 kcal, other usable products show per serving/use. Chapter order book supports cheapest/highest single price and survival-value sorting.
+- Archive, shop and room prompts explain preparation, manual unpacking, survival needs, useful equipment and observation. They retain uncertainty: no exact mechanism window, weather gate or outcome confirmation is disclosed.
+- Renamed the former extreme-only full-run regression as `tests/hard-balance.cjs`; the old name was specific to a removed option.
+
+## Regression and browser results
+- `node tests/levels.cjs`: **123** chapter assertions pass, including exactly one profile, legacy-save migration, fixed budget table, price tiers and unit costs.
+- `node tests/survival.cjs`: **42** safety, medicine, disease, expiry and waste assertions pass.
+- `node tests/simulation.cjs`: **165** classic assertions pass; 365-day policy still wins on day 366.
+- `node tests/hard-balance.cjs`: all six real one-time purchase carts fit and win without restocking or resetting survival meters; table above records output.
+- `tests/levels-browser.cjs`: no difficulty picker, archive guides, chapter budget/legacy profile check, value sorting, food per-calorie display, persistent non-spoiling room guide, hidden-clock mechanisms and cutting/fall QTEs pass; **0 external requests, 0 JS errors**.
+- `tests/browser.cjs`: physical store, manual unpack/placement, meals, saves/import, one-purchase lock, touch and no-WebGL fallback pass; **0 external requests, 0 JS errors**.
+- `tests/realism.cjs`, `tests/life.cjs`, `tests/navigation.cjs` (**257 seeded routes, `liveClock:true`**), `tests/audio.cjs` (**72/72 decoded clips**) and `tests/live.cjs` (real RAF movement, checkout/unpack, no panels/errors) pass.
+
+## Build / cleanup / publication state
+- `python3 tools/build.py` built offline `index.html` (**24,304,076 bytes**) and temporary local ZIP (**30,814,082 bytes**); `unzip -t` reported no errors. Final source embeds the assets and makes zero external runtime requests.
+- Removed `dist/` and all temporary screenshots in `tests/artifacts/`. Workspace is **91 MB**; root `index.html` is the deliverable. Playwright/Chromium for browser QA remained outside the project under `/var/tmp` and is not a runtime dependency.
+- `git diff --check` passes. No v0.24 commit, push, force-push or remote mutation. `main` and `origin/main` stay at the published v0.23 documentation commit `297dce73fb4dceb8924ff906fe469e71283b12a4`; v0.24 changes remain local and uncommitted pending any future publication request.

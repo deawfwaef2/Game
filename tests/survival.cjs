@@ -18,7 +18,7 @@ vm.runInContext(`
 let checks=0;function ok(value,message){assert.ok(value,message);checks++;}
 saveGame=()=>{};
 function reset(seed="survival-test",kit={water:1,rice:1}){
-  closePreparation();phase="title";lvPending=null;lvDifficultyKey="standard";currentSeed=seed;env=environment(seed);
+  closePreparation();phase="title";lvPending=null;currentSeed=seed;env=environment(seed);
   if(!startPreparation())throw new Error("prep failed");cart={...kit};if(!beginGame())throw new Error("checkout failed");
   for(const b of G.inv){b.packed=false;b.opened=false;b.location="shelf";}G.bags.forEach(b=>b.opened=true);
   G.nextEvent=1e7;G.minute=8*60+10;env=G.env;

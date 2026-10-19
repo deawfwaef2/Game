@@ -793,6 +793,13 @@ kbd {
   min-height: 27px;
   margin-top: 4px;
 }
+.product-value {
+  min-height: 15px;
+  margin-top: 2px;
+  color: #c4a466;
+  font: 11px/1.4 var(--sans);
+  letter-spacing: 0.01em;
+}
 .product-footer {
   display: flex;
   justify-content: space-between;

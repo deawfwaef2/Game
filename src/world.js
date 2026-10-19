@@ -1875,6 +1875,12 @@ function worldRenderHUD() {
     $("#worldCondition").textContent = warnings.slice(0, 2).join(" · ");
     $("#worldCondition").classList.toggle("urgent", !!safeReason("idle"));
   }
+  const chapterGuide = $("#worldChapterGuide");
+  if (chapterGuide) {
+    const chapter = !shopping && timeHidden() && typeof lvDef === "function" ? lvDef(G.level.id) : null;
+    chapterGuide.hidden = !chapter?.guide;
+    chapterGuide.textContent = chapter?.guide || "";
+  }
   $("#worldHint").textContent = shopping
     ? "E 拿商品  ·  R 放回  ·  Tab 看清单"
     : W.glance
@@ -2110,7 +2116,7 @@ function initWorldDOM() {
     <div id="worldFocus"><strong></strong><span></span></div>
     <div id="worldAction" hidden><span></span><div id="worldActionLine"><i></i></div><small></small></div>
     <div id="worldSubtitle" role="status" aria-live="polite"></div>
-    <div class="world-bottom"><div id="worldCondition"></div><div id="worldHint"></div></div>
+    <div class="world-bottom"><div id="worldCondition"></div><div id="worldChapterGuide" hidden></div><div id="worldHint"></div></div>
     <button id="worldPauseButton" aria-label="暂停">Ⅱ</button>
     <div id="worldMobile"><button data-world="alt">放回</button><button data-world="shift">辅助</button><button data-world="use">使用</button><div class="mobile-pair"><button data-world="down">−</button><button data-world="up">＋</button></div><button data-world="note">手记</button></div>
   </div>

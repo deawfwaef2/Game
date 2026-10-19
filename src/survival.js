@@ -53,6 +53,7 @@ function survFoodRisk(it, batch, failedQte = false) {
   if (failedQte) risk *= 1.25;
   return Math.min(0.018, risk);
 }
+function survChapterHard() { return !!(G?.level && !G.ended); }
 function survFallChance(hazards = {}) {
   let p = 0.000025;
   if (hazards.wet) p += 0.00045;
@@ -61,7 +62,7 @@ function survFallChance(hazards = {}) {
   if (hazards.tired) p += 0.00034;
   if (hazards.sprinting) p += 0.00042;
   if (hazards.wornFloor) p += 0.00008;
-  if (hazards.extreme) p *= 1.4;
+  if (hazards.chapterHard) p *= 1.2;
   return Math.min(0.003, p);
 }
 function survCurrentHazards(speed = 0) {
@@ -69,7 +70,7 @@ function survCurrentHazards(speed = 0) {
     dark = !!(G && !G.power && (hour() >= 20 || hour() < 5) && G.candleUntil < G.minute),
     clutter = !!(G && (G.trash >= 12 || G.dirt > 65)),
     tired = !!(G && (G.stats.energy < 25 || G.illness.some((i) => i.id === "sprain"))),
-    extreme = G?.level?.difficulty === "extreme";
+    chapterHard = survChapterHard();
   return {
     wet,
     dark,
@@ -77,7 +78,7 @@ function survCurrentHazards(speed = 0) {
     tired,
     sprinting: speed > 1.55,
     wornFloor: (env?.wear || 0) > 0.65,
-    extreme,
+    chapterHard,
     cause: wet
       ? "刚才用水后的地面还有些湿滑"
       : dark
@@ -223,7 +224,7 @@ function survCutHalfWidth() {
   half += board ? 0.035 : -0.04;
   if (G?.stats.energy < 30) half -= 0.035;
   if (G?.stats.energy < 15) half -= 0.035;
-  if (G?.level?.difficulty === "extreme") half -= 0.035;
+  if (survChapterHard()) half -= 0.02;
   return clamp(half, 0.055, 0.27);
 }
 function survCutInjuryChance() {
@@ -234,7 +235,7 @@ function survCutInjuryChance() {
   else if (["economy", "clearance"].includes(survQuality(DB[knife.id]))) p += 0.11;
   if (!board) p += 0.09;
   if (G?.stats.energy < 30) p += 0.07;
-  if (G?.level?.difficulty === "extreme") p += 0.09;
+  if (survChapterHard()) p += 0.05;
   return Math.min(0.58, p);
 }
 function survCauseCut() {
@@ -354,7 +355,7 @@ function survTrackDistance(distance, dt) {
   for (let i = 0; i < segments; i++) {
     const hazards = survCurrentHazards(speed);
     if (rngNext(G) < survFallChance(hazards)) {
-      survStartQte("fall", { cause: hazards.cause, half: hazards.extreme ? 0.105 : 0.15 });
+      survStartQte("fall", { cause: hazards.cause, half: hazards.chapterHard ? 0.12 : 0.15 });
       return;
     }
   }

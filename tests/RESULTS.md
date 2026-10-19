@@ -445,4 +445,9 @@ The extreme profile now uses 103% of the measured 1,420.8 kcal/day simulator bas
 
 ## Build and publication
 - `python3 tools/build.py` regenerated the offline root `index.html` at **24,300,655 bytes** and a temporary ZIP under `dist/`. The ZIP is a local package only; remove `dist/` and transient QA artifacts after packaging to stay within the workspace cap.
-- `git remote -v` is empty. No push was attempted; never use the previously pasted PAT or weaken SSH host verification. Revoke that exposed token immediately if it has not already been revoked.
+- At the time of the initial v0.23 test report, `git remote -v` was empty and no push had yet been attempted. Never use a PAT pasted in chat or weaken SSH host verification; revoke every exposed PAT immediately.
+
+## GitHub publication completed — 2026-10-19
+- Pushed commit `e7f853b760da8f67c5467aa6e8737dbcbc5b0f50` to `main` by fast-forward (no force) and pushed annotated tag `v0.23.0-preview`. This brings the previously local v0.19–v0.22 commits onto GitHub alongside v0.23.
+- Strict SSH host verification used GitHub's published ED25519 key fingerprint checked against `api.github.com/meta`; repo-scoped deploy-key authentication succeeded. `git ls-remote` confirmed remote `main` and the peeled tag point to the expected commit.
+- No GitHub Release or ZIP asset was created. Root offline `index.html` and source/tests/docs are committed. Temporary private key cleanup follows after this documentation commit; remove its public Deploy Key from repository settings afterward.

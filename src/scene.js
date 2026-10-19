@@ -913,7 +913,7 @@ function freeMovement(dt) {
   if (len > 0) {
     forward /= Math.max(1, len);
     side /= Math.max(1, len);
-    const speed = keys.ShiftLeft ? 1.8 : 1.35;
+    const speed = (keys.ShiftLeft ? 1.8 : 1.35) * (G?.illness?.some((i) => i.id === "sprain") ? 0.82 : 1);
     const dx =
         (-Math.sin(lookYaw) * forward + Math.cos(lookYaw) * side) * dt * speed,
       dz =

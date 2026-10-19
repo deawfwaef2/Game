@@ -22,9 +22,17 @@ const fileURL="file://"+path.resolve("index.html"),out=path.resolve("tests/artif
  await page.waitForFunction(()=>[...document.querySelectorAll(".lv-chapter")].every(el=>getComputedStyle(el).opacity==="1"),{timeout:5000});
  const coverAudit=await page.locator(".lv-card-photo").evaluateAll(xs=>xs.map(i=>({data:i.src.startsWith("data:image/jpeg;base64,"),width:i.naturalWidth})));
  assert.ok(coverAudit.every(x=>x.data&&x.width>500),"chapter art is embedded and fully offline");
- assert.equal(await page.locator("[data-lv-difficulty]").count(),3,"chapter picker offers three difficulty profiles");
+ assert.equal(await page.locator("[data-lv-difficulty]").count(),4,"chapter picker offers four difficulty profiles");
  assert.equal(await page.locator('[data-lv-difficulty="standard"]').getAttribute("aria-pressed"),"true","standard difficulty is selected by default");
  assert.ok((await page.locator('[data-level-select="bellhouse"]').innerText()).includes("预算 · E$ 300"),"chapter cards show chapter-specific budget");
+ await page.locator('[data-lv-difficulty="extreme"]').click();
+ assert.equal(await page.locator('[data-lv-difficulty="extreme"]').getAttribute("aria-pressed"),"true","extreme difficulty can be selected");
+ assert.ok((await page.locator('[data-level-select="bellhouse"]').innerText()).includes("预算 · E$ 64"),"extreme difficulty updates the unlocked chapter's modeled budget");
+ assert.equal(await page.evaluate(()=>lvBudgetFor("thousand","extreme")),429,"the 1000-day extreme budget uses the modeled economy");
+ assert.equal(await page.evaluate(()=>lvExtremeBudgetDetails("thousand").flavorCount),6,"extreme budget is built around six distinct long-life food flavors");
+ assert.equal(await page.evaluate(()=>lvExtremeBudgetDetails("thousand").planningKcalPerDay),1463,"extreme plan uses 103 percent of the simulator's measured daily calorie baseline");
+ await page.locator('[data-lv-difficulty="standard"]').click();
+ assert.equal(await page.locator('[data-lv-difficulty="standard"]').getAttribute("aria-pressed"),"true","standard profile can be restored before entering the chapter");
  await snap("02-chapter-book.jpg",84);
  await page.locator('[data-level-select="bellhouse"]').click();
  await page.waitForFunction(()=>phase==="shop"&&W.store,{timeout:30000});
@@ -90,7 +98,36 @@ const fileURL="file://"+path.resolve("index.html"),out=path.resolve("tests/artif
  await page.locator("[data-lv-mini-lock]").click();
  await page.waitForFunction(()=>lvMiniState===null&&window.__miniAfter===true);
  assert.equal(await page.evaluate(()=>panelType),"","radio tuning resolves cleanly without exposing the chapter trigger");
+ // Real vegetable preparation opens a separate timing dialog; a forced missed cut can create an injury.
+ await page.evaluate(()=>{G.power=true;G.waterOn=true;G.tank=2;G.stats.energy=100;G.inv.push({uid:"iqa-potato",id:"potato",units:2,packed:false,opened:false,location:"shelf",bag:0,created:G.minute,age:0});window.__cutHealth=G.stats.health;prepareFood("iqa-potato");});
+ await page.locator("#survivalIncident").waitFor({state:"visible"});
+ assert.equal(await page.evaluate(()=>panelType),"survival-qte","vegetable preparation pauses in the cutting QTE");
+ await page.evaluate(()=>{SURVIVAL.qte.injuryChance=1;SURVIVAL.qte.half=0.01;SURVIVAL.qte.pos=0;survCutAttempt();SURVIVAL.qte.half=0.5;});
+ for(let i=0;i<3;i++) await page.keyboard.press("Space");
+ await page.waitForFunction(()=>qte.active&&document.querySelector("#qteLayer").classList.contains("visible"),{timeout:10000});
+ assert.ok(await page.evaluate(()=>G.illness.some(x=>x.id==="cut")&&G.stats.health<window.__cutHealth),"missed vegetable timing causes a treatable hand cut");
+ await page.evaluate(()=>{qte.pos=0.5;finishQTE(false);});
+ await page.waitForFunction(()=>!qte.active);
+ const fallSetup=await page.evaluate(()=>{
+   G.level.difficulty="extreme";G.minute=22*60;G.power=false;G.candleUntil=0;G.dirt=70;G.stats.energy=10;
+   G.cooldowns.wetFloorUntil=G.minute+60;G.env.wear=0.9;env=G.env;paused=false;panelType="";
+   SURVIVAL.distance=0;SURVIVAL.seed=G.seed;
+   const hazards=survCurrentHazards(5),chance=survFallChance(hazards);let seed=0;
+   for(;seed<1000000;seed++){const x={rng:seed};if(rngNext(x)<chance)break;}
+   G.rng=seed;survTrackDistance(5,1);
+   return {hazards,chance,baseChance:survFallChance({}),kind:SURVIVAL.qte?.kind,seed};
+ });
+ assert.ok(fallSetup.hazards.wet&&fallSetup.hazards.dark&&fallSetup.hazards.clutter&&fallSetup.hazards.tired&&fallSetup.hazards.extreme,"fall risk accounts for wet, dark, cluttered, tired, extreme conditions");
+ assert.ok(fallSetup.chance>fallSetup.baseChance&&fallSetup.kind==="fall","five metres of hazardous movement triggers a fall QTE");
+ await page.locator("#survivalIncident").waitFor({state:"visible"});
+ await page.evaluate(()=>{SURVIVAL.qte.half=0.5;});
+ await page.keyboard.press("Space");
+ await page.waitForFunction(()=>SURVIVAL.qte===null&&panelType==="");
+ await page.evaluate(()=>survStartQte("fall",{cause:"测试湿滑地面",half:0.01}));
+ await page.locator("#survivalIncident").waitFor({state:"visible"});
+ await page.evaluate(()=>{SURVIVAL.qte.pos=0.5;survFallFinish(false);});
+ assert.ok(await page.evaluate(()=>G.illness.some(x=>x.id==="sprain")&&G.cooldowns.fallUntil>G.minute&&survCurrentHazards(0).tired),"a failed fall QTE applies sprain and a cooldown");
  assert.equal(errors.length,0,errors.join("\n"));assert.equal(requests.length,0,requests.join("\n"));
- console.log("PASS chapter picker / progression lock / large searchable order book / checkout / hidden clock / room fixture; external requests=0; JS errors=0");
+ console.log("PASS chapter picker / one-time budget / all six chapters / hidden-clock mechanisms / cutting, hand-injury and environment-driven fall QTEs; external requests=0; JS errors=0");
  await page.close();await browser.close();
 })().catch(e=>{console.error(e);process.exit(1);});

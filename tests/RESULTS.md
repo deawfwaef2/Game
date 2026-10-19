@@ -412,3 +412,37 @@
 - `tools/build.py` now describes ZIP creation as a **local build**, not a GitHub upload.
 - Local safe checkpoint created: commit `8bf9ac939d652ffbe8e8fc341147d210a8b65675`, annotated tag `v0.22.0-preview`. `tools/safe_checkpoint.py` compacted/verified repository metadata and reported a projected workspace of 85,553,152 bytes; `dist/` and `tests/artifacts/` were removed while root `index.html` was retained.
 - No remote URL is configured in the current clone (`git remote -v` is empty), so no push was attempted. For a future publish, configure authorized credentials and verify GitHub's host key; do not use the previously pasted PAT, and remind the user to revoke it.
+
+# v0.23.0-preview — extreme survival, food safety, and environment-driven QTEs (2026-10-19)
+
+## Extreme economy: complete deterministic runs
+The extreme profile now uses 103% of the measured 1,420.8 kcal/day simulator baseline (1,463 planned kcal/day), six distinct shelf-stable food flavors, the actual non-food YEAR_KIT, E$0.02/day for care, chapter mechanism items, and a 6% reserve on the modeled subtotal. Budgets are rounded up; this changes only the new extreme profile.
+
+| Chapter | Budget | Actual one-time cart | Cleared on day | Remaining kcal | Medicines used | Stars |
+|---|---:|---:|---:|---:|---:|---:|
+| Bellhouse | E$64 | E$63.57 | 61 | 30,140 | 0 | 1 |
+| Sealed | E$80 | E$77.99 | 91 | 59,752 | 0 | 1 |
+| Night Radio | E$87 | E$84.00 | 121 | 36,172 | 5 | 1 |
+| Ledger | E$98 | E$93.72 | 181 | 45,084 | 0 | 1 |
+| Clockmaker | E$157 | E$146.14 | 366 | 17,238 | 14 | 1 |
+| Thousand | E$429 | E$400.21 | 1,001 | 17,980 | 16 | 1 |
+
+`node tests/extreme-balance.cjs` ran all six real one-time checkout carts through the actual simulator without restocking or resetting needs; all six wins fit within the budget, with no more than 10% left unspent. This validates a deterministic policy, not guaranteed success for arbitrary carts or play.
+
+## Pure simulation regressions
+- `node tests/levels.cjs`: **111 chapter assertions pass**, including all six recalculated extreme budgets, the 1,463 kcal target, exactly 6% reserve, and unchanged legacy difficulties/classic budget.
+- `node tests/simulation.cjs`: **165 deterministic assertions pass**; classic 365-day resource policy still wins on day 366. Catalogue remains **19,865 goods**; classic seed stock is 200.
+- `node tests/survival.cjs`: **42 assertions pass** for food and medicine quality/risk, disease, exact spoilage, waste migration/categories, cap metadata, and package-specific rules. Bottled drinks count caps; tea bags and powdered-drink pouches do not.
+
+## Browser / real-time / offline regressions
+- `tests/levels-browser.cjs`: extreme budget picker, all six chapters, hidden-clock mechanisms, vegetable cutting/injury and environment-driven fall QTEs pass; **0 external requests, 0 JS errors**.
+- `tests/browser.cjs`: physical shop and room loop, manual unpacking/placement, one-time purchasing, saves/import, touch layout, and no-WebGL fallback pass; **0 external requests, 0 JS errors**.
+- `tests/navigation.cjs`: **257 seeded routes** and touch/mode/pause/load checks pass; reports `liveClock:true`, **0 external requests, 0 JS errors**. The first run after adding fall incidents stopped at the live-clock assertion; the test now chooses a longer real route and disables only fall probability during that isolated clock check (fall-QTE behavior is tested separately above). The final run passes.
+- `tests/realism.cjs`: PBR/hand/action/placement, save isolation, no-fetch loading and opaque no-network iframe pass.
+- `tests/audio.cjs`: **72/72** embedded clips decode and action/ambience controls pass.
+- `tests/life.cjs`: garden/letters/calendar/dreams/weather/faults regressions pass; no pests, external requests or JS errors.
+- `tests/live.cjs`: actual RAF movement (z 4.55→4.122455), checkout and unpacking pass; **0 panels, 0 JS errors**.
+
+## Build and publication
+- `python3 tools/build.py` regenerated the offline root `index.html` at **24,300,655 bytes** and a temporary ZIP under `dist/`. The ZIP is a local package only; remove `dist/` and transient QA artifacts after packaging to stay within the workspace cap.
+- `git remote -v` is empty. No push was attempted; never use the previously pasted PAT or weaken SSH host verification. Revoke that exposed token immediately if it has not already been revoked.

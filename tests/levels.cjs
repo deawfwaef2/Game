@@ -44,6 +44,11 @@ lvPending="bellhouse";phase="shop";lvDifficultyKey="calm";ok(gameBudget()===360,
 lvPending="thousand";ok(gameBudget()===3000,"long chapter has a distinctly larger calm budget");
 lvPending="bellhouse";lvDifficultyKey="strict";ok(gameBudget()===246,"strict chapter budget is reduced");
 lvPending=null;phase="title";lvDifficultyKey="standard";ok(gameBudget()===300,"classic 365-day budget remains unchanged");
+const extremeBudgetTable=LV_CHAPTERS.map(ch=>lvBudgetFor(ch.id,"extreme"));
+ok(JSON.stringify(extremeBudgetTable)==="[64,80,87,98,157,429]","extreme budgets reflect the retuned 103%-calorie plan and six-percent reserve");
+const extremeLong=lvExtremeBudgetDetails("thousand"),extremeSubtotal=extremeLong.foodCost+extremeLong.careReserve+extremeLong.setupReserve+extremeLong.mechanismReserve;
+ok(extremeLong.planningKcalPerDay===1463,"extreme chapters plan 103 percent of the measured calorie baseline");
+ok(Math.abs(extremeLong.riskAndPackingReserve/extremeSubtotal-0.06)<1e-10,"extreme reserve remains exactly six percent of the modeled subtotal");
 
 let g=startChapter("bellhouse",{water:1},"calm");ok(G.level.difficulty==="calm"&&Math.abs(G.cash-(360-cartSummary({water:1}).cost))<0.01,"checkout records the selected chapter budget and deducts only purchased goods");
 g=startChapter("night-radio",{radio:1},"calm");ok(lvWithinWindow(2*1440+20*60+15,20*60+30,22*60),"calm difficulty widens chapter signal windows");

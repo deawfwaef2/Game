@@ -5904,7 +5904,7 @@ const OFFLINE_ROOM={"models":{"drawer_cabinet":"Z2xURgIAAABY5RAAuLQEAEpTT057ImFz
     </script>
     <script>
       /* 闭门365 — original game data, fictional 1980s subsidized prices. */
-const VERSION = "0.22.0-preview";
+const VERSION = "0.23.0-preview";
 const CATEGORIES = [
   ["all", "全部物资"],
   ["staple", "主食与干粮"],
@@ -6003,10 +6003,12 @@ food("hardtack", "压缩口粮 · 1kg", 1.75, 1, 8, 500, 1095, "staple", {
 food("bread", "黑麦面包", 0.45, 0.45, 3, 350, 5, "fresh", { flavor: "bread" });
 food("potato", "土豆 · 2kg", 0.85, 2, 8, 200, 30, "fresh", {
   cook: true,
+  vegetable: true,
   flavor: "potato",
 });
 food("sweetpotato", "红薯 · 1kg", 0.6, 1, 4, 230, 21, "fresh", {
   cook: true,
+  vegetable: true,
   flavor: "sweetpotato",
 });
 food("oil", "葵花籽油 · 1L", 1.8, 0.93, 40, 205, 540, "staple", {
@@ -6140,11 +6142,13 @@ food("yogurt", "原味酸奶 · 500g", 0.65, 0.55, 2, 210, 5, "fresh", {
 });
 item("water", "瓶装饮用水 · 2L", 0.28, 2, "drink", 4, {
   kind: "drink",
+  capWaste: true,
   water: 38,
   liters: 2,
 });
 item("waterlarge", "封装饮用水 · 5L", 0.55, 5, "drink", 10, {
   kind: "drink",
+  capWaste: true,
   water: 38,
   liters: 5,
 });
@@ -6169,12 +6173,14 @@ item("cocoa", "可可粉 · 15份", 1.05, 0.25, "drink", 15, {
 });
 item("juice", "苹果汁 · 1L", 0.6, 1.05, "drink", 4, {
   kind: "drink",
+  capWaste: true,
   water: 32,
   joy: 3,
   life: 120,
 });
 item("soda", "柠檬汽水 · 330ml", 0.22, 0.35, "drink", 1, {
   kind: "drink",
+  capWaste: true,
   water: 25,
   joy: 3,
   life: 365,
@@ -6256,6 +6262,12 @@ item("firstaid", "家庭应急护理盒", 2.2, 0.35, "medical", 8, {
 });
 item("pot", "带盖小铝锅", 2.5, 0.7, "tool", 1, {
   desc: "公寓已有旧锅；新锅让烹饪更省时。",
+});
+item("knife", "旧式菜刀", 1.15, 0.22, "tool", 1, {
+  desc: "磨损的旧刀仍能切菜；一把刃口更可靠的菜刀能让切配更安全。",
+});
+item("cutboard", "小木砧板", 0.65, 0.48, "tool", 1, {
+  desc: "切配时垫稳食材，降低手滑风险。",
 });
 item("pan", "平底煎锅", 2.1, 0.8, "tool");
 item("bowl", "搪瓷碗", 0.4, 0.2, "tool");
@@ -6600,6 +6612,18 @@ const DISEASES = {
     desc: "饮水消耗增快、精神缓慢下降，注意食物与卫生。",
   },
   fever: { name: "低热", desc: "健康与体力缓慢下降，需休息、补水或对症护理。" },
+  foodborne: {
+    name: "食源性不适",
+    desc: "水分与体力消耗加快；胃肠护理片或应急护理盒能缩短病程。",
+  },
+  sprain: {
+    name: "轻度扭伤",
+    desc: "体力恢复变慢；休息、绷带或应急护理能缓解。",
+  },
+  cut: {
+    name: "手部划伤",
+    desc: "小伤口需要清洁包扎；护理绷带或应急护理盒能缩短恢复时间。",
+  },
 };
 
 /* 闭门365 · v0.17 a vast, messy cooperative catalogue.
@@ -6847,6 +6871,8 @@ tiwenji2|水银体温计|thermometer|medical|thermometer|0.8|0.02|1|med|
 jijiu2|红十字药箱|firstaid|medical|firstaid|8.5|1.2|8|med|o
 guo2|铝饭盒|pot|tool|pot|1.6|0.4|1|tool|
 guo3|小砂锅|pot|tool|pot|2.0|1.2|1|tool|
+caidao|安德士锻打菜刀|knife|tool|knife|1.15|0.22|1|tool|
+zhanban|榉木菜板|cutboard|tool|board|0.8|0.55|1|tool|
 pingdi2|铸铁平底锅|pan|tool|pan|3.4|1.6|1|tool|
 wan2|蓝边瓷碗 · 2只|bowl|tool|bowl|0.9|0.5|1|home|
 wan3|木碗|bowl|tool|bowl|0.7|0.15|1|home|
@@ -7555,6 +7581,8 @@ tiwenji2|h0.5|水银体温计，准
 jijiu2|h1|红十字药箱，样样齐
 guo2|m0.5|铝饭盒，能蒸饭
 guo3|mc2|小砂锅，冬天炖汤最暖
+caidao|#刃口可靠，切配时安全时机更宽|旧式锻打菜刀，刃口耐用
+zhanban|#垫稳食材，降低手滑风险|榉木砧板，平整不晃
 pingdi2|h0.3 m1|铸铁平底锅，补铁
 wan2|m0.5|蓝边瓷碗
 wan3|m0.3|木碗，不烫手
@@ -7983,6 +8011,16 @@ for (const p of CG_EXTRA_PRODUCTS) {
   it.brandNote = "地方小厂：批次小，风味各有来处。";
   cgAdd(it);
 }
+function cgQualityTier(it) {
+  if (["premium", "imported", "medicated"].includes(it?.trait)) return "premium";
+  if (it?.trait === "clearance") return "clearance";
+  if (["economy", "old"].includes(it?.trait) || ["群众", "河谷", "前进", "黄河"].includes(it?.brand)) return "economy";
+  return "standard";
+}
+for (const it of CATALOG) {
+  it.qualityTier = cgQualityTier(it);
+  if (it.kind === "drink" && ["water", "waterlarge", "soda", "juice"].includes(it.look) && !["pouch", "box", "paper", "frozenbag"].includes(it.shape?.[0])) it.capWaste = true;
+}
 
 function cgExpiryMark(it) {
   if (!it || !Number.isFinite(it.life) || it.life >= 9999) return "none";
@@ -8218,7 +8256,7 @@ function hour() {
   return G ? (G.minute % 1440) / 60 : 8;
 }
 function freshWaste() {
-  return { packaging: 0, scraps: 0, discarded: 0, items: [], warnedFull: false };
+  return { packaging: 0, caps: 0, scraps: 0, discarded: 0, items: [], warnedFull: false };
 }
 function ensureWaste() {
   if (!G) return null;
@@ -8227,6 +8265,7 @@ function ensureWaste() {
     G.waste.packaging = Math.max(0, Math.floor(Number(G.trash) || 0));
   }
   G.waste.packaging ??= 0;
+  G.waste.caps ??= 0;
   G.waste.scraps ??= 0;
   G.waste.discarded ??= 0;
   G.waste.items ??= [];
@@ -8237,8 +8276,8 @@ function addWaste(kind, id = null, count = 1) {
   if (!G) return 0;
   const waste = ensureWaste(),
     amount = Math.max(0, Math.floor(Number(count) || 0));
-  if (!["packaging", "scraps", "discarded"].includes(kind)) kind = "discarded";
-  const total = waste.packaging + waste.scraps + waste.discarded,
+  if (!["packaging", "caps", "scraps", "discarded"].includes(kind)) kind = "discarded";
+  const total = waste.packaging + waste.caps + waste.scraps + waste.discarded,
     added = Math.min(amount, Math.max(0, 2e7 - total));
   waste[kind] += added;
   for (let i = 0; i < Math.min(added, 48); i++) {
@@ -8252,6 +8291,8 @@ function markPackageOpened(batch) {
   if (!G || !batch || batch.opened) return false;
   batch.opened = true;
   addWaste("packaging", batch.id);
+  const it = DB[batch.id];
+  if (it?.kind === "drink" && it.capWaste) addWaste("caps", batch.id);
   return true;
 }
 function clearWaste() {
@@ -8596,11 +8637,12 @@ function simulate(minutes, context) {
     13;
   const hot = temperature() > 29;
   s.food -= (sleep ? 1.8 : 2.8) * h * (cold ? 1.15 : 1);
-  s.water -=
-    (sleep ? 2.4 : 3.6) *
-    h *
-    (hot ? 1.3 : 1) *
-    (G.illness.some((i) => i.id === "stomach") ? 1.3 : 1);
+  const digestiveStress = G.illness.some((i) => i.id === "foodborne")
+    ? 1.5
+    : G.illness.some((i) => i.id === "stomach")
+      ? 1.3
+      : 1;
+  s.water -= (sleep ? 2.4 : 3.6) * h * (hot ? 1.3 : 1) * digestiveStress;
   const bedQuality = env.bed + (has("pillow") ? 1 : 0);
   s.energy += (sleep ? 7.6 + bedQuality * 1.1 : -2.7) * h;
   G.sleepToday += sleep ? h : 0;
@@ -8652,6 +8694,16 @@ function simulate(minutes, context) {
     disease.remaining -= minutes;
     if (disease.id === "fever") s.health -= 0.55 * h;
     if (disease.id === "cold") s.energy -= 0.6 * h;
+    if (disease.id === "foodborne") {
+      s.energy -= 0.35 * h;
+      s.health -= 0.12 * h;
+      s.morale -= 0.15 * h;
+    }
+    if (disease.id === "sprain") s.energy -= 0.4 * h;
+    if (disease.id === "cut") {
+      s.health -= 0.08 * h;
+      s.hygiene -= 0.04 * h;
+    }
     if (sleep) disease.remaining -= minutes * 0.35;
   }
   G.illness = G.illness.filter((i) => i.remaining > 0);
@@ -8736,8 +8788,13 @@ function dailyUpdate() {
     );
 }
 function addDisease(id) {
-  if (G.illness.some((i) => i.id === id)) return;
-  G.illness.push({ id, remaining: 24 * 60 + Math.floor(rngNext(G) * 48 * 60) });
+  if (!G || !DISEASES[id] || G.illness.some((i) => i.id === id) || G.illness.length >= 6) return;
+  const [minHours, maxHours] =
+    ({ foodborne: [36, 72], sprain: [36, 72], cut: [8, 24] })[id] || [24, 72];
+  G.illness.push({
+    id,
+    remaining: minHours * 60 + Math.floor(rngNext(G) * (maxHours - minHours) * 60),
+  });
   logEvent(`持续状态：${DISEASES[id].name}。${DISEASES[id].desc}`, "warn");
   notify("身体不太舒服：" + DISEASES[id].name, "warn");
 }
@@ -8999,6 +9056,7 @@ function doAction(action, value) {
       {
         const waste = ensureWaste(),
           packaging = waste.packaging,
+          caps = waste.caps,
           scraps = waste.scraps,
           discarded = waste.discarded,
           spoiled = G.inv.filter((b) => isSpoiled(b));
@@ -9008,7 +9066,7 @@ function doAction(action, value) {
         G.dirt = Math.max(0, G.dirt - 8);
         advanceTime(10, "clean");
         logEvent(
-          `密封带走包装${packaging}份、餐厨残渣${scraps}份、其他废弃物${discarded}份和变质物资${spoiled.length}批。没有恶心画面。`,
+          `密封带走包装${packaging}份、瓶盖${caps}个、餐厨残渣${scraps}份、其他废弃物${discarded}份和变质物资${spoiled.length}批。没有恶心画面。`,
           "good",
         );
         break;
@@ -9179,7 +9237,11 @@ function takeMedicine(uidValue) {
     logEvent("按份量做了一次日常营养补充。");
   } else {
     const disease = G.illness.find(
-      (x) => it.treat === "all" || it.treat === "rest" || x.id === it.treat,
+      (x) =>
+        it.treat === "all" ||
+        it.treat === "rest" ||
+        x.id === it.treat ||
+        (it.treat === "stomach" && x.id === "foodborne"),
     );
     if (!disease) return notify("目前没有对应状态，不需要使用。");
     use(it.id);
@@ -9261,9 +9323,9 @@ function validateSave(s) {
       if (!num(s[k], 0, 2e7)) return false;
     if (s.waste !== undefined) {
       const w = s.waste,
-        validItem = (x) => obj(x) && ["packaging", "scraps", "discarded"].includes(x.kind) && (x.id === null || Object.hasOwn(DB, x.id));
-      if (!obj(w) || !num(w.packaging, 0, 2e7) || !num(w.scraps, 0, 2e7) || !num(w.discarded, 0, 2e7) || typeof w.warnedFull !== "boolean" || !Array.isArray(w.items) || w.items.length > 48 || !w.items.every(validItem)) return false;
-      if (Math.abs(s.trash - w.packaging - w.scraps - w.discarded) > 0.001) return false;
+        validItem = (x) => obj(x) && ["packaging", "caps", "scraps", "discarded"].includes(x.kind) && (x.id === null || Object.hasOwn(DB, x.id));
+      if (!obj(w) || !num(w.packaging, 0, 2e7) || !num(w.caps ?? 0, 0, 2e7) || !num(w.scraps, 0, 2e7) || !num(w.discarded, 0, 2e7) || typeof w.warnedFull !== "boolean" || !Array.isArray(w.items) || w.items.length > 48 || !w.items.every(validItem)) return false;
+      if (Math.abs(s.trash - w.packaging - (w.caps ?? 0) - w.scraps - w.discarded) > 0.001) return false;
     }
     if (!num(s.rng, 0, 4294967295) || !obj(s.env)) return false;
     const expected = environment(s.seed);
@@ -9369,7 +9431,7 @@ function validateSave(s) {
       return false;
     if (
       !Array.isArray(s.illness) ||
-      s.illness.length > 3 ||
+      s.illness.length > 6 ||
       !s.illness.every((i) => DISEASES[i.id] && num(i.remaining, 0, 100000))
     )
       return false;
@@ -10394,7 +10456,7 @@ function freeMovement(dt) {
   if (len > 0) {
     forward /= Math.max(1, len);
     side /= Math.max(1, len);
-    const speed = keys.ShiftLeft ? 1.8 : 1.35;
+    const speed = (keys.ShiftLeft ? 1.8 : 1.35) * (G?.illness?.some((i) => i.id === "sprain") ? 0.82 : 1);
     const dx =
         (-Math.sin(lookYaw) * forward + Math.cos(lookYaw) * side) * dt * speed,
       dz =
@@ -11031,8 +11093,8 @@ function openStation(id) {
   } else if (id === "trash" || id === "inspect") {
     title = "让房间仍像一个家。";
     subtitle = "HOUSEKEEPING";
-    const waste = G.waste || { packaging: G.trash, scraps: 0, discarded: 0 };
-    html = `<div class="stat-grid"><div class="stat-tile"><span>房间整洁</span><strong>${Math.round(100 - G.dirt)}<small>%</small></strong><p>脏乱会影响精神</p></div><div class="stat-tile"><span>未洗餐具</span><strong>${G.dishes}<small>份</small></strong><p>清洗后更安心</p></div><div class="stat-tile"><span>待处理废弃物</span><strong>${G.trash}<small>份</small></strong><p>包装 ${waste.packaging} · 餐厨残渣 ${waste.scraps} · 其他 ${waste.discarded}</p></div></div><div class="action-grid">${action("清扫整理", "扫帚/拖把更有效 · 30–45分钟", "clean", "", "⌁")}${action("密封处理垃圾", "10分钟 · 清走包装、餐厨残渣与过期物资", "trash", "", "▧")}${action("检查家具", "15分钟 · 概率发现，隐藏总数未知", "inspect", "", "⌕")}${action("清洗餐具", "12分钟 · 用水1L", "dishes", "", "◡")}</div><h3 class="section-label">房东的旧抽屉</h3><div class="action-grid">${action("检查旧抽屉", G.emergencyUsed ? "已经检查过，没有更多物资" : "房东遗留的小量应急品 · 仅一次", "emergency", "", "▣")}</div><p class="panel-note">开封包装和每顿餐厨残渣都会累积；章节模式垃圾桶满后会慢慢影响整洁，经典模式仅记录，不加新惩罚。可以用垃圾袋封口。没有虫鼠，也没有恶心画面。</p>`;
+    const waste = G.waste || { packaging: G.trash, caps: 0, scraps: 0, discarded: 0 };
+    html = `<div class="stat-grid"><div class="stat-tile"><span>房间整洁</span><strong>${Math.round(100 - G.dirt)}<small>%</small></strong><p>脏乱会影响精神</p></div><div class="stat-tile"><span>未洗餐具</span><strong>${G.dishes}<small>份</small></strong><p>清洗后更安心</p></div><div class="stat-tile"><span>待处理废弃物</span><strong>${G.trash}<small>份</small></strong><p>包装 ${waste.packaging} · 瓶盖 ${waste.caps || 0} · 餐厨残渣 ${waste.scraps} · 其他 ${waste.discarded}</p></div></div><div class="action-grid">${action("清扫整理", "扫帚/拖把更有效 · 30–45分钟", "clean", "", "⌁")}${action("密封处理垃圾", "10分钟 · 清走包装、瓶盖、餐厨残渣与过期物资", "trash", "", "▧")}${action("检查家具", "15分钟 · 概率发现，隐藏总数未知", "inspect", "", "⌕")}${action("清洗餐具", "12分钟 · 用水1L", "dishes", "", "◡")}</div><h3 class="section-label">房东的旧抽屉</h3><div class="action-grid">${action("检查旧抽屉", G.emergencyUsed ? "已经检查过，没有更多物资" : "房东遗留的小量应急品 · 仅一次", "emergency", "", "▣")}</div><p class="panel-note">开封包装、饮料瓶盖和每顿餐厨残渣都会累积；章节模式垃圾桶满后会慢慢影响整洁，经典模式仅记录，不加新惩罚。可以用垃圾袋封口。没有虫鼠，也没有恶心画面。</p>`;
   } else if (id === "window") {
     title = "窗外，还是那座城市。";
     subtitle = "WINDOW / A VIEW WITH CONSEQUENCES";
@@ -16223,7 +16285,7 @@ function navFrame(now, dt) {
     } else if (phase === "playing" && !N.startWarning && safeReason("idle")) {
       navStop("身体需要照顾，先停下。可以再选箭头走向生活设施。");
     } else {
-      let remaining = Math.min(dt, 0.1) * 1.24;
+      let remaining = Math.min(dt, 0.1) * 1.24 * (G?.illness?.some((i) => i.id === "sprain") ? 0.82 : 1);
       while (remaining > 0 && N.index < N.path.length) {
         const p = N.path[N.index],
           dx = p.x - camera.position.x,
@@ -22491,6 +22553,8 @@ const ITEM_USE = {
   thermometer: "生病时先量体温再用药，用药效果更好（健康再 +3）。",
   firstaid: "家庭护理盒：任何病都能用，缩短约12小时。",
   pot: "公寓已有一口旧锅；新锅煮饭更快，每顿省10分钟。",
+  knife: "旧刀可切菜。切配时按提示把握节奏；好刀能让安全时机更宽，简装或旧刀更容易打滑。",
+  cutboard: "小木砧板。垫稳食材后，切配失误时受伤的机会更低。",
   pan: "平底锅。煮熟的饭菜心情 +1。",
   bowl: "搪瓷碗。吃饭像样一点，心情 +0.5，桌上也少弄脏一点。",
   cup: "自己的水杯。冲茶、咖啡、可可时心情再 +1。",
@@ -24670,6 +24734,7 @@ const LV_DIFFICULTIES = {
   calm: { id:"calm", name:"宽裕", budget:1.2, fatigue:0.72, penalty:0.72, window:1.45, note:"预算多两成 · 味觉疲劳较缓 · 机关时窗较宽" },
   standard: { id:"standard", name:"标准", budget:1, fatigue:1, penalty:1, window:1, note:"按本章原始预算与机关时窗" },
   strict: { id:"strict", name:"拮据", budget:0.82, fatigue:1.3, penalty:1.5, window:0.6, note:"预算少近两成 · 味觉疲劳更重 · 误触代价更高" },
+  extreme: { id:"extreme", name:"生存极限", budget:"modeled", fatigue:1.6, penalty:2, window:0.42, note:"103%基础热量 · 六种耐储食品 · 基础套件 · 6%风险余量" },
 };
 const LV_PRODUCTS = [];
 const LV = {};
@@ -24703,7 +24768,11 @@ function lvReadDifficultyKey() {
 }
 let lvDifficultyKey = lvReadDifficultyKey();
 function lvDifficulty(key = lvState()?.difficulty || lvDifficultyKey) { return LV_DIFFICULTIES[key] || LV_DIFFICULTIES.standard; }
-function lvBudgetFor(id, difficulty = lvDifficultyKey) { return Math.round((LV_BY_ID[id]?.budget || 300) * lvDifficulty(difficulty).budget); }
+function lvBudgetFor(id, difficulty = lvDifficultyKey) {
+  const d = lvDifficulty(difficulty);
+  if (d.id === "extreme") return lvExtremeBudgetDetails(id).budget;
+  return Math.round((LV_BY_ID[id]?.budget || 300) * d.budget);
+}
 function lvSaveDifficultyKey() { try { localStorage.setItem("anders-room-difficulty-v1", lvDifficultyKey); } catch (e) {} }
 let lvShopPage = 0;
 let lvOrderPage = 0;
@@ -24833,6 +24902,64 @@ function lvLineRank() {
   const sorted = [...groups.entries()].sort((a, b) => a[1] - b[1]);
   LV._lineRank = new Map(sorted.map(([key], i) => [key, 1 + (i % 6)]));
   return LV._lineRank;
+}
+function lvExtremeBudgetDetails(id) {
+  const chapter = LV_BY_ID[id] || LV_CHAPTERS[0],
+    days = chapter.nominal,
+    ranks = lvLineRank(),
+    tier = chapter.no;
+  const pool = CATALOG.filter((it) => {
+    if (it.gen && (ranks.get(it.line || it.id) || 1) > tier) return false;
+    return (
+      it.kind === "food" &&
+      !it.ingredient &&
+      Number.isFinite(it.kcal) &&
+      it.kcal > 0 &&
+      it.servings > 0 &&
+      it.life >= days + 15 &&
+      !["economy", "clearance"].includes(it.qualityTier || "standard")
+    );
+  }).sort((a, b) => a.price / (a.kcal * a.servings) - b.price / (b.kcal * b.servings));
+  const picks = [], flavors = new Set();
+  for (const it of pool) {
+    const flavor = String(it.flavor || it.line || it.id).slice(0, 72);
+    if (flavors.has(flavor)) continue;
+    flavors.add(flavor);
+    picks.push(it);
+    if (picks.length === 6) break;
+  }
+  const dailyNeedKcal = 24 * (16 * 2.8 + 8 * 1.8),
+    planningKcalPerDay = Math.round(dailyNeedKcal * 1.03),
+    targetPerFlavor = (planningKcalPerDay * days) / Math.max(1, picks.length),
+    foodPlan = picks.map((it) => ({
+      id: it.id,
+      servings: Math.ceil(targetPerFlavor / (it.kcal * it.servings)) * it.servings,
+      packages: Math.ceil(targetPerFlavor / (it.kcal * it.servings)),
+      cost: Math.ceil(targetPerFlavor / (it.kcal * it.servings)) * it.price,
+    })),
+    foodCost = foodPlan.reduce((sum, row) => sum + row.cost, 0),
+    careReserve = days * 0.02,
+    setupReserve = Object.entries(YEAR_KIT).reduce((sum, [itemId, quantity]) => {
+      const item = DB[itemId];
+      return sum + (item && !["food", "drink", "seasoning"].includes(item.kind) ? item.price * quantity : 0);
+    }, 0),
+    mechanismReserve =
+      id === "night-radio" ? DB.radio.price : id === "ledger" ? DB.lighter.price : id === "thousand" ? DB.radio.price + DB.lighter.price : 0,
+    subtotal = foodCost + careReserve + setupReserve + mechanismReserve,
+    riskAndPackingReserve = subtotal * 0.06;
+  return {
+    days,
+    dailyNeedKcal,
+    planningKcalPerDay,
+    flavorCount: picks.length,
+    foodPlan,
+    foodCost,
+    careReserve,
+    setupReserve,
+    mechanismReserve,
+    riskAndPackingReserve,
+    budget: Math.ceil(subtotal + riskAndPackingReserve),
+  };
 }
 function lvCatalogStock() {
   const tier = lvCatalogTier(), ranks = lvLineRank();
@@ -25337,7 +25464,7 @@ function lvOpenPicker() {
     root.id = "lvPicker";
     root.className = "lv-overlay lv-archive-overlay";
     root.hidden = true;
-    root.innerHTML = `<div class="lv-picker-card lv-archive-card"><header class="lv-archive-head"><div class="lv-archive-title"><div class="lv-archive-eyebrow"><span>ROOM ARCHIVE · ANDERS EMPIRE · 1986</span><span>FIELD DOSSIER / 06 ROOMS</span></div><h2>六扇门，六种等待。</h2><p>楼道尽头的灯总是慢半拍。挑一间房，守住一次采购，听它把故事说完。</p></div><div class="lv-archive-seal" aria-hidden="true"><span>闭门</span><small>THE LAST TENANT<br>安德士帝国 · 1986</small></div><button class="lv-close lv-archive-close" data-lv-close aria-label="关闭章节簿">×</button></header><div class="lv-archive-rail"><span>案件档案 / CASE FILES</span><span id="lvArchiveProgress">已解锁 1 / 6</span></div><section class="lv-difficulty-block"><div class="lv-difficulty-heading"><strong>选择生活尺度</strong><span>只影响章节预算、机关窗口与误触代价；经典365天不变</span></div><div id="lvDifficultySelect" class="lv-difficulty-grid"></div></section><div class="lv-grid-heading"><span>ROOMS UNDER WATCH</span><span>选择一间已开放的房间，进入开局采购</span></div><div id="lvChapterGrid" class="lv-chapter-grid"></div><footer class="lv-archive-footer"><span>通关留星，逐步开启全国订货簿。时间不会主动告诉你机关是否生效。</span><span>保存于房间里的故事 · CLOSED DOOR ARCHIVE</span></footer></div>`;
+    root.innerHTML = `<div class="lv-picker-card lv-archive-card"><header class="lv-archive-head"><div class="lv-archive-title"><div class="lv-archive-eyebrow"><span>ROOM ARCHIVE · ANDERS EMPIRE · 1986</span><span>FIELD DOSSIER / 06 ROOMS</span></div><h2>六扇门，六种等待。</h2><p>楼道尽头的灯总是慢半拍。挑一间房，守住一次采购，听它把故事说完。</p></div><div class="lv-archive-seal" aria-hidden="true"><span>闭门</span><small>THE LAST TENANT<br>安德士帝国 · 1986</small></div><button class="lv-close lv-archive-close" data-lv-close aria-label="关闭章节簿">×</button></header><div class="lv-archive-rail"><span>案件档案 / CASE FILES</span><span id="lvArchiveProgress">已解锁 1 / 6</span></div><section class="lv-difficulty-block"><div class="lv-difficulty-heading"><strong>选择生活尺度</strong><span>章节可选四档生存难度；经典365天与已保存的章节规则保持不变</span></div><div id="lvDifficultySelect" class="lv-difficulty-grid"></div></section><div class="lv-grid-heading"><span>ROOMS UNDER WATCH</span><span>选择一间已开放的房间，进入开局采购</span></div><div id="lvChapterGrid" class="lv-chapter-grid"></div><footer class="lv-archive-footer"><span>通关留星，逐步开启全国订货簿。时间不会主动告诉你机关是否生效。</span><span>保存于房间里的故事 · CLOSED DOOR ARCHIVE</span></footer></div>`;
     document.body.appendChild(root);
   }
   lvRenderPicker(root);
@@ -25440,7 +25567,8 @@ if(lvBaseOpenShop) openShop=function(isRestock=false){
   if(lvPending&&phase==="shop"&&!W.enabled){
     const difficulty=lvDifficulty(lvDifficultyKey);
     $("#shopBudgetLabel").textContent=`章节预算 · E$ ${lvBudget().toFixed(2)}`;
-    $("#shopIntroText").textContent=`本章期限 ${lvGoalDays()} 天 · ${difficulty.name}难度 · 预算 E$ ${lvBudget().toFixed(2)}。房间里没有时钟；计时器需开局购买，机关是否生效不会提示。开局只采购一次。`;
+    const budgetMethod=difficulty.id==="extreme"?"按模拟基础消耗的103%热量、六种耐储食品、基础生活用品全套、每日E$0.02照护额和6%风险/包装余量测算；仅供开局一次采购，不代表可补货。":"";
+    $("#shopIntroText").textContent=`本章期限 ${lvGoalDays()} 天 · ${difficulty.name}难度 · 预算 E$ ${lvBudget().toFixed(2)}。${budgetMethod} 房间里没有时钟；计时器需开局购买，机关是否生效不会提示。开局只采购一次。`;
     $("#catalogCount").textContent=`${lvCatalogStock().length.toLocaleString("zh-CN")} 件 / 本章已开放 · 目录共 ${CATALOG.length.toLocaleString("zh-CN")} 种`;
     renderCatalog();
   }
@@ -25546,7 +25674,7 @@ function lvEnsureStyles() {
   if(document.getElementById("lvRuntimeCss")) return;
   const s=document.createElement("style");s.id="lvRuntimeCss";s.textContent=`.lv-overlay{position:fixed;inset:0;z-index:1200;display:grid;place-items:center;padding:clamp(12px,3vw,42px);background:rgba(18,22,19,.72);backdrop-filter:blur(10px);color:#272a23}.lv-overlay[hidden]{display:none!important}.lv-picker-card,.lv-order-card{width:min(1160px,100%);max-height:min(92dvh,1000px);overflow:auto;background:#e7dfca;border:1px solid #c9b995;box-shadow:0 30px 90px #1119;padding:clamp(18px,3vw,38px);font-family:Georgia,'Noto Serif CJK SC',serif}.lv-picker-card>header,.lv-order-head{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;border-bottom:1px solid #b8ad94;padding-bottom:20px}.lv-kicker{font:700 11px/1.4 system-ui,sans-serif;letter-spacing:.18em;color:#73705e}.lv-picker-card h2,.lv-order-head h2{font-size:clamp(30px,5vw,50px);font-weight:500;margin:8px 0}.lv-picker-card header p,.lv-order-head p{font:15px/1.6 system-ui,sans-serif;color:#686656;margin:0;max-width:680px}.lv-close{font-size:28px;border:1px solid #a69c84;background:transparent;width:44px;height:44px;color:#4c4d42;cursor:pointer}.lv-chapter-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:22px 0}.lv-chapter{min-height:215px;text-align:left;padding:20px;background:#f1ead8;border:1px solid #c6baa0;color:#302f28;cursor:pointer;transition:transform .18s,background .18s,border .18s}.lv-chapter:hover:not(:disabled){transform:translateY(-3px);background:#f7f0df;border-color:#9e875d}.lv-chapter.locked{opacity:.52;cursor:not-allowed;background:#ded8ca}.lv-chapter-no,.lv-card-meta,.lv-chapter small{font:12px/1.5 system-ui,sans-serif;color:#82785f;letter-spacing:.08em}.lv-chapter h3{font-size:23px;font-weight:500;margin:9px 0}.lv-chapter p{font:14px/1.6 system-ui,sans-serif;color:#615f54;min-height:44px;margin:0 0 12px}.lv-card-meta{display:flex;justify-content:space-between;gap:10px;border-top:1px solid #d6cbb2;padding-top:10px}.lv-chapter small{display:block;margin-top:10px;letter-spacing:0;color:#6e6b5d}.lv-stars{color:#9b7735;font-size:17px}.lv-locked{color:#8a5247}.lv-picker-card footer,.lv-order-foot{display:flex;justify-content:space-between;align-items:center;gap:14px;padding-top:16px;border-top:1px solid #c5b89d;font:13px/1.5 system-ui,sans-serif;color:#77715f}.lv-order-card{width:min(1280px,100%)}.lv-order-tools{display:grid;grid-template-columns:minmax(190px,1fr) 220px 1.2fr;gap:12px;align-items:center;margin:18px 0}.lv-order-tools input,.lv-order-tools select{background:#f8f3e7;border:1px solid #b8ad94;padding:12px;font:15px system-ui,sans-serif;color:#35362f}.lv-order-tools span{font:13px/1.45 system-ui,sans-serif;color:#77715f}.lv-order-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.lv-order-grid:has(.lv-order-item:only-child){grid-template-columns:minmax(240px,420px);justify-content:center}.lv-order-item{border:1px solid #cfc3aa;background:#f4eddd;padding:12px;min-width:0}.lv-order-art{height:86px;display:grid;place-items:center;background:#e4dcc7}.lv-order-art svg{height:68px;width:68px}.lv-order-item h3{font:600 15px/1.35 system-ui,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:9px 0 4px}.lv-order-item p{font:12px/1.4 system-ui,sans-serif;height:35px;overflow:hidden;color:#716d5f;margin:0 0 7px}.lv-order-meta,.lv-order-qty{display:flex;align-items:center;justify-content:space-between;gap:6px;font:12px system-ui,sans-serif}.lv-order-meta b{color:#735b2f}.lv-order-qty{margin-top:8px}.lv-order-qty button,.lv-order-foot button,.lv-next-button,.lv-shop-pager button{border:1px solid #9c906f;background:#e3d7b9;color:#403c2e;padding:8px 12px;font:600 12px system-ui,sans-serif;cursor:pointer}.lv-order-qty button:disabled,.lv-order-foot button:disabled,.lv-shop-pager button:disabled{opacity:.4;cursor:not-allowed}.lv-order-qty span{min-width:25px;text-align:center}.lv-order-foot{margin-top:16px}.lv-checkout-mini{margin-left:auto;background:#535c48!important;color:#f3ebd8!important}.lv-shop-pager{display:flex;align-items:center;justify-content:center;gap:14px;padding:16px;font:13px system-ui,sans-serif;color:#635f53}.lv-next-button{display:block;width:min(420px,100%);margin:0 auto 10px;padding:13px}@media(max-width:780px){.lv-chapter-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.lv-order-tools{grid-template-columns:1fr 1fr}.lv-order-tools span{grid-column:1/-1}.lv-order-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.lv-picker-card footer{display:block}.lv-picker-card footer span{display:block;margin:6px 0}}@media(max-width:480px){.lv-overlay{padding:8px}.lv-picker-card,.lv-order-card{padding:16px;max-height:96dvh}.lv-chapter-grid{grid-template-columns:1fr}.lv-chapter{min-height:0}.lv-order-tools{grid-template-columns:1fr}.lv-order-tools span{grid-column:auto}.lv-order-grid{gap:7px}.lv-order-item{padding:8px}.lv-order-art{height:68px}.lv-order-item h3{font-size:13px}.lv-order-item p{font-size:11px;height:31px}.lv-order-foot{flex-wrap:wrap}.lv-order-foot>*{flex:1}.lv-order-foot span{order:-1;text-align:center;flex-basis:100%}}`;
   document.head.appendChild(s);
-  const difficultyStyle=document.createElement("style");difficultyStyle.id="lvDifficultyStyles";difficultyStyle.textContent=`.lv-difficulty-block{margin:18px 0 4px}.lv-difficulty-heading{display:flex;justify-content:space-between;align-items:baseline;gap:12px;color:#4e4d41;font:13px system-ui,sans-serif}.lv-difficulty-heading strong{font-size:15px;letter-spacing:.04em}.lv-difficulty-heading span{color:#817963;font-size:11px}.lv-difficulty-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:9px}.lv-difficulty-card{display:flex;flex-direction:column;gap:4px;min-height:68px;padding:11px 14px;text-align:left;border:1px solid #c6baa0;background:#f2ecdd;color:#38382f;cursor:pointer}.lv-difficulty-card:hover{border-color:#9d875e;background:#f8f2e3}.lv-difficulty-card.selected{border-color:#73764f;background:#e4e4cf;box-shadow:inset 0 0 0 1px #73764f}.lv-difficulty-card strong{font:600 15px system-ui,sans-serif}.lv-difficulty-card span{color:#77715f;font:11px/1.4 system-ui,sans-serif}@media(max-width:600px){.lv-difficulty-heading{display:block}.lv-difficulty-heading span{display:block;margin-top:4px}.lv-difficulty-grid{grid-template-columns:1fr}.lv-difficulty-card{min-height:0}}`;
+  const difficultyStyle=document.createElement("style");difficultyStyle.id="lvDifficultyStyles";difficultyStyle.textContent=`.lv-difficulty-block{margin:18px 0 4px}.lv-difficulty-heading{display:flex;justify-content:space-between;align-items:baseline;gap:12px;color:#4e4d41;font:13px system-ui,sans-serif}.lv-difficulty-heading strong{font-size:15px;letter-spacing:.04em}.lv-difficulty-heading span{color:#817963;font-size:11px}.lv-difficulty-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:9px}.lv-difficulty-card{display:flex;flex-direction:column;gap:4px;min-height:68px;padding:11px 14px;text-align:left;border:1px solid #c6baa0;background:#f2ecdd;color:#38382f;cursor:pointer}.lv-difficulty-card:hover{border-color:#9d875e;background:#f8f2e3}.lv-difficulty-card.selected{border-color:#73764f;background:#e4e4cf;box-shadow:inset 0 0 0 1px #73764f}.lv-difficulty-card strong{font:600 15px system-ui,sans-serif}.lv-difficulty-card span{color:#77715f;font:11px/1.4 system-ui,sans-serif}@media(max-width:760px){.lv-difficulty-heading{display:block}.lv-difficulty-heading span{display:block;margin-top:4px}.lv-difficulty-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.lv-difficulty-card{min-height:0}}@media(max-width:380px){.lv-difficulty-grid{grid-template-columns:1fr}}`;
   document.head.appendChild(difficultyStyle);
   const premium=document.createElement("style");premium.id="lvPremiumStyles";premium.textContent=`.lv-order-card{width:min(1240px,100%);max-height:94dvh;overflow:auto;padding:0;background:#ede7d8;border:1px solid #c6b998;border-radius:4px;box-shadow:0 34px 100px #090b09a8;color:#292b25}.lv-order-hero{position:relative;min-height:clamp(150px,21vh,220px);display:flex;align-items:flex-end;overflow:hidden;padding:23px 30px;border-bottom:3px solid #9a4f3c;background:linear-gradient(135deg,#53614c,#9b805e)}.lv-order-hero-image{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 57%;filter:saturate(.82) contrast(1.02)}.lv-order-hero-shade{position:absolute;inset:0;background:linear-gradient(90deg,rgba(14,17,14,.82),rgba(20,18,14,.4) 56%,rgba(20,18,14,.1)),linear-gradient(0deg,rgba(12,14,11,.68),transparent 78%)}.lv-order-hero-copy{position:relative;z-index:1;color:#f6ead1;max-width:75%}.lv-order-hero-copy .lv-kicker{color:#e8d8b5;font-size:10px;letter-spacing:.2em}.lv-order-hero-copy h2{margin:5px 0 3px;font:500 clamp(30px,4vw,46px)/1.12 Georgia,'Noto Serif CJK SC','Songti SC',serif;letter-spacing:.06em;text-shadow:0 2px 12px #0009}.lv-order-hero-copy p{margin:0;color:#e4dac5;font:12px/1.4 system-ui,sans-serif;letter-spacing:.02em;text-shadow:0 1px 5px #0009}.lv-order-close{position:absolute;z-index:3;top:17px;right:18px;border-color:#f3e8ce88;background:#1e211bc9;color:#f4ead7;border-radius:3px}.lv-order-content{padding:18px clamp(16px,2.3vw,30px) 22px}.lv-order-tools{grid-template-columns:minmax(220px,1fr) minmax(165px,210px) minmax(180px,.9fr);gap:12px;margin:0 0 15px}.lv-search-wrap{display:flex;align-items:center;gap:8px;padding:0 12px;background:#f8f4ea;border:1px solid #b9aa88;box-shadow:inset 0 1px 2px #4036210d}.lv-search-wrap>span{font:24px/1 Georgia,serif;color:#806e4a}.lv-search-wrap input{min-width:0;width:100%;padding:11px 0;border:0;background:transparent;outline:0;color:#30322b;font:14px system-ui,sans-serif}.lv-order-tools select{min-width:0;background:#f8f4ea;border:1px solid #b9aa88;padding:11px 12px;color:#34362d;font:14px system-ui,sans-serif}.lv-order-tools>span{padding-left:12px;border-left:2px solid #b38f5d;color:#776c58;font:12px/1.5 system-ui,sans-serif}.lv-order-grid{max-height:min(48vh,470px);overflow:auto;padding:2px 3px 5px;grid-template-columns:repeat(auto-fill,minmax(205px,1fr));gap:12px}.lv-order-item{position:relative;border:1px solid #cfc3a9;border-radius:3px;background:linear-gradient(160deg,#faf6ec,#eee7d5);padding:10px;box-shadow:0 3px 11px #574a3010;transition:transform .16s,box-shadow .16s,border-color .16s}.lv-order-item:hover{transform:translateY(-2px);border-color:#a9966b;box-shadow:0 8px 20px #574a3020}.lv-order-art{height:92px;border:1px solid #d9cfb9;background:radial-gradient(ellipse at 50% 70%,#c9bd9e,#e5ddca 72%);overflow:hidden}.lv-order-art svg{height:88px;width:88px;filter:drop-shadow(0 5px 3px #342d1d22)}.lv-order-item h3{white-space:normal;min-height:38px;margin:9px 0 4px;color:#33342e;font:600 14px/1.35 'Noto Serif CJK SC','Songti SC',serif}.lv-order-item p{height:43px;margin:0 0 8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;color:#746d5e;font:11px/1.5 system-ui,sans-serif}.lv-order-meta{padding-top:7px;border-top:1px solid #dfd5c0;color:#766d5a;font:11px system-ui,sans-serif}.lv-order-meta b{color:#934f3c;font-size:13px}.lv-order-qty{margin-top:9px}.lv-order-qty button{border:1px solid #ab9a73;background:#e9dfc8;color:#3e3a2e;border-radius:2px;padding:7px 9px;font:600 11px system-ui,sans-serif}.lv-order-qty button:last-child{background:#59624a;border-color:#59624a;color:#fff6e2}.lv-order-qty button:disabled{opacity:.4}.lv-order-foot{margin-top:14px;padding-top:13px;border-top:1px solid #cfc3a8}.lv-order-foot button{border-radius:2px}.lv-checkout-mini{margin-left:auto;background:#4d5b45!important;border-color:#4d5b45!important;color:#f5eddc!important;min-height:38px}.lv-order-grid::-webkit-scrollbar{width:8px}.lv-order-grid::-webkit-scrollbar-thumb{background:#b8a987;border:2px solid #eee7d8;border-radius:6px}@media(max-width:760px){.lv-order-hero{min-height:150px;padding:18px}.lv-order-hero-copy{max-width:88%}.lv-order-content{padding:14px}.lv-order-tools{grid-template-columns:minmax(0,1fr) minmax(125px,.65fr)}.lv-order-tools>span{grid-column:1/-1;border-left:0;padding:0}.lv-order-grid{max-height:52vh;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.lv-order-item{padding:8px}.lv-order-art{height:72px}.lv-order-art svg{height:68px;width:68px}.lv-order-item h3{font-size:12px;min-height:34px}.lv-order-item p{font-size:10px;height:38px}.lv-order-qty button{padding:7px 6px}.lv-order-foot{flex-wrap:wrap}.lv-order-foot>*{flex:1}.lv-order-foot span{order:-1;text-align:center;flex-basis:100%}}`;
   document.head.appendChild(premium);
@@ -25567,7 +25695,7 @@ function lvEnsureStyles() {
   .lv-archive-rail{display:flex;justify-content:space-between;gap:12px;margin:13px 0 10px;color:#aaa58e;font:700 9px system-ui,sans-serif;letter-spacing:.17em}.lv-archive-rail span:last-child{color:#d0b875}
   .lv-archive-card .lv-difficulty-block{margin:0 0 19px;padding:10px 12px 11px;border:1px solid #c3b57a24;background:linear-gradient(90deg,#c5a75b0c,#fff0 65%)}
   .lv-archive-card .lv-difficulty-heading{color:#d2c8ae;font:12px system-ui,sans-serif}.lv-archive-card .lv-difficulty-heading strong{font-size:13px;letter-spacing:.08em}.lv-archive-card .lv-difficulty-heading span{font-size:10px;color:#969687}
-  .lv-archive-card .lv-difficulty-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-top:8px}
+  .lv-archive-card .lv-difficulty-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-top:8px}
   .lv-archive-card .lv-difficulty-card{position:relative;display:grid;grid-template-columns:25px 1fr;grid-template-rows:auto auto;align-items:center;gap:1px 8px;min-height:53px;padding:7px 10px;border:1px solid #b7ad8c35;background:#111816a8;color:#e7e0cd;text-align:left;transition:background .16s,border .16s,transform .16s}
   .lv-archive-card .lv-difficulty-card:hover{transform:translateY(-1px);border-color:#d0b56d88;background:#242c23}.lv-archive-card .lv-difficulty-card.selected{border-color:#d8bb70;background:linear-gradient(105deg,#8c713a63,#3b4432);box-shadow:inset 0 0 0 1px #d0ad6077}
   .lv-difficulty-index{grid-row:1/3;color:#b89a57;font:700 10px Georgia,serif}.lv-archive-card .lv-difficulty-card strong{font:700 12px system-ui,sans-serif;color:#f1e8d0}.lv-archive-card .lv-difficulty-card span:last-child{font:10px/1.35 system-ui,sans-serif;color:#a5a18d}
@@ -25585,7 +25713,7 @@ function lvEnsureStyles() {
   .lv-card-lock{position:absolute;inset:auto 0 0;display:grid;grid-template-columns:36px 1fr;align-items:center;gap:2px 8px;padding:12px 14px;background:linear-gradient(90deg,#080b0bf2,#111715e8);color:#d1c8b1;pointer-events:none}.lv-lock-glyph{grid-row:1/3;width:30px;height:30px;display:grid;place-items:center;border:1px solid #b7aa8577;border-radius:50%;color:#c6b276;font-size:20px}.lv-card-lock b{font:700 10px system-ui,sans-serif;letter-spacing:.08em}.lv-card-lock small{color:#a5a193;font:9px system-ui,sans-serif}
   .lv-archive-footer{display:flex;justify-content:space-between;gap:15px;padding-top:10px;border-top:1px solid #c7b87b33;color:#aaa795;font:10px/1.5 system-ui,sans-serif}.lv-archive-footer span:last-child{color:#b9a878;text-align:right;letter-spacing:.1em}
   @media(max-width:850px){.lv-archive-card .lv-chapter-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.lv-archive-seal{width:72px;height:72px;flex-basis:72px}.lv-archive-seal>span{font-size:21px}.lv-archive-seal small{font-size:7px}}
-  @media(max-width:560px){.lv-archive-overlay{padding:5px}.lv-archive-card{padding:14px;max-height:98dvh}.lv-archive-head{padding-right:43px!important}.lv-archive-seal{display:none}.lv-archive-title h2{font-size:29px!important}.lv-archive-title p{font-size:11px!important}.lv-archive-eyebrow{font-size:8px}.lv-archive-eyebrow span+span{display:none}.lv-archive-rail{font-size:8px}.lv-archive-card .lv-difficulty-block{padding:8px}.lv-archive-card .lv-difficulty-heading{display:block}.lv-archive-card .lv-difficulty-heading span{display:block;margin-top:3px}.lv-archive-card .lv-difficulty-grid{gap:4px}.lv-archive-card .lv-difficulty-card{grid-template-columns:1fr;gap:2px;min-height:55px;padding:6px}.lv-difficulty-index{display:none}.lv-archive-card .lv-difficulty-card strong{font-size:10px}.lv-archive-card .lv-difficulty-card span:last-child{font-size:8px}.lv-grid-heading span:last-child{display:none}.lv-archive-card .lv-chapter-grid{grid-template-columns:1fr;gap:8px}.lv-archive-card .lv-chapter{min-height:265px;padding:12px}.lv-card-copy>strong{font-size:22px}.lv-card-story{min-height:34px}.lv-archive-footer{display:block}.lv-archive-footer span{display:block}.lv-archive-footer span:last-child{text-align:left;margin-top:4px}}
+  @media(max-width:560px){.lv-archive-overlay{padding:5px}.lv-archive-card{padding:14px;max-height:98dvh}.lv-archive-head{padding-right:43px!important}.lv-archive-seal{display:none}.lv-archive-title h2{font-size:29px!important}.lv-archive-title p{font-size:11px!important}.lv-archive-eyebrow{font-size:8px}.lv-archive-eyebrow span+span{display:none}.lv-archive-rail{font-size:8px}.lv-archive-card .lv-difficulty-block{padding:8px}.lv-archive-card .lv-difficulty-heading{display:block}.lv-archive-card .lv-difficulty-heading span{display:block;margin-top:3px}.lv-archive-card .lv-difficulty-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}.lv-archive-card .lv-difficulty-card{grid-template-columns:1fr;gap:2px;min-height:55px;padding:6px}.lv-difficulty-index{display:none}.lv-archive-card .lv-difficulty-card strong{font-size:10px}.lv-archive-card .lv-difficulty-card span:last-child{font-size:8px}.lv-grid-heading span:last-child{display:none}.lv-archive-card .lv-chapter-grid{grid-template-columns:1fr;gap:8px}.lv-archive-card .lv-chapter{min-height:265px;padding:12px}.lv-card-copy>strong{font-size:22px}.lv-card-story{min-height:34px}.lv-archive-footer{display:block}.lv-archive-footer span{display:block}.lv-archive-footer span:last-child{text-align:left;margin-top:4px}}
   `;document.head.appendChild(archive);
 }
 function lvFallbackDo(action,shift=false){
@@ -25994,6 +26122,505 @@ if (typeof document !== "undefined") {
   document.addEventListener("input", (e) => { if (e.target?.id === "lvMiniSlider") lvMiniTuneUpdate(); });
   document.addEventListener("keydown", lvMiniHandleKey, true);
 }
+
+    </script>
+    <script>
+      /* v0.23 survival layer: quantified rationing, food safety, kitchen preparation and environment-driven incidents. */
+const SURVIVAL = {
+  qte: null,
+  distance: 0,
+  seed: "",
+  ui: null,
+};
+function survQuality(it) {
+  return ["premium", "economy", "clearance"].includes(it?.qualityTier)
+    ? it.qualityTier
+    : "standard";
+}
+function survSafetyText(it) {
+  if (!it) return "";
+  const tier = survQuality(it);
+  if (["food", "drink"].includes(it.kind)) {
+    return ({
+      premium: "优选批次：封装与抽检更严格，食源风险较低；价格也更高。",
+      economy: "简装低价：批次稳定性一般，开封与临期后更容易出问题。",
+      clearance: "临期特价：折扣大但风险偏高，请尽早食用并留意状态。",
+      standard: "常规批次：正常保存下风险较低；开封或临近保质期时请优先使用。",
+    })[tier];
+  }
+  if (it.kind === "medicine") {
+    return ({
+      premium: "严选护理品：对症效果更可靠，价格较高。",
+      economy: "简装低价护理品：可能效果不稳，留好备用剂量。",
+      clearance: "折扣护理品：批次可靠性较低，可能需要备用剂量。",
+      standard: "常规护理品：按对应状态使用。",
+    })[tier];
+  }
+  if (it.base === "knife" || it.base === "cutboard") {
+    return tier === "premium"
+      ? "做工更可靠，切配时机更宽。"
+      : tier === "economy"
+        ? "简装低价，刃口或支撑不够稳定。"
+        : "切配用具，能减轻手滑风险。";
+  }
+  return "";
+}
+function survFoodRisk(it, batch, failedQte = false) {
+  if (!it || !["food", "drink"].includes(it.kind) || batch?.contaminated) return 0;
+  let risk =
+    survQuality(it) === "premium" ? 0.00012 :
+    survQuality(it) === "economy" ? 0.003 :
+    survQuality(it) === "clearance" ? 0.006 : 0.0007;
+  if (Number.isFinite(it.life) && it.life < 9999) {
+    const ratio = Math.max(0, (Number(batch?.age) || 0) / it.life);
+    risk *= 1 + Math.max(0, ratio - 0.7) * 3;
+  }
+  if (batch?.opened) risk += 0.0002;
+  if (typeof temperature === "function" && temperature() > 28) risk += 0.0002;
+  if (failedQte) risk *= 1.25;
+  return Math.min(0.018, risk);
+}
+function survFallChance(hazards = {}) {
+  let p = 0.000025;
+  if (hazards.wet) p += 0.00045;
+  if (hazards.dark) p += 0.0003;
+  if (hazards.clutter) p += 0.00024;
+  if (hazards.tired) p += 0.00034;
+  if (hazards.sprinting) p += 0.00042;
+  if (hazards.wornFloor) p += 0.00008;
+  if (hazards.extreme) p *= 1.4;
+  return Math.min(0.003, p);
+}
+function survCurrentHazards(speed = 0) {
+  const wet = !!(G?.cooldowns?.wetFloorUntil > G.minute),
+    dark = !!(G && !G.power && (hour() >= 20 || hour() < 5) && G.candleUntil < G.minute),
+    clutter = !!(G && (G.trash >= 12 || G.dirt > 65)),
+    tired = !!(G && (G.stats.energy < 25 || G.illness.some((i) => i.id === "sprain"))),
+    extreme = G?.level?.difficulty === "extreme";
+  return {
+    wet,
+    dark,
+    clutter,
+    tired,
+    sprinting: speed > 1.55,
+    wornFloor: (env?.wear || 0) > 0.65,
+    extreme,
+    cause: wet
+      ? "刚才用水后的地面还有些湿滑"
+      : dark
+        ? "停电的夜里看不清脚下"
+        : clutter
+          ? "地面上的杂物和散落包装不太好避开"
+          : tired
+            ? "疲惫的双腿没能及时稳住"
+            : speed > 1.55
+              ? "匆忙的脚步踩到了旧地板的松动处"
+              : "旧公寓的地板有一处轻微松动",
+  };
+}
+function survQteEnsure() {
+  if (SURVIVAL.ui || typeof document === "undefined") return SURVIVAL.ui;
+  const style = document.createElement("style");
+  style.id = "survivalIncidentStyles";
+  style.textContent = `
+#survivalIncident{position:fixed;inset:0;z-index:2500;display:grid;place-items:center;padding:18px;background:rgba(8,13,11,.72);backdrop-filter:blur(7px);font-family:system-ui,-apple-system,'Noto Sans CJK SC',sans-serif;color:#f2ead7}
+#survivalIncident[hidden]{display:none}#survivalIncident .surv-card{width:min(540px,94vw);padding:clamp(22px,5vw,38px);border:1px solid #c6a76366;background:linear-gradient(145deg,#1e2822f5,#111715f5);box-shadow:0 22px 70px #0009;position:relative}
+#survivalIncident .surv-kicker{display:block;color:#c5a963;font:700 10px/1.4 system-ui,sans-serif;letter-spacing:.18em;text-transform:uppercase}
+#survivalIncident h2{margin:12px 0 9px;color:#f1e8d3;font:600 clamp(24px,5vw,34px)/1.2 Georgia,'Noto Serif CJK SC',serif;letter-spacing:.04em}
+#survivalIncident p{margin:0;color:#b8b4a5;font:14px/1.7 system-ui,sans-serif}#survivalIncident .surv-meter{position:relative;height:22px;margin:28px 0 13px;border:1px solid #a69d7b66;background:repeating-linear-gradient(90deg,#8c987f12 0 8%,#f1e8d20a 8% 9%);overflow:hidden}
+#survivalIncident .surv-safe{position:absolute;top:0;bottom:0;background:#97b17d70;border-left:1px solid #c5d5a6;border-right:1px solid #c5d5a6;box-shadow:0 0 18px #aac78344}
+#survivalIncident .surv-needle{position:absolute;top:-3px;bottom:-3px;width:3px;background:#f0d178;box-shadow:0 0 10px #ffdb88;transform:translateX(-1px)}
+#survivalIncident .surv-status{min-height:25px;text-align:center;color:#d5c69a;font-size:12px!important}
+#survivalIncident .surv-action{display:block;width:100%;margin-top:19px;padding:13px 16px;border:1px solid #c5a963;background:linear-gradient(120deg,#725d36,#9d804c);color:#fff4db;font:700 14px system-ui,sans-serif;letter-spacing:.05em;cursor:pointer;transition:filter .15s,transform .15s}
+#survivalIncident .surv-action:hover{filter:brightness(1.14);transform:translateY(-1px)}#survivalIncident .surv-help{display:block;margin-top:11px;text-align:center;color:#898b7d;font:11px/1.5 system-ui,sans-serif}
+@media(prefers-reduced-motion:reduce){#survivalIncident *{transition:none!important}}
+`;
+  document.head.appendChild(style);
+  const root = document.createElement("div");
+  root.id = "survivalIncident";
+  root.hidden = true;
+  root.setAttribute("role", "dialog");
+  root.setAttribute("aria-modal", "true");
+  root.setAttribute("aria-labelledby", "survivalIncidentTitle");
+  root.innerHTML = `<section class="surv-card"><span class="surv-kicker" id="survivalIncidentKicker">ROOM SAFETY / QUICK CHECK</span><h2 id="survivalIncidentTitle">稳住脚步</h2><p id="survivalIncidentCopy"></p><div class="surv-meter" aria-hidden="true"><span class="surv-safe"></span><i class="surv-needle"></i></div><p class="surv-status" id="survivalIncidentStatus" aria-live="polite"></p><button class="surv-action" id="survivalIncidentButton" type="button">把握时机</button><small class="surv-help">在指针进入浅色区域时按下空格、回车，或点击按钮。Esc 不会跳过这次动作。</small></section>`;
+  document.body.appendChild(root);
+  SURVIVAL.ui = {
+    root,
+    kicker: root.querySelector("#survivalIncidentKicker"),
+    title: root.querySelector("#survivalIncidentTitle"),
+    copy: root.querySelector("#survivalIncidentCopy"),
+    status: root.querySelector("#survivalIncidentStatus"),
+    safe: root.querySelector(".surv-safe"),
+    needle: root.querySelector(".surv-needle"),
+    button: root.querySelector("#survivalIncidentButton"),
+  };
+  return SURVIVAL.ui;
+}
+function survQteClose() {
+  const q = SURVIVAL.qte;
+  if (q?.frame) cancelAnimationFrame(q.frame);
+  SURVIVAL.qte = null;
+  if (SURVIVAL.ui) SURVIVAL.ui.root.hidden = true;
+  if (typeof panelType !== "undefined" && panelType === "survival-qte") panelType = "";
+}
+function survStartQte(kind, options = {}) {
+  if (!G || G.ended || SURVIVAL.qte || typeof document === "undefined") return false;
+  const ui = survQteEnsure();
+  if (!ui) return false;
+  if (typeof releasePointer === "function") releasePointer();
+  const q = {
+    kind,
+    started: performance.now(),
+    deadline: performance.now() + (kind === "cut" ? 9000 : 5800),
+    uid: options.uid || "",
+    cause: options.cause || "",
+    half: options.half || 0.15,
+    injuryChance: options.injuryChance || 0,
+    injured: false,
+    hits: 0,
+    misses: 0,
+    attempts: 0,
+    pos: 0,
+    frame: 0,
+  };
+  SURVIVAL.qte = q;
+  panelType = "survival-qte";
+  ui.root.hidden = false;
+  ui.kicker.textContent = kind === "fall" ? "ROOM SAFETY / FALL QTE" : "KITCHEN / VEGETABLE PREP";
+  ui.title.textContent = kind === "fall" ? "腳下打滑" : "切好這一份菜";
+  if (kind === "fall") {
+    ui.title.textContent = "脚下打滑";
+    ui.copy.textContent = `你感觉${q.cause}。看准时机稳住身体，尽量别让小失衡变成扭伤。`;
+    ui.button.textContent = "稳住身体 · Space";
+  } else {
+    ui.copy.textContent = "连续完成三次安全切配。砧板垫稳、刀刃可靠时，可操作的安全时机更宽；手累或工具简陋会增加受伤机会。";
+    ui.button.textContent = "切下一刀 · Space";
+  }
+  ui.status.textContent = kind === "fall" ? "指针进入浅色区域时按下。" : "安全切配 0 / 3 · 留意指针。";
+  ui.safe.style.left = `${(0.5 - q.half) * 100}%`;
+  ui.safe.style.width = `${q.half * 200}%`;
+  ui.button.focus({ preventScroll: true });
+  const tick = (now) => {
+    if (SURVIVAL.qte !== q) return;
+    q.pos = (Math.sin((now - q.started) * 0.0028 - Math.PI / 2) + 1) / 2;
+    ui.needle.style.left = `calc(${q.pos * 100}% - 1px)`;
+    if (now >= q.deadline) {
+      if (q.kind === "fall") survFallFinish(false);
+      else survCutFinish(true);
+      return;
+    }
+    q.frame = requestAnimationFrame(tick);
+  };
+  q.frame = requestAnimationFrame(tick);
+  return true;
+}
+function survInSafeZone(q) {
+  return q.pos >= 0.5 - q.half && q.pos <= 0.5 + q.half;
+}
+function survFallFinish(success) {
+  const q = SURVIVAL.qte;
+  if (!q || q.kind !== "fall") return;
+  survQteClose();
+  if (!G || G.ended) return;
+  G.cooldowns ??= {};
+  G.cooldowns.fallUntil = G.minute + 180;
+  SURVIVAL.distance = 0;
+  if (success) {
+    G.stats.energy = clamp(G.stats.energy - 0.8);
+    logEvent("脚下一滑，你及时扶住墙沿，没有摔倒。", "good");
+    notify("及时稳住了脚步。", "good");
+  } else {
+    G.stats.health = clamp(G.stats.health - 2.5);
+    G.stats.morale = clamp(G.stats.morale - 1.5);
+    addDisease("sprain");
+    logEvent("没能及时站稳，轻微扭伤了脚踝。先休息，并用绷带或应急护理。", "warn");
+    notify("轻微扭伤：休息或使用护理绷带。", "warn");
+  }
+  renderHUD();
+  syncRoom();
+  saveGame(false);
+}
+function survCutHalfWidth() {
+  const knife = G?.inv.find((b) => !b.packed && b.units > 0 && isItem(b, "knife")),
+    board = G?.inv.find((b) => !b.packed && b.units > 0 && isItem(b, "cutboard"));
+  let half = 0.19;
+  if (!knife) half -= 0.075;
+  else if (survQuality(DB[knife.id]) === "premium") half += 0.045;
+  else if (["economy", "clearance"].includes(survQuality(DB[knife.id]))) half -= 0.045;
+  half += board ? 0.035 : -0.04;
+  if (G?.stats.energy < 30) half -= 0.035;
+  if (G?.stats.energy < 15) half -= 0.035;
+  if (G?.level?.difficulty === "extreme") half -= 0.035;
+  return clamp(half, 0.055, 0.27);
+}
+function survCutInjuryChance() {
+  const knife = G?.inv.find((b) => !b.packed && b.units > 0 && isItem(b, "knife")),
+    board = G?.inv.find((b) => !b.packed && b.units > 0 && isItem(b, "cutboard"));
+  let p = 0.045;
+  if (!knife) p += 0.19;
+  else if (["economy", "clearance"].includes(survQuality(DB[knife.id]))) p += 0.11;
+  if (!board) p += 0.09;
+  if (G?.stats.energy < 30) p += 0.07;
+  if (G?.level?.difficulty === "extreme") p += 0.09;
+  return Math.min(0.58, p);
+}
+function survCauseCut() {
+  if (!G || G.illness.some((i) => i.id === "cut")) return;
+  G.stats.health = clamp(G.stats.health - 1.5);
+  addDisease("cut");
+  logEvent("切配时手指被刀刃轻轻划伤。清洁、包扎后再继续；护理绷带或应急护理盒可缩短恢复。", "warn");
+  notify("手部轻微划伤：清洁包扎，必要时使用护理用品。", "warn");
+  renderHUD();
+}
+function survCutAttempt() {
+  const q = SURVIVAL.qte;
+  if (!q || q.kind !== "cut" || !G || G.ended) return;
+  q.attempts++;
+  if (survInSafeZone(q)) {
+    q.hits++;
+    SURVIVAL.ui.status.textContent = `切配稳当 · 安全切配 ${q.hits} / 3`;
+  } else {
+    q.misses++;
+    SURVIVAL.ui.status.textContent = "刀尖偏了一点。放慢呼吸，再找下一次时机。";
+    if (!q.injured && rngNext(G) < q.injuryChance) {
+      q.injured = true;
+      survCauseCut();
+    }
+  }
+  if (q.hits >= 3 || q.attempts >= 5) survCutFinish(false);
+}
+function survCutFinish(timedOut = false) {
+  const q = SURVIVAL.qte;
+  if (!q || q.kind !== "cut") return;
+  const uidValue = q.uid,
+    hits = q.hits,
+    injured = q.injured;
+  survQteClose();
+  if (!G || G.ended) return;
+  advanceTime(8, "prep");
+  if (G.ended) return;
+  logEvent(
+    hits >= 3
+      ? "把蔬菜切配好了，刀刃一直留在砧板上。"
+      : timedOut
+        ? "切配时机没找准，最后还是慢慢收了刀。"
+        : "切配得不算整齐，但总算完成了。",
+    hits >= 3 ? "good" : "normal",
+  );
+  if (injured) logEvent("手上的小伤口还在提醒你：先清洗，再用护理绷带。", "warn");
+  if (typeof beginFoodQTE === "function" && G.inv.some((b) => b.uid === uidValue && b.units >= 1 && !b.packed))
+    beginFoodQTE(uidValue);
+}
+function survHandleQteInput(e) {
+  if (!SURVIVAL.qte) return;
+  if (["Space", "Enter", "NumpadEnter", "KeyE"].includes(e.code)) {
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    if (!e.repeat) {
+      if (SURVIVAL.qte.kind === "fall") survFallFinish(survInSafeZone(SURVIVAL.qte));
+      else survCutAttempt();
+    }
+    return;
+  }
+  if (e.code === "Escape") {
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    if (SURVIVAL.ui) SURVIVAL.ui.status.textContent = "先稳住这一刻；按下时机键或等待当前动作结束。";
+  }
+}
+function survNeedsCut(it) {
+  return !!(
+    it &&
+    it.kind === "food" &&
+    !it.ingredient &&
+    it.vegetable &&
+    (it.category === "fresh" || it.cook)
+  );
+}
+function survPrepareFood(uidValue) {
+  const b = G?.inv.find((x) => x.uid === uidValue),
+    it = b && DB[b.id];
+  if (!b || !it || !survNeedsCut(it)) return survBasePrepareFood.apply(this, arguments);
+  if (isSpoiled(b) || b.contaminated || it.ingredient) return survBasePrepareFood.apply(this, arguments);
+  if (it.cook && !G.power && !(has("stove") && amount("fuel") >= 1))
+    return survBasePrepareFood.apply(this, arguments);
+  if (it.cook && !canTap() && G.tank < 0.3) return survBasePrepareFood.apply(this, arguments);
+  if (typeof document === "undefined") return survBasePrepareFood.apply(this, arguments);
+  closePanel();
+  const started = survStartQte("cut", {
+    uid: b.uid,
+    half: survCutHalfWidth(),
+    injuryChance: survCutInjuryChance(),
+  });
+  if (!started) return survBasePrepareFood.apply(this, arguments);
+}
+function survFallGate() {
+  return !!(
+    G &&
+    !G.ended &&
+    phase === "playing" &&
+    !paused &&
+    !panelType &&
+    !SURVIVAL.qte &&
+    !document.getElementById("qteLayer")?.classList.contains("visible") &&
+    !(typeof worldIsBusy === "function" && worldIsBusy()) &&
+    (!G.cooldowns?.fallUntil || G.minute >= G.cooldowns.fallUntil)
+  );
+}
+function survTrackDistance(distance, dt) {
+  if (!(distance > 0.01) || !G || typeof document === "undefined" || !survFallGate()) return;
+  if (SURVIVAL.seed !== G.seed) {
+    SURVIVAL.seed = G.seed;
+    SURVIVAL.distance = 0;
+  }
+  SURVIVAL.distance += distance;
+  if (SURVIVAL.distance < 5) return;
+  const segments = Math.floor(SURVIVAL.distance / 5),
+    speed = dt > 0 ? distance / dt : 0;
+  SURVIVAL.distance -= segments * 5;
+  for (let i = 0; i < segments; i++) {
+    const hazards = survCurrentHazards(speed);
+    if (rngNext(G) < survFallChance(hazards)) {
+      survStartQte("fall", { cause: hazards.cause, half: hazards.extreme ? 0.105 : 0.15 });
+      return;
+    }
+  }
+}
+function survObserveMovement(fn, args, nowIndex = -1) {
+  const before = camera ? [camera.position.x, camera.position.z] : null,
+    dt = Number(args[nowIndex >= 0 ? nowIndex : 0]) || 0;
+  const result = fn.apply(this, args);
+  if (before && camera) {
+    const distance = Math.hypot(camera.position.x - before[0], camera.position.z - before[1]);
+    survTrackDistance(distance, dt);
+  }
+  return result;
+}
+function survOnAction(action, value) {
+  const before = G?.minute;
+  const result = survBaseDoAction.apply(this, arguments);
+  if (!G || G.ended || G.minute === before) return result;
+  if (["shower", "dishes", "laundry"].includes(action)) {
+    G.cooldowns ??= {};
+    const duration = action === "shower" ? 45 : action === "laundry" ? 30 : 18;
+    G.cooldowns.wetFloorUntil = Math.max(G.cooldowns.wetFloorUntil || 0, G.minute + duration);
+    G.cooldowns.wetFloorZone = action === "shower" ? "bathroom" : "kitchen";
+  }
+  return result;
+}
+function survAfterRisk(it, batch, risk, unsuccessful = false) {
+  if (!G || G.ended || !it || !batch || batch.contaminated || risk <= 0) return;
+  if (rngNext(G) < risk) {
+    addDisease("foodborne");
+    logEvent("刚才吃喝的东西让胃里有些不舒服。补水、休息并使用胃肠护理片。", "warn");
+    renderHUD();
+    saveGame(false);
+  }
+}
+function survTakeMedicine(uidValue) {
+  const b = G?.inv.find((x) => x.uid === uidValue),
+    it = b && DB[b.id];
+  if (!b || !it || it.kind !== "medicine" || it.treat === "vitamin")
+    return survBaseTakeMedicine.apply(this, arguments);
+  const matches = G.illness.some((x) =>
+    it.treat === "all" || it.treat === "rest" || x.id === it.treat || (it.treat === "stomach" && x.id === "foodborne"),
+  );
+  if (!matches) return survBaseTakeMedicine.apply(this, arguments);
+  const tier = survQuality(it),
+    failure = tier === "premium" ? 0.004 : tier === "economy" ? 0.12 : tier === "clearance" ? 0.16 : 0.025;
+  if (rngNext(G) < failure) {
+    if (!use(it.id)) return;
+    advanceTime(5, "medicine");
+    logEvent("这份简装护理品效果不明显；剂量已经用掉，必要时换用可靠的备用品。", "warn");
+    notify("护理效果不明显，检查是否有备用药品。", "warn");
+    saveGame(false);
+    renderHUD();
+    openInventory();
+    return;
+  }
+  return survBaseTakeMedicine.apply(this, arguments);
+}
+function survEatMeal(uidValue, success = true, slow = false) {
+  const b = G?.inv.find((x) => x.uid === uidValue),
+    it = b && DB[b.id],
+    risk = survFoodRisk(it, b, !success),
+    wasContaminated = !!b?.contaminated;
+  const result = survBaseConsumeMeal.apply(this, arguments);
+  if (G && !G.ended && !wasContaminated) survAfterRisk(it, b, risk, !success);
+  return result;
+}
+function survDrink(uidValue) {
+  const b = uidValue === "tap" ? null : G?.inv.find((x) => x.uid === uidValue),
+    it = b && DB[b.id],
+    before = b?.units || 0,
+    risk = survFoodRisk(it, b);
+  const result = survBaseActDrink.apply(this, arguments);
+  if (G && !G.ended && b && it?.kind === "drink" && b.units < before)
+    survAfterRisk(it, b, risk);
+  return result;
+}
+function survInstall() {
+  if (typeof document !== "undefined") {
+    survQteEnsure();
+    document.addEventListener("keydown", survHandleQteInput, true);
+    document.addEventListener("click", (e) => {
+      if (e.target?.closest?.("#survivalIncidentButton") && SURVIVAL.qte) {
+        e.preventDefault();
+        if (SURVIVAL.qte.kind === "fall") survFallFinish(survInSafeZone(SURVIVAL.qte));
+        else survCutAttempt();
+      }
+    });
+  }
+  const oldItemUse = itemUse;
+  itemUse = function (it) {
+    const text = oldItemUse.apply(this, arguments),
+      safety = survSafetyText(it);
+    return [text, safety].filter(Boolean).join(text && safety ? "\n" : "");
+  };
+  const oldItemFacts = itemFacts;
+  itemFacts = function (it) {
+    const text = oldItemFacts.apply(this, arguments),
+      safety = survSafetyText(it);
+    return [text, safety].filter(Boolean).join(" · ");
+  };
+  const oldExpiry = expiryInventoryLabel;
+  expiryInventoryLabel = function (it, batch) {
+    const text = oldExpiry.apply(this, arguments);
+    if (!it || !batch || isSpoiled(batch)) return text;
+    if (batch.opened && batch.units > 0) return `${text} · 已拆封，优先食用`;
+    if (it.life < 9999 && batch.age / it.life >= 0.72) return `${text} · 临近保质期，建议优先食用`;
+    return text;
+  };
+  const oldPrepare = prepareFood;
+  survBasePrepareFood = oldPrepare;
+  prepareFood = survPrepareFood;
+  const oldConsume = consumeMeal;
+  survBaseConsumeMeal = oldConsume;
+  consumeMeal = survEatMeal;
+  const oldDrink = actDrink;
+  survBaseActDrink = oldDrink;
+  actDrink = survDrink;
+  const oldMedicine = takeMedicine;
+  survBaseTakeMedicine = oldMedicine;
+  takeMedicine = survTakeMedicine;
+  const oldAction = doAction;
+  survBaseDoAction = oldAction;
+  doAction = survOnAction;
+  if (typeof freeMovement === "function") {
+    const oldFreeMovement = freeMovement;
+    freeMovement = function (dt) {
+      return survObserveMovement(oldFreeMovement, arguments, 0);
+    };
+  }
+  if (typeof worldFrame === "function") {
+    const oldWorldFrame = worldFrame;
+    worldFrame = function (now, dt) {
+      return survObserveMovement(oldWorldFrame, arguments, 1);
+    };
+  }
+}
+let survBasePrepareFood, survBaseConsumeMeal, survBaseActDrink, survBaseTakeMedicine, survBaseDoAction;
+survInstall();
 
     </script>
   </body>

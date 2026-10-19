@@ -243,6 +243,8 @@ tiwenji2|水银体温计|thermometer|medical|thermometer|0.8|0.02|1|med|
 jijiu2|红十字药箱|firstaid|medical|firstaid|8.5|1.2|8|med|o
 guo2|铝饭盒|pot|tool|pot|1.6|0.4|1|tool|
 guo3|小砂锅|pot|tool|pot|2.0|1.2|1|tool|
+caidao|安德士锻打菜刀|knife|tool|knife|1.15|0.22|1|tool|
+zhanban|榉木菜板|cutboard|tool|board|0.8|0.55|1|tool|
 pingdi2|铸铁平底锅|pan|tool|pan|3.4|1.6|1|tool|
 wan2|蓝边瓷碗 · 2只|bowl|tool|bowl|0.9|0.5|1|home|
 wan3|木碗|bowl|tool|bowl|0.7|0.15|1|home|
@@ -951,6 +953,8 @@ tiwenji2|h0.5|水银体温计，准
 jijiu2|h1|红十字药箱，样样齐
 guo2|m0.5|铝饭盒，能蒸饭
 guo3|mc2|小砂锅，冬天炖汤最暖
+caidao|#刃口可靠，切配时安全时机更宽|旧式锻打菜刀，刃口耐用
+zhanban|#垫稳食材，降低手滑风险|榉木砧板，平整不晃
 pingdi2|h0.3 m1|铸铁平底锅，补铁
 wan2|m0.5|蓝边瓷碗
 wan3|m0.3|木碗，不烫手
@@ -1378,6 +1382,16 @@ for (const p of CG_EXTRA_PRODUCTS) {
   const it = { ...p, gen:true, line:p.id, brand:"地方小厂", maker:"供销社副食品组" };
   it.brandNote = "地方小厂：批次小，风味各有来处。";
   cgAdd(it);
+}
+function cgQualityTier(it) {
+  if (["premium", "imported", "medicated"].includes(it?.trait)) return "premium";
+  if (it?.trait === "clearance") return "clearance";
+  if (["economy", "old"].includes(it?.trait) || ["群众", "河谷", "前进", "黄河"].includes(it?.brand)) return "economy";
+  return "standard";
+}
+for (const it of CATALOG) {
+  it.qualityTier = cgQualityTier(it);
+  if (it.kind === "drink" && ["water", "waterlarge", "soda", "juice"].includes(it.look) && !["pouch", "box", "paper", "frozenbag"].includes(it.shape?.[0])) it.capWaste = true;
 }
 
 function cgExpiryMark(it) {

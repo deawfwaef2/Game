@@ -420,7 +420,7 @@ function navFrame(now, dt) {
     } else if (phase === "playing" && !N.startWarning && safeReason("idle")) {
       navStop("身体需要照顾，先停下。可以再选箭头走向生活设施。");
     } else {
-      let remaining = Math.min(dt, 0.1) * 1.24;
+      let remaining = Math.min(dt, 0.1) * 1.24 * (G?.illness?.some((i) => i.id === "sprain") ? 0.82 : 1);
       while (remaining > 0 && N.index < N.path.length) {
         const p = N.path[N.index],
           dx = p.x - camera.position.x,

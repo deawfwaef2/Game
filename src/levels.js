@@ -50,6 +50,7 @@ const LV_DIFFICULTIES = {
   calm: { id:"calm", name:"宽裕", budget:1.2, fatigue:0.72, penalty:0.72, window:1.45, note:"预算多两成 · 味觉疲劳较缓 · 机关时窗较宽" },
   standard: { id:"standard", name:"标准", budget:1, fatigue:1, penalty:1, window:1, note:"按本章原始预算与机关时窗" },
   strict: { id:"strict", name:"拮据", budget:0.82, fatigue:1.3, penalty:1.5, window:0.6, note:"预算少近两成 · 味觉疲劳更重 · 误触代价更高" },
+  extreme: { id:"extreme", name:"生存极限", budget:"modeled", fatigue:1.6, penalty:2, window:0.42, note:"103%基础热量 · 六种耐储食品 · 基础套件 · 6%风险余量" },
 };
 const LV_PRODUCTS = [];
 const LV = {};
@@ -83,7 +84,11 @@ function lvReadDifficultyKey() {
 }
 let lvDifficultyKey = lvReadDifficultyKey();
 function lvDifficulty(key = lvState()?.difficulty || lvDifficultyKey) { return LV_DIFFICULTIES[key] || LV_DIFFICULTIES.standard; }
-function lvBudgetFor(id, difficulty = lvDifficultyKey) { return Math.round((LV_BY_ID[id]?.budget || 300) * lvDifficulty(difficulty).budget); }
+function lvBudgetFor(id, difficulty = lvDifficultyKey) {
+  const d = lvDifficulty(difficulty);
+  if (d.id === "extreme") return lvExtremeBudgetDetails(id).budget;
+  return Math.round((LV_BY_ID[id]?.budget || 300) * d.budget);
+}
 function lvSaveDifficultyKey() { try { localStorage.setItem("anders-room-difficulty-v1", lvDifficultyKey); } catch (e) {} }
 let lvShopPage = 0;
 let lvOrderPage = 0;
@@ -213,6 +218,64 @@ function lvLineRank() {
   const sorted = [...groups.entries()].sort((a, b) => a[1] - b[1]);
   LV._lineRank = new Map(sorted.map(([key], i) => [key, 1 + (i % 6)]));
   return LV._lineRank;
+}
+function lvExtremeBudgetDetails(id) {
+  const chapter = LV_BY_ID[id] || LV_CHAPTERS[0],
+    days = chapter.nominal,
+    ranks = lvLineRank(),
+    tier = chapter.no;
+  const pool = CATALOG.filter((it) => {
+    if (it.gen && (ranks.get(it.line || it.id) || 1) > tier) return false;
+    return (
+      it.kind === "food" &&
+      !it.ingredient &&
+      Number.isFinite(it.kcal) &&
+      it.kcal > 0 &&
+      it.servings > 0 &&
+      it.life >= days + 15 &&
+      !["economy", "clearance"].includes(it.qualityTier || "standard")
+    );
+  }).sort((a, b) => a.price / (a.kcal * a.servings) - b.price / (b.kcal * b.servings));
+  const picks = [], flavors = new Set();
+  for (const it of pool) {
+    const flavor = String(it.flavor || it.line || it.id).slice(0, 72);
+    if (flavors.has(flavor)) continue;
+    flavors.add(flavor);
+    picks.push(it);
+    if (picks.length === 6) break;
+  }
+  const dailyNeedKcal = 24 * (16 * 2.8 + 8 * 1.8),
+    planningKcalPerDay = Math.round(dailyNeedKcal * 1.03),
+    targetPerFlavor = (planningKcalPerDay * days) / Math.max(1, picks.length),
+    foodPlan = picks.map((it) => ({
+      id: it.id,
+      servings: Math.ceil(targetPerFlavor / (it.kcal * it.servings)) * it.servings,
+      packages: Math.ceil(targetPerFlavor / (it.kcal * it.servings)),
+      cost: Math.ceil(targetPerFlavor / (it.kcal * it.servings)) * it.price,
+    })),
+    foodCost = foodPlan.reduce((sum, row) => sum + row.cost, 0),
+    careReserve = days * 0.02,
+    setupReserve = Object.entries(YEAR_KIT).reduce((sum, [itemId, quantity]) => {
+      const item = DB[itemId];
+      return sum + (item && !["food", "drink", "seasoning"].includes(item.kind) ? item.price * quantity : 0);
+    }, 0),
+    mechanismReserve =
+      id === "night-radio" ? DB.radio.price : id === "ledger" ? DB.lighter.price : id === "thousand" ? DB.radio.price + DB.lighter.price : 0,
+    subtotal = foodCost + careReserve + setupReserve + mechanismReserve,
+    riskAndPackingReserve = subtotal * 0.06;
+  return {
+    days,
+    dailyNeedKcal,
+    planningKcalPerDay,
+    flavorCount: picks.length,
+    foodPlan,
+    foodCost,
+    careReserve,
+    setupReserve,
+    mechanismReserve,
+    riskAndPackingReserve,
+    budget: Math.ceil(subtotal + riskAndPackingReserve),
+  };
 }
 function lvCatalogStock() {
   const tier = lvCatalogTier(), ranks = lvLineRank();
@@ -717,7 +780,7 @@ function lvOpenPicker() {
     root.id = "lvPicker";
     root.className = "lv-overlay lv-archive-overlay";
     root.hidden = true;
-    root.innerHTML = `<div class="lv-picker-card lv-archive-card"><header class="lv-archive-head"><div class="lv-archive-title"><div class="lv-archive-eyebrow"><span>ROOM ARCHIVE · ANDERS EMPIRE · 1986</span><span>FIELD DOSSIER / 06 ROOMS</span></div><h2>六扇门，六种等待。</h2><p>楼道尽头的灯总是慢半拍。挑一间房，守住一次采购，听它把故事说完。</p></div><div class="lv-archive-seal" aria-hidden="true"><span>闭门</span><small>THE LAST TENANT<br>安德士帝国 · 1986</small></div><button class="lv-close lv-archive-close" data-lv-close aria-label="关闭章节簿">×</button></header><div class="lv-archive-rail"><span>案件档案 / CASE FILES</span><span id="lvArchiveProgress">已解锁 1 / 6</span></div><section class="lv-difficulty-block"><div class="lv-difficulty-heading"><strong>选择生活尺度</strong><span>只影响章节预算、机关窗口与误触代价；经典365天不变</span></div><div id="lvDifficultySelect" class="lv-difficulty-grid"></div></section><div class="lv-grid-heading"><span>ROOMS UNDER WATCH</span><span>选择一间已开放的房间，进入开局采购</span></div><div id="lvChapterGrid" class="lv-chapter-grid"></div><footer class="lv-archive-footer"><span>通关留星，逐步开启全国订货簿。时间不会主动告诉你机关是否生效。</span><span>保存于房间里的故事 · CLOSED DOOR ARCHIVE</span></footer></div>`;
+    root.innerHTML = `<div class="lv-picker-card lv-archive-card"><header class="lv-archive-head"><div class="lv-archive-title"><div class="lv-archive-eyebrow"><span>ROOM ARCHIVE · ANDERS EMPIRE · 1986</span><span>FIELD DOSSIER / 06 ROOMS</span></div><h2>六扇门，六种等待。</h2><p>楼道尽头的灯总是慢半拍。挑一间房，守住一次采购，听它把故事说完。</p></div><div class="lv-archive-seal" aria-hidden="true"><span>闭门</span><small>THE LAST TENANT<br>安德士帝国 · 1986</small></div><button class="lv-close lv-archive-close" data-lv-close aria-label="关闭章节簿">×</button></header><div class="lv-archive-rail"><span>案件档案 / CASE FILES</span><span id="lvArchiveProgress">已解锁 1 / 6</span></div><section class="lv-difficulty-block"><div class="lv-difficulty-heading"><strong>选择生活尺度</strong><span>章节可选四档生存难度；经典365天与已保存的章节规则保持不变</span></div><div id="lvDifficultySelect" class="lv-difficulty-grid"></div></section><div class="lv-grid-heading"><span>ROOMS UNDER WATCH</span><span>选择一间已开放的房间，进入开局采购</span></div><div id="lvChapterGrid" class="lv-chapter-grid"></div><footer class="lv-archive-footer"><span>通关留星，逐步开启全国订货簿。时间不会主动告诉你机关是否生效。</span><span>保存于房间里的故事 · CLOSED DOOR ARCHIVE</span></footer></div>`;
     document.body.appendChild(root);
   }
   lvRenderPicker(root);
@@ -820,7 +883,8 @@ if(lvBaseOpenShop) openShop=function(isRestock=false){
   if(lvPending&&phase==="shop"&&!W.enabled){
     const difficulty=lvDifficulty(lvDifficultyKey);
     $("#shopBudgetLabel").textContent=`章节预算 · E$ ${lvBudget().toFixed(2)}`;
-    $("#shopIntroText").textContent=`本章期限 ${lvGoalDays()} 天 · ${difficulty.name}难度 · 预算 E$ ${lvBudget().toFixed(2)}。房间里没有时钟；计时器需开局购买，机关是否生效不会提示。开局只采购一次。`;
+    const budgetMethod=difficulty.id==="extreme"?"按模拟基础消耗的103%热量、六种耐储食品、基础生活用品全套、每日E$0.02照护额和6%风险/包装余量测算；仅供开局一次采购，不代表可补货。":"";
+    $("#shopIntroText").textContent=`本章期限 ${lvGoalDays()} 天 · ${difficulty.name}难度 · 预算 E$ ${lvBudget().toFixed(2)}。${budgetMethod} 房间里没有时钟；计时器需开局购买，机关是否生效不会提示。开局只采购一次。`;
     $("#catalogCount").textContent=`${lvCatalogStock().length.toLocaleString("zh-CN")} 件 / 本章已开放 · 目录共 ${CATALOG.length.toLocaleString("zh-CN")} 种`;
     renderCatalog();
   }
@@ -926,7 +990,7 @@ function lvEnsureStyles() {
   if(document.getElementById("lvRuntimeCss")) return;
   const s=document.createElement("style");s.id="lvRuntimeCss";s.textContent=`.lv-overlay{position:fixed;inset:0;z-index:1200;display:grid;place-items:center;padding:clamp(12px,3vw,42px);background:rgba(18,22,19,.72);backdrop-filter:blur(10px);color:#272a23}.lv-overlay[hidden]{display:none!important}.lv-picker-card,.lv-order-card{width:min(1160px,100%);max-height:min(92dvh,1000px);overflow:auto;background:#e7dfca;border:1px solid #c9b995;box-shadow:0 30px 90px #1119;padding:clamp(18px,3vw,38px);font-family:Georgia,'Noto Serif CJK SC',serif}.lv-picker-card>header,.lv-order-head{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;border-bottom:1px solid #b8ad94;padding-bottom:20px}.lv-kicker{font:700 11px/1.4 system-ui,sans-serif;letter-spacing:.18em;color:#73705e}.lv-picker-card h2,.lv-order-head h2{font-size:clamp(30px,5vw,50px);font-weight:500;margin:8px 0}.lv-picker-card header p,.lv-order-head p{font:15px/1.6 system-ui,sans-serif;color:#686656;margin:0;max-width:680px}.lv-close{font-size:28px;border:1px solid #a69c84;background:transparent;width:44px;height:44px;color:#4c4d42;cursor:pointer}.lv-chapter-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:22px 0}.lv-chapter{min-height:215px;text-align:left;padding:20px;background:#f1ead8;border:1px solid #c6baa0;color:#302f28;cursor:pointer;transition:transform .18s,background .18s,border .18s}.lv-chapter:hover:not(:disabled){transform:translateY(-3px);background:#f7f0df;border-color:#9e875d}.lv-chapter.locked{opacity:.52;cursor:not-allowed;background:#ded8ca}.lv-chapter-no,.lv-card-meta,.lv-chapter small{font:12px/1.5 system-ui,sans-serif;color:#82785f;letter-spacing:.08em}.lv-chapter h3{font-size:23px;font-weight:500;margin:9px 0}.lv-chapter p{font:14px/1.6 system-ui,sans-serif;color:#615f54;min-height:44px;margin:0 0 12px}.lv-card-meta{display:flex;justify-content:space-between;gap:10px;border-top:1px solid #d6cbb2;padding-top:10px}.lv-chapter small{display:block;margin-top:10px;letter-spacing:0;color:#6e6b5d}.lv-stars{color:#9b7735;font-size:17px}.lv-locked{color:#8a5247}.lv-picker-card footer,.lv-order-foot{display:flex;justify-content:space-between;align-items:center;gap:14px;padding-top:16px;border-top:1px solid #c5b89d;font:13px/1.5 system-ui,sans-serif;color:#77715f}.lv-order-card{width:min(1280px,100%)}.lv-order-tools{display:grid;grid-template-columns:minmax(190px,1fr) 220px 1.2fr;gap:12px;align-items:center;margin:18px 0}.lv-order-tools input,.lv-order-tools select{background:#f8f3e7;border:1px solid #b8ad94;padding:12px;font:15px system-ui,sans-serif;color:#35362f}.lv-order-tools span{font:13px/1.45 system-ui,sans-serif;color:#77715f}.lv-order-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.lv-order-grid:has(.lv-order-item:only-child){grid-template-columns:minmax(240px,420px);justify-content:center}.lv-order-item{border:1px solid #cfc3aa;background:#f4eddd;padding:12px;min-width:0}.lv-order-art{height:86px;display:grid;place-items:center;background:#e4dcc7}.lv-order-art svg{height:68px;width:68px}.lv-order-item h3{font:600 15px/1.35 system-ui,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:9px 0 4px}.lv-order-item p{font:12px/1.4 system-ui,sans-serif;height:35px;overflow:hidden;color:#716d5f;margin:0 0 7px}.lv-order-meta,.lv-order-qty{display:flex;align-items:center;justify-content:space-between;gap:6px;font:12px system-ui,sans-serif}.lv-order-meta b{color:#735b2f}.lv-order-qty{margin-top:8px}.lv-order-qty button,.lv-order-foot button,.lv-next-button,.lv-shop-pager button{border:1px solid #9c906f;background:#e3d7b9;color:#403c2e;padding:8px 12px;font:600 12px system-ui,sans-serif;cursor:pointer}.lv-order-qty button:disabled,.lv-order-foot button:disabled,.lv-shop-pager button:disabled{opacity:.4;cursor:not-allowed}.lv-order-qty span{min-width:25px;text-align:center}.lv-order-foot{margin-top:16px}.lv-checkout-mini{margin-left:auto;background:#535c48!important;color:#f3ebd8!important}.lv-shop-pager{display:flex;align-items:center;justify-content:center;gap:14px;padding:16px;font:13px system-ui,sans-serif;color:#635f53}.lv-next-button{display:block;width:min(420px,100%);margin:0 auto 10px;padding:13px}@media(max-width:780px){.lv-chapter-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.lv-order-tools{grid-template-columns:1fr 1fr}.lv-order-tools span{grid-column:1/-1}.lv-order-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.lv-picker-card footer{display:block}.lv-picker-card footer span{display:block;margin:6px 0}}@media(max-width:480px){.lv-overlay{padding:8px}.lv-picker-card,.lv-order-card{padding:16px;max-height:96dvh}.lv-chapter-grid{grid-template-columns:1fr}.lv-chapter{min-height:0}.lv-order-tools{grid-template-columns:1fr}.lv-order-tools span{grid-column:auto}.lv-order-grid{gap:7px}.lv-order-item{padding:8px}.lv-order-art{height:68px}.lv-order-item h3{font-size:13px}.lv-order-item p{font-size:11px;height:31px}.lv-order-foot{flex-wrap:wrap}.lv-order-foot>*{flex:1}.lv-order-foot span{order:-1;text-align:center;flex-basis:100%}}`;
   document.head.appendChild(s);
-  const difficultyStyle=document.createElement("style");difficultyStyle.id="lvDifficultyStyles";difficultyStyle.textContent=`.lv-difficulty-block{margin:18px 0 4px}.lv-difficulty-heading{display:flex;justify-content:space-between;align-items:baseline;gap:12px;color:#4e4d41;font:13px system-ui,sans-serif}.lv-difficulty-heading strong{font-size:15px;letter-spacing:.04em}.lv-difficulty-heading span{color:#817963;font-size:11px}.lv-difficulty-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:9px}.lv-difficulty-card{display:flex;flex-direction:column;gap:4px;min-height:68px;padding:11px 14px;text-align:left;border:1px solid #c6baa0;background:#f2ecdd;color:#38382f;cursor:pointer}.lv-difficulty-card:hover{border-color:#9d875e;background:#f8f2e3}.lv-difficulty-card.selected{border-color:#73764f;background:#e4e4cf;box-shadow:inset 0 0 0 1px #73764f}.lv-difficulty-card strong{font:600 15px system-ui,sans-serif}.lv-difficulty-card span{color:#77715f;font:11px/1.4 system-ui,sans-serif}@media(max-width:600px){.lv-difficulty-heading{display:block}.lv-difficulty-heading span{display:block;margin-top:4px}.lv-difficulty-grid{grid-template-columns:1fr}.lv-difficulty-card{min-height:0}}`;
+  const difficultyStyle=document.createElement("style");difficultyStyle.id="lvDifficultyStyles";difficultyStyle.textContent=`.lv-difficulty-block{margin:18px 0 4px}.lv-difficulty-heading{display:flex;justify-content:space-between;align-items:baseline;gap:12px;color:#4e4d41;font:13px system-ui,sans-serif}.lv-difficulty-heading strong{font-size:15px;letter-spacing:.04em}.lv-difficulty-heading span{color:#817963;font-size:11px}.lv-difficulty-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:9px}.lv-difficulty-card{display:flex;flex-direction:column;gap:4px;min-height:68px;padding:11px 14px;text-align:left;border:1px solid #c6baa0;background:#f2ecdd;color:#38382f;cursor:pointer}.lv-difficulty-card:hover{border-color:#9d875e;background:#f8f2e3}.lv-difficulty-card.selected{border-color:#73764f;background:#e4e4cf;box-shadow:inset 0 0 0 1px #73764f}.lv-difficulty-card strong{font:600 15px system-ui,sans-serif}.lv-difficulty-card span{color:#77715f;font:11px/1.4 system-ui,sans-serif}@media(max-width:760px){.lv-difficulty-heading{display:block}.lv-difficulty-heading span{display:block;margin-top:4px}.lv-difficulty-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.lv-difficulty-card{min-height:0}}@media(max-width:380px){.lv-difficulty-grid{grid-template-columns:1fr}}`;
   document.head.appendChild(difficultyStyle);
   const premium=document.createElement("style");premium.id="lvPremiumStyles";premium.textContent=`.lv-order-card{width:min(1240px,100%);max-height:94dvh;overflow:auto;padding:0;background:#ede7d8;border:1px solid #c6b998;border-radius:4px;box-shadow:0 34px 100px #090b09a8;color:#292b25}.lv-order-hero{position:relative;min-height:clamp(150px,21vh,220px);display:flex;align-items:flex-end;overflow:hidden;padding:23px 30px;border-bottom:3px solid #9a4f3c;background:linear-gradient(135deg,#53614c,#9b805e)}.lv-order-hero-image{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 57%;filter:saturate(.82) contrast(1.02)}.lv-order-hero-shade{position:absolute;inset:0;background:linear-gradient(90deg,rgba(14,17,14,.82),rgba(20,18,14,.4) 56%,rgba(20,18,14,.1)),linear-gradient(0deg,rgba(12,14,11,.68),transparent 78%)}.lv-order-hero-copy{position:relative;z-index:1;color:#f6ead1;max-width:75%}.lv-order-hero-copy .lv-kicker{color:#e8d8b5;font-size:10px;letter-spacing:.2em}.lv-order-hero-copy h2{margin:5px 0 3px;font:500 clamp(30px,4vw,46px)/1.12 Georgia,'Noto Serif CJK SC','Songti SC',serif;letter-spacing:.06em;text-shadow:0 2px 12px #0009}.lv-order-hero-copy p{margin:0;color:#e4dac5;font:12px/1.4 system-ui,sans-serif;letter-spacing:.02em;text-shadow:0 1px 5px #0009}.lv-order-close{position:absolute;z-index:3;top:17px;right:18px;border-color:#f3e8ce88;background:#1e211bc9;color:#f4ead7;border-radius:3px}.lv-order-content{padding:18px clamp(16px,2.3vw,30px) 22px}.lv-order-tools{grid-template-columns:minmax(220px,1fr) minmax(165px,210px) minmax(180px,.9fr);gap:12px;margin:0 0 15px}.lv-search-wrap{display:flex;align-items:center;gap:8px;padding:0 12px;background:#f8f4ea;border:1px solid #b9aa88;box-shadow:inset 0 1px 2px #4036210d}.lv-search-wrap>span{font:24px/1 Georgia,serif;color:#806e4a}.lv-search-wrap input{min-width:0;width:100%;padding:11px 0;border:0;background:transparent;outline:0;color:#30322b;font:14px system-ui,sans-serif}.lv-order-tools select{min-width:0;background:#f8f4ea;border:1px solid #b9aa88;padding:11px 12px;color:#34362d;font:14px system-ui,sans-serif}.lv-order-tools>span{padding-left:12px;border-left:2px solid #b38f5d;color:#776c58;font:12px/1.5 system-ui,sans-serif}.lv-order-grid{max-height:min(48vh,470px);overflow:auto;padding:2px 3px 5px;grid-template-columns:repeat(auto-fill,minmax(205px,1fr));gap:12px}.lv-order-item{position:relative;border:1px solid #cfc3a9;border-radius:3px;background:linear-gradient(160deg,#faf6ec,#eee7d5);padding:10px;box-shadow:0 3px 11px #574a3010;transition:transform .16s,box-shadow .16s,border-color .16s}.lv-order-item:hover{transform:translateY(-2px);border-color:#a9966b;box-shadow:0 8px 20px #574a3020}.lv-order-art{height:92px;border:1px solid #d9cfb9;background:radial-gradient(ellipse at 50% 70%,#c9bd9e,#e5ddca 72%);overflow:hidden}.lv-order-art svg{height:88px;width:88px;filter:drop-shadow(0 5px 3px #342d1d22)}.lv-order-item h3{white-space:normal;min-height:38px;margin:9px 0 4px;color:#33342e;font:600 14px/1.35 'Noto Serif CJK SC','Songti SC',serif}.lv-order-item p{height:43px;margin:0 0 8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;color:#746d5e;font:11px/1.5 system-ui,sans-serif}.lv-order-meta{padding-top:7px;border-top:1px solid #dfd5c0;color:#766d5a;font:11px system-ui,sans-serif}.lv-order-meta b{color:#934f3c;font-size:13px}.lv-order-qty{margin-top:9px}.lv-order-qty button{border:1px solid #ab9a73;background:#e9dfc8;color:#3e3a2e;border-radius:2px;padding:7px 9px;font:600 11px system-ui,sans-serif}.lv-order-qty button:last-child{background:#59624a;border-color:#59624a;color:#fff6e2}.lv-order-qty button:disabled{opacity:.4}.lv-order-foot{margin-top:14px;padding-top:13px;border-top:1px solid #cfc3a8}.lv-order-foot button{border-radius:2px}.lv-checkout-mini{margin-left:auto;background:#4d5b45!important;border-color:#4d5b45!important;color:#f5eddc!important;min-height:38px}.lv-order-grid::-webkit-scrollbar{width:8px}.lv-order-grid::-webkit-scrollbar-thumb{background:#b8a987;border:2px solid #eee7d8;border-radius:6px}@media(max-width:760px){.lv-order-hero{min-height:150px;padding:18px}.lv-order-hero-copy{max-width:88%}.lv-order-content{padding:14px}.lv-order-tools{grid-template-columns:minmax(0,1fr) minmax(125px,.65fr)}.lv-order-tools>span{grid-column:1/-1;border-left:0;padding:0}.lv-order-grid{max-height:52vh;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.lv-order-item{padding:8px}.lv-order-art{height:72px}.lv-order-art svg{height:68px;width:68px}.lv-order-item h3{font-size:12px;min-height:34px}.lv-order-item p{font-size:10px;height:38px}.lv-order-qty button{padding:7px 6px}.lv-order-foot{flex-wrap:wrap}.lv-order-foot>*{flex:1}.lv-order-foot span{order:-1;text-align:center;flex-basis:100%}}`;
   document.head.appendChild(premium);
@@ -947,7 +1011,7 @@ function lvEnsureStyles() {
   .lv-archive-rail{display:flex;justify-content:space-between;gap:12px;margin:13px 0 10px;color:#aaa58e;font:700 9px system-ui,sans-serif;letter-spacing:.17em}.lv-archive-rail span:last-child{color:#d0b875}
   .lv-archive-card .lv-difficulty-block{margin:0 0 19px;padding:10px 12px 11px;border:1px solid #c3b57a24;background:linear-gradient(90deg,#c5a75b0c,#fff0 65%)}
   .lv-archive-card .lv-difficulty-heading{color:#d2c8ae;font:12px system-ui,sans-serif}.lv-archive-card .lv-difficulty-heading strong{font-size:13px;letter-spacing:.08em}.lv-archive-card .lv-difficulty-heading span{font-size:10px;color:#969687}
-  .lv-archive-card .lv-difficulty-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-top:8px}
+  .lv-archive-card .lv-difficulty-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-top:8px}
   .lv-archive-card .lv-difficulty-card{position:relative;display:grid;grid-template-columns:25px 1fr;grid-template-rows:auto auto;align-items:center;gap:1px 8px;min-height:53px;padding:7px 10px;border:1px solid #b7ad8c35;background:#111816a8;color:#e7e0cd;text-align:left;transition:background .16s,border .16s,transform .16s}
   .lv-archive-card .lv-difficulty-card:hover{transform:translateY(-1px);border-color:#d0b56d88;background:#242c23}.lv-archive-card .lv-difficulty-card.selected{border-color:#d8bb70;background:linear-gradient(105deg,#8c713a63,#3b4432);box-shadow:inset 0 0 0 1px #d0ad6077}
   .lv-difficulty-index{grid-row:1/3;color:#b89a57;font:700 10px Georgia,serif}.lv-archive-card .lv-difficulty-card strong{font:700 12px system-ui,sans-serif;color:#f1e8d0}.lv-archive-card .lv-difficulty-card span:last-child{font:10px/1.35 system-ui,sans-serif;color:#a5a18d}
@@ -965,7 +1029,7 @@ function lvEnsureStyles() {
   .lv-card-lock{position:absolute;inset:auto 0 0;display:grid;grid-template-columns:36px 1fr;align-items:center;gap:2px 8px;padding:12px 14px;background:linear-gradient(90deg,#080b0bf2,#111715e8);color:#d1c8b1;pointer-events:none}.lv-lock-glyph{grid-row:1/3;width:30px;height:30px;display:grid;place-items:center;border:1px solid #b7aa8577;border-radius:50%;color:#c6b276;font-size:20px}.lv-card-lock b{font:700 10px system-ui,sans-serif;letter-spacing:.08em}.lv-card-lock small{color:#a5a193;font:9px system-ui,sans-serif}
   .lv-archive-footer{display:flex;justify-content:space-between;gap:15px;padding-top:10px;border-top:1px solid #c7b87b33;color:#aaa795;font:10px/1.5 system-ui,sans-serif}.lv-archive-footer span:last-child{color:#b9a878;text-align:right;letter-spacing:.1em}
   @media(max-width:850px){.lv-archive-card .lv-chapter-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.lv-archive-seal{width:72px;height:72px;flex-basis:72px}.lv-archive-seal>span{font-size:21px}.lv-archive-seal small{font-size:7px}}
-  @media(max-width:560px){.lv-archive-overlay{padding:5px}.lv-archive-card{padding:14px;max-height:98dvh}.lv-archive-head{padding-right:43px!important}.lv-archive-seal{display:none}.lv-archive-title h2{font-size:29px!important}.lv-archive-title p{font-size:11px!important}.lv-archive-eyebrow{font-size:8px}.lv-archive-eyebrow span+span{display:none}.lv-archive-rail{font-size:8px}.lv-archive-card .lv-difficulty-block{padding:8px}.lv-archive-card .lv-difficulty-heading{display:block}.lv-archive-card .lv-difficulty-heading span{display:block;margin-top:3px}.lv-archive-card .lv-difficulty-grid{gap:4px}.lv-archive-card .lv-difficulty-card{grid-template-columns:1fr;gap:2px;min-height:55px;padding:6px}.lv-difficulty-index{display:none}.lv-archive-card .lv-difficulty-card strong{font-size:10px}.lv-archive-card .lv-difficulty-card span:last-child{font-size:8px}.lv-grid-heading span:last-child{display:none}.lv-archive-card .lv-chapter-grid{grid-template-columns:1fr;gap:8px}.lv-archive-card .lv-chapter{min-height:265px;padding:12px}.lv-card-copy>strong{font-size:22px}.lv-card-story{min-height:34px}.lv-archive-footer{display:block}.lv-archive-footer span{display:block}.lv-archive-footer span:last-child{text-align:left;margin-top:4px}}
+  @media(max-width:560px){.lv-archive-overlay{padding:5px}.lv-archive-card{padding:14px;max-height:98dvh}.lv-archive-head{padding-right:43px!important}.lv-archive-seal{display:none}.lv-archive-title h2{font-size:29px!important}.lv-archive-title p{font-size:11px!important}.lv-archive-eyebrow{font-size:8px}.lv-archive-eyebrow span+span{display:none}.lv-archive-rail{font-size:8px}.lv-archive-card .lv-difficulty-block{padding:8px}.lv-archive-card .lv-difficulty-heading{display:block}.lv-archive-card .lv-difficulty-heading span{display:block;margin-top:3px}.lv-archive-card .lv-difficulty-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}.lv-archive-card .lv-difficulty-card{grid-template-columns:1fr;gap:2px;min-height:55px;padding:6px}.lv-difficulty-index{display:none}.lv-archive-card .lv-difficulty-card strong{font-size:10px}.lv-archive-card .lv-difficulty-card span:last-child{font-size:8px}.lv-grid-heading span:last-child{display:none}.lv-archive-card .lv-chapter-grid{grid-template-columns:1fr;gap:8px}.lv-archive-card .lv-chapter{min-height:265px;padding:12px}.lv-card-copy>strong{font-size:22px}.lv-card-story{min-height:34px}.lv-archive-footer{display:block}.lv-archive-footer span{display:block}.lv-archive-footer span:last-child{text-align:left;margin-top:4px}}
   `;document.head.appendChild(archive);
 }
 function lvFallbackDo(action,shift=false){

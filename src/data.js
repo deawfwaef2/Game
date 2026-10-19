@@ -1,5 +1,5 @@
 /* 闭门365 — original game data, fictional 1980s subsidized prices. */
-const VERSION = "0.22.0-preview";
+const VERSION = "0.23.0-preview";
 const CATEGORIES = [
   ["all", "全部物资"],
   ["staple", "主食与干粮"],
@@ -98,10 +98,12 @@ food("hardtack", "压缩口粮 · 1kg", 1.75, 1, 8, 500, 1095, "staple", {
 food("bread", "黑麦面包", 0.45, 0.45, 3, 350, 5, "fresh", { flavor: "bread" });
 food("potato", "土豆 · 2kg", 0.85, 2, 8, 200, 30, "fresh", {
   cook: true,
+  vegetable: true,
   flavor: "potato",
 });
 food("sweetpotato", "红薯 · 1kg", 0.6, 1, 4, 230, 21, "fresh", {
   cook: true,
+  vegetable: true,
   flavor: "sweetpotato",
 });
 food("oil", "葵花籽油 · 1L", 1.8, 0.93, 40, 205, 540, "staple", {
@@ -235,11 +237,13 @@ food("yogurt", "原味酸奶 · 500g", 0.65, 0.55, 2, 210, 5, "fresh", {
 });
 item("water", "瓶装饮用水 · 2L", 0.28, 2, "drink", 4, {
   kind: "drink",
+  capWaste: true,
   water: 38,
   liters: 2,
 });
 item("waterlarge", "封装饮用水 · 5L", 0.55, 5, "drink", 10, {
   kind: "drink",
+  capWaste: true,
   water: 38,
   liters: 5,
 });
@@ -264,12 +268,14 @@ item("cocoa", "可可粉 · 15份", 1.05, 0.25, "drink", 15, {
 });
 item("juice", "苹果汁 · 1L", 0.6, 1.05, "drink", 4, {
   kind: "drink",
+  capWaste: true,
   water: 32,
   joy: 3,
   life: 120,
 });
 item("soda", "柠檬汽水 · 330ml", 0.22, 0.35, "drink", 1, {
   kind: "drink",
+  capWaste: true,
   water: 25,
   joy: 3,
   life: 365,
@@ -351,6 +357,12 @@ item("firstaid", "家庭应急护理盒", 2.2, 0.35, "medical", 8, {
 });
 item("pot", "带盖小铝锅", 2.5, 0.7, "tool", 1, {
   desc: "公寓已有旧锅；新锅让烹饪更省时。",
+});
+item("knife", "旧式菜刀", 1.15, 0.22, "tool", 1, {
+  desc: "磨损的旧刀仍能切菜；一把刃口更可靠的菜刀能让切配更安全。",
+});
+item("cutboard", "小木砧板", 0.65, 0.48, "tool", 1, {
+  desc: "切配时垫稳食材，降低手滑风险。",
 });
 item("pan", "平底煎锅", 2.1, 0.8, "tool");
 item("bowl", "搪瓷碗", 0.4, 0.2, "tool");
@@ -695,4 +707,16 @@ const DISEASES = {
     desc: "饮水消耗增快、精神缓慢下降，注意食物与卫生。",
   },
   fever: { name: "低热", desc: "健康与体力缓慢下降，需休息、补水或对症护理。" },
+  foodborne: {
+    name: "食源性不适",
+    desc: "水分与体力消耗加快；胃肠护理片或应急护理盒能缩短病程。",
+  },
+  sprain: {
+    name: "轻度扭伤",
+    desc: "体力恢复变慢；休息、绷带或应急护理能缓解。",
+  },
+  cut: {
+    name: "手部划伤",
+    desc: "小伤口需要清洁包扎；护理绷带或应急护理盒能缩短恢复时间。",
+  },
 };

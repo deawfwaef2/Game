@@ -80,7 +80,7 @@ function hour() {
   return G ? (G.minute % 1440) / 60 : 8;
 }
 function freshWaste() {
-  return { packaging: 0, scraps: 0, discarded: 0, items: [], warnedFull: false };
+  return { packaging: 0, caps: 0, scraps: 0, discarded: 0, items: [], warnedFull: false };
 }
 function ensureWaste() {
   if (!G) return null;
@@ -89,6 +89,7 @@ function ensureWaste() {
     G.waste.packaging = Math.max(0, Math.floor(Number(G.trash) || 0));
   }
   G.waste.packaging ??= 0;
+  G.waste.caps ??= 0;
   G.waste.scraps ??= 0;
   G.waste.discarded ??= 0;
   G.waste.items ??= [];
@@ -99,8 +100,8 @@ function addWaste(kind, id = null, count = 1) {
   if (!G) return 0;
   const waste = ensureWaste(),
     amount = Math.max(0, Math.floor(Number(count) || 0));
-  if (!["packaging", "scraps", "discarded"].includes(kind)) kind = "discarded";
-  const total = waste.packaging + waste.scraps + waste.discarded,
+  if (!["packaging", "caps", "scraps", "discarded"].includes(kind)) kind = "discarded";
+  const total = waste.packaging + waste.caps + waste.scraps + waste.discarded,
     added = Math.min(amount, Math.max(0, 2e7 - total));
   waste[kind] += added;
   for (let i = 0; i < Math.min(added, 48); i++) {
@@ -114,6 +115,8 @@ function markPackageOpened(batch) {
   if (!G || !batch || batch.opened) return false;
   batch.opened = true;
   addWaste("packaging", batch.id);
+  const it = DB[batch.id];
+  if (it?.kind === "drink" && it.capWaste) addWaste("caps", batch.id);
   return true;
 }
 function clearWaste() {
@@ -458,11 +461,12 @@ function simulate(minutes, context) {
     13;
   const hot = temperature() > 29;
   s.food -= (sleep ? 1.8 : 2.8) * h * (cold ? 1.15 : 1);
-  s.water -=
-    (sleep ? 2.4 : 3.6) *
-    h *
-    (hot ? 1.3 : 1) *
-    (G.illness.some((i) => i.id === "stomach") ? 1.3 : 1);
+  const digestiveStress = G.illness.some((i) => i.id === "foodborne")
+    ? 1.5
+    : G.illness.some((i) => i.id === "stomach")
+      ? 1.3
+      : 1;
+  s.water -= (sleep ? 2.4 : 3.6) * h * (hot ? 1.3 : 1) * digestiveStress;
   const bedQuality = env.bed + (has("pillow") ? 1 : 0);
   s.energy += (sleep ? 7.6 + bedQuality * 1.1 : -2.7) * h;
   G.sleepToday += sleep ? h : 0;
@@ -514,6 +518,16 @@ function simulate(minutes, context) {
     disease.remaining -= minutes;
     if (disease.id === "fever") s.health -= 0.55 * h;
     if (disease.id === "cold") s.energy -= 0.6 * h;
+    if (disease.id === "foodborne") {
+      s.energy -= 0.35 * h;
+      s.health -= 0.12 * h;
+      s.morale -= 0.15 * h;
+    }
+    if (disease.id === "sprain") s.energy -= 0.4 * h;
+    if (disease.id === "cut") {
+      s.health -= 0.08 * h;
+      s.hygiene -= 0.04 * h;
+    }
     if (sleep) disease.remaining -= minutes * 0.35;
   }
   G.illness = G.illness.filter((i) => i.remaining > 0);
@@ -598,8 +612,13 @@ function dailyUpdate() {
     );
 }
 function addDisease(id) {
-  if (G.illness.some((i) => i.id === id)) return;
-  G.illness.push({ id, remaining: 24 * 60 + Math.floor(rngNext(G) * 48 * 60) });
+  if (!G || !DISEASES[id] || G.illness.some((i) => i.id === id) || G.illness.length >= 6) return;
+  const [minHours, maxHours] =
+    ({ foodborne: [36, 72], sprain: [36, 72], cut: [8, 24] })[id] || [24, 72];
+  G.illness.push({
+    id,
+    remaining: minHours * 60 + Math.floor(rngNext(G) * (maxHours - minHours) * 60),
+  });
   logEvent(`持续状态：${DISEASES[id].name}。${DISEASES[id].desc}`, "warn");
   notify("身体不太舒服：" + DISEASES[id].name, "warn");
 }
@@ -861,6 +880,7 @@ function doAction(action, value) {
       {
         const waste = ensureWaste(),
           packaging = waste.packaging,
+          caps = waste.caps,
           scraps = waste.scraps,
           discarded = waste.discarded,
           spoiled = G.inv.filter((b) => isSpoiled(b));
@@ -870,7 +890,7 @@ function doAction(action, value) {
         G.dirt = Math.max(0, G.dirt - 8);
         advanceTime(10, "clean");
         logEvent(
-          `密封带走包装${packaging}份、餐厨残渣${scraps}份、其他废弃物${discarded}份和变质物资${spoiled.length}批。没有恶心画面。`,
+          `密封带走包装${packaging}份、瓶盖${caps}个、餐厨残渣${scraps}份、其他废弃物${discarded}份和变质物资${spoiled.length}批。没有恶心画面。`,
           "good",
         );
         break;
@@ -1041,7 +1061,11 @@ function takeMedicine(uidValue) {
     logEvent("按份量做了一次日常营养补充。");
   } else {
     const disease = G.illness.find(
-      (x) => it.treat === "all" || it.treat === "rest" || x.id === it.treat,
+      (x) =>
+        it.treat === "all" ||
+        it.treat === "rest" ||
+        x.id === it.treat ||
+        (it.treat === "stomach" && x.id === "foodborne"),
     );
     if (!disease) return notify("目前没有对应状态，不需要使用。");
     use(it.id);
@@ -1123,9 +1147,9 @@ function validateSave(s) {
       if (!num(s[k], 0, 2e7)) return false;
     if (s.waste !== undefined) {
       const w = s.waste,
-        validItem = (x) => obj(x) && ["packaging", "scraps", "discarded"].includes(x.kind) && (x.id === null || Object.hasOwn(DB, x.id));
-      if (!obj(w) || !num(w.packaging, 0, 2e7) || !num(w.scraps, 0, 2e7) || !num(w.discarded, 0, 2e7) || typeof w.warnedFull !== "boolean" || !Array.isArray(w.items) || w.items.length > 48 || !w.items.every(validItem)) return false;
-      if (Math.abs(s.trash - w.packaging - w.scraps - w.discarded) > 0.001) return false;
+        validItem = (x) => obj(x) && ["packaging", "caps", "scraps", "discarded"].includes(x.kind) && (x.id === null || Object.hasOwn(DB, x.id));
+      if (!obj(w) || !num(w.packaging, 0, 2e7) || !num(w.caps ?? 0, 0, 2e7) || !num(w.scraps, 0, 2e7) || !num(w.discarded, 0, 2e7) || typeof w.warnedFull !== "boolean" || !Array.isArray(w.items) || w.items.length > 48 || !w.items.every(validItem)) return false;
+      if (Math.abs(s.trash - w.packaging - (w.caps ?? 0) - w.scraps - w.discarded) > 0.001) return false;
     }
     if (!num(s.rng, 0, 4294967295) || !obj(s.env)) return false;
     const expected = environment(s.seed);
@@ -1231,7 +1255,7 @@ function validateSave(s) {
       return false;
     if (
       !Array.isArray(s.illness) ||
-      s.illness.length > 3 ||
+      s.illness.length > 6 ||
       !s.illness.every((i) => DISEASES[i.id] && num(i.remaining, 0, 100000))
     )
       return false;

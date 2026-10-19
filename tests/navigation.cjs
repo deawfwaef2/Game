@@ -256,17 +256,31 @@ const { chromium } = require("playwright"),
       navRefreshLayout();
       renderer.setPixelRatio(0.45);
       renderer.shadowMap.enabled = false;
-      navGo("center");
+      // Keep the live-clock regression deterministic: the chapter/browser tests independently exercise fall QTEs.
+      if (SURVIVAL.qte?.kind === "fall") survFallFinish(true);
+      window.__qaFallChance = survFallChance;
+      survFallChance = () => 0;
+      const farthest = N.nodes.map((n) => {
+        const plan = navPlan(camera.position, n.point);
+        const distance = plan?.points.reduce((sum, p, i, a) => sum + (i ? p.distanceTo(a[i - 1]) : 0), 0) || 0;
+        return { id: n.id, distance };
+      }).sort((a, b) => b.distance - a.distance)[0];
+      const started = !!farthest && navGo(farthest.id);
       lastFrame = performance.now();
       animId = requestAnimationFrame(frameLoop);
-      return G.minute;
+      return { minute: G.minute, started, target: farthest?.id, distance: farthest?.distance || 0 };
     });
+    assert.strictEqual(beforeLive.started, true, "live-clock test starts a real, long navigation route");
+    assert.ok(beforeLive.distance > 1, "live-clock route is long enough to span simulation ticks");
     await page.waitForFunction(() => !N.walking, null, { timeout: 45000 });
     await page.evaluate(() => cancelAnimationFrame(animId));
-    assert.ok(
-      await page.evaluate((m) => G.minute > m, beforeLive),
-      "walking uses live simulation time, not teleport/skip",
-    );
+    const afterLive = await page.evaluate(() => {
+      const minute = G.minute;
+      survFallChance = window.__qaFallChance;
+      delete window.__qaFallChance;
+      return minute;
+    });
+    assert.ok(afterLive > beforeLive.minute, "walking uses live simulation time, not teleport/skip");
     // A freshly occurring knock stops an existing journey, but deliberate movement remains possible.
     const knock = await page.evaluate(() => {
       G.pendingKnock = false;

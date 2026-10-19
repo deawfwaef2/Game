@@ -19,7 +19,7 @@
 - 饥饿、口渴、睡眠、大小便、清洁、精神、疾病持续效果；食物腐败、多样性、吃饭 QTE、日常生活调度。
 - 睡觉指定时长 / 读书等推进时间；过度睡眠、重复食物/重复读物、脏乱、疾病降低精神；精神或健康耗尽失败。
 - 头发、指甲会长；剪发、剪指甲、洗澡、换衣、洗衣、打扫需要相应工具或水电资源。
-- **不要真实昆虫/蚊子/老鼠，不要恶心玩家。**三类干扰物只能用干净抽象的小汽车 / 小直升机 / 足球表示；检查概率发现，数量未知，有道具才能清理。
+- **绝不添加昆虫、蚊子、老鼠，也不添加小汽车 / 小直升机 / 足球等替代干扰物；不恶心玩家。**房间脏乱只按现有清洁、精神与健康规则处理。此项取代下方v0.10之前的历史设想。
 - 生存有难度，但避免恶意突然死亡、无法理解的损耗、明显软锁。危险需有提前提示；跳时逐段模拟，接近危急自动中断。
 - 允许逐步扩展，根据用户反馈继续优化；不要虚称所有最终构想均已完整完成。
 
@@ -411,3 +411,17 @@
 - Build from final game sources: offline root `index.html` 24,273,575 bytes; temporary local ZIP 30,770,828 bytes. The ZIP is in `dist/`; test screenshots are in `tests/artifacts/`. Remove both generated directories before final workspace-size check, retaining source chapter art and root `index.html`.
 - Local safe checkpoint created: commit `8bf9ac939d652ffbe8e8fc341147d210a8b65675`, annotated tag `v0.22.0-preview`, via `tools/safe_checkpoint.py`. Projected workspace after compacting was 85,553,152 bytes; `dist/` and `tests/artifacts/` were removed, root `index.html` retained. The release checkpoint was clean.
 - No remote URL is configured in the current clone (`git remote -v` is empty), so no push was attempted this turn. If the user later requests publishing, first configure an authorized remote/credential and verify GitHub's host key; never use the previously pasted PAT. Remind the user to revoke that PAT.
+
+### 2026-10-19 / Agent A / v0.23.0-preview — extreme survival, food safety and QTEs
+- Continued from the v0.22 local source without using a credential. Added the extreme-only chapter profile while preserving classic defaults and existing three chapter profiles; kept the one-time checkout, fixed chapter fixtures, hidden clocks, no restocking/gifts/automatic placement, and offline assets.
+- Final extreme planning uses 103% of the measured 1,420.8 kcal/day baseline (1,463 kcal/day), six distinct shelf-stable flavors, the actual non-food YEAR_KIT, E$0.02/day care, mechanism goods, plus a 6% modeled reserve. Budgets: E$64 / 80 / 87 / 98 / 157 / 429. `tests/RESULTS.md` holds the six full-run costs, days, calorie remainders, medicines and stars.
+- Food/medicine quality and price descriptions, foodborne illness, cutting/hand injury and sprain care, per-5m environment-driven fall QTEs, and four waste categories including explicit `capWaste` metadata are documented. Cap regression verifies bottled drinks count but tea bags/powder pouches do not. No pests or stand-ins were added.
+- Final pure-simulation checks: levels **111**, survival **42**, classic simulation **165**, plus all six full extreme chapter runs pass. Browser checks: `levels-browser` (chapter/QTE; 0 external requests, 0 JS errors), classic physical `browser` (0/0), `navigation` (257 routes, `liveClock:true`, 0/0), `realism`, `audio` (72/72), `life`, and live RAF (checkout/unpack, no panels/errors) pass. The first navigation live-clock rerun failed its assertion; the test was made deterministic by choosing a longer real route and disabling fall chance only in that isolated timing check, while fall QTEs remain covered in `levels-browser`; final navigation test passes.
+- Updated README, DESIGN and RESULTS; stale pest-stand-in claim was removed from current design text. Built `index.html` from the latest source; remove `dist/` and `tests/artifacts/` after packaging and verify the workspace stays below 128 MB. Local package only.
+- `git remote -v` was empty at initial v0.23 handoff; **no push had yet been attempted** at that point. Never use, store or repeat any PAT pasted by the user; remind them to revoke it immediately. Do not weaken SSH host verification.
+
+### 2026-10-19 / GitHub publication authorization — pending push
+- User requested publication. GitHub connector is unsupported here; installed the official GitHub CLI temporarily under `/var/tmp` after SHA-256 verification. Device-flow authorization returned `repo`, `gist`, and `read:org` scopes rather than the requested narrow scope; local auth files were deleted and that credential was not used. A later token-exchange attempt failed with a network connection reset.
+- The user pasted another PAT during this process; it was not used, saved, or echoed. The user was told to revoke every PAT pasted in this conversation immediately. No token is stored in the repository.
+- User authorized a repository-specific SSH deploy key. A temporary ED25519 key pair is outside the workspace; only its public key was shown, and the user confirmed adding it to `deawfwaef2/Game` with write access. GitHub's ED25519 SSH host fingerprint was checked against the official `api.github.com/meta`; strict `ssh -T` authentication succeeded as `deawfwaef2/Game`.
+- `origin` is now configured as `git@github.com:deawfwaef2/Game.git`; a strict-host-verified fetch shows remote `main` at `92bebdc` and an ancestor of local `main` at `0df059c`, so a normal fast-forward is safe. The v0.23 working tree is still uncommitted; push has not yet been attempted. After committing, push without force, verify the remote ref, delete the temporary private key/auth utilities, and append the publication outcome here and in RESULTS.
